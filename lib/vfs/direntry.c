@@ -59,7 +59,6 @@
 
 #include <errno.h>
 #include <time.h>
-#include <sys/time.h>           /* gettimeofday() */
 #include <inttypes.h>           /* uintmax_t */
 #include <stdarg.h>
 
@@ -67,6 +66,7 @@
 
 #include "lib/tty/tty.h"        /* enable/disable interrupt key */
 #include "lib/util.h"           /* custom_canonicalize_pathname() */
+#include "lib/timer.h"
 #if 0
 #include "lib/widget.h"         /* message() */
 #endif
@@ -834,7 +834,7 @@ vfs_s_free (vfsid id)
 static int
 vfs_s_dir_uptodate (struct vfs_class *me, struct vfs_s_inode *ino)
 {
-    struct timeval tim;
+    guint64 time;
 
     if (MEDATA->flush != 0)
     {
@@ -842,11 +842,10 @@ vfs_s_dir_uptodate (struct vfs_class *me, struct vfs_s_inode *ino)
         return 0;
     }
 
-    gettimeofday (&tim, NULL);
+    time = mc_timer_elapsed (mc_global.timer);
 
-    return (tim.tv_sec < ino->timestamp.tv_sec ? 1 : 0);
+    return (time < ino->timestamp) ? 1 : 0;
 }
-
 
 /* --------------------------------------------------------------------------------------------- */
 /*** public functions ****************************************************************************/

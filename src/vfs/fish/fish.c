@@ -54,7 +54,6 @@
 #include <errno.h>
 #include <pwd.h>
 #include <grp.h>
-#include <sys/time.h>           /* gettimeofday() */
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>           /* uintmax_t */
@@ -66,6 +65,7 @@
 #include "lib/fileloc.h"
 #include "lib/util.h"           /* my_exit() */
 #include "lib/mcconfig.h"
+#include "lib/timer.h"
 
 #include "src/execute.h"        /* pre_exec, post_exec */
 
@@ -746,8 +746,7 @@ fish_dir_load (struct vfs_class *me, struct vfs_s_inode *dir, char *remote_path)
 
     vfs_print_message (_("fish: Reading directory %s..."), remote_path);
 
-    gettimeofday (&dir->timestamp, NULL);
-    dir->timestamp.tv_sec += fish_directory_timeout;
+    dir->timestamp = mc_timer_elapsed (mc_global.timer) + fish_directory_timeout * G_USEC_PER_SEC;
 
     quoted_path = strutils_shell_escape (remote_path);
     (void) fish_command_v (me, super, NONE, SUP->scr_ls, "FISH_FILENAME=%s;\n", quoted_path);

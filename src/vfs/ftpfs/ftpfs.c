@@ -91,16 +91,16 @@ What to do with this?
 #endif
 #include <errno.h>
 #include <ctype.h>
-#include <sys/time.h>           /* gettimeofday() */
+#include <fcntl.h>
 #include <inttypes.h>           /* uintmax_t */
 
 #include "lib/global.h"
 #include "lib/util.h"
 #include "lib/strutil.h"        /* str_move() */
 #include "lib/mcconfig.h"
-
 #include "lib/tty/tty.h"        /* enable/disable interrupt key */
 #include "lib/widget.h"         /* message() */
+#include "lib/timer.h"
 
 #include "src/history.h"
 #include "src/setup.h"          /* for load_anon_passwd */
@@ -180,7 +180,7 @@ gboolean ftpfs_ignore_chattr_errors = TRUE;
    second parameter to ftpfs_changetype. */
 #define TYPE_UNKNOWN -1
 
-#define ABORT_TIMEOUT 5
+#define ABORT_TIMEOUT (5 * G_USEC_PER_SEC)
 /*** file scope type declarations ****************************************************************/
 
 #ifndef HAVE_SOCKLEN_T
@@ -1447,6 +1447,7 @@ ftpfs_linear_abort (struct vfs_class *me, vfs_file_handler_t * fh)
     static unsigned char const ipbuf[3] = { IAC, IP, IAC };
     fd_set mask;
     int dsock = FH_SOCK;
+
     FH_SOCK = -1;
     SUP->ctl_connection_busy = 0;
 
@@ -1470,17 +1471,21 @@ ftpfs_linear_abort (struct vfs_class *me, vfs_file_handler_t * fh)
     {
         FD_ZERO (&mask);
         FD_SET (dsock, &mask);
+
         if (select (dsock + 1, &mask, NULL, NULL, NULL) > 0)
         {
-            struct timeval start_tim, tim;
-            char buf[BUF_8K];
+            guint64 start_tim;
 
-            gettimeofday (&start_tim, NULL);
+            start_tim = mc_timer_elapsed (mc_global.timer);
+
             /* flush the remaining data */
             while (read (dsock, buf, sizeof (buf)) > 0)
             {
-                gettimeofday (&tim, NULL);
-                if (tim.tv_sec > start_tim.tv_sec + ABORT_TIMEOUT)
+                guint64 tim;
+
+                tim = mc_timer_elapsed (mc_global.timer);
+
+                if (start_tim + ABORT_TIMEOUT < tim)
                 {
                     /* server keeps sending, drop the connection and ftpfs_reconnect */
                     close (dsock);
@@ -1709,8 +1714,7 @@ ftpfs_dir_load (struct vfs_class *me, struct vfs_s_inode *dir, char *remote_path
         }
     }
 
-    gettimeofday (&dir->timestamp, NULL);
-    dir->timestamp.tv_sec += ftpfs_directory_timeout;
+    dir->timestamp = mc_timer_elapsed (mc_global.timer) + ftpfs_directory_timeout * G_USEC_PER_SEC;
 
     if (SUP->strict == RFC_STRICT)
         sock = ftpfs_open_data_connection (me, super, "LIST", 0, TYPE_ASCII, 0);
