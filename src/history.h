@@ -9,15 +9,6 @@
 
 /* history section names */
 
-#define MC_HISTORY_EDIT_SAVE_AS       "mc.edit.save-as"
-#define MC_HISTORY_EDIT_LOAD          "mc.edit.load"
-#define MC_HISTORY_EDIT_SAVE_BLOCK    "mc.edit.save-block"
-#define MC_HISTORY_EDIT_INSERT_FILE   "mc.edit.insert-file"
-#define MC_HISTORY_EDIT_GOTO_LINE     "mc.edit.goto-line"
-#define MC_HISTORY_EDIT_SORT          "mc.edit.sort"
-#define MC_HISTORY_EDIT_PASTE_EXTCMD  "mc.edit.paste-extcmd"
-#define MC_HISTORY_EDIT_REPEAT        "mc.edit.repeat-action"
-
 #define MC_HISTORY_FM_VIEW_FILE       "mc.fm.view-file"
 #define MC_HISTORY_FM_MKDIR           "mc.fm.mkdir"
 #define MC_HISTORY_FM_LINK            "mc.fm.link"
@@ -30,11 +21,6 @@
 #define MC_HISTORY_FM_MENU_EXEC_PARAM "mc.fm.menu.exec.parameter"
 
 #define MC_HISTORY_ESC_TIMEOUT        "mc.esc.timeout"
-
-#define MC_HISTORY_VIEW_GOTO          "mc.view.goto"
-#define MC_HISTORY_VIEW_GOTO_LINE     "mc.view.goto-line"
-#define MC_HISTORY_VIEW_GOTO_ADDR     "mc.view.goto-addr"
-#define MC_HISTORY_VIEW_SEARCH_REGEX  "mc.view.search.regex"
 
 #define MC_HISTORY_FTPFS_ACCOUNT      "mc.vfs.ftp.account"
 

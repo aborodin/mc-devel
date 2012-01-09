@@ -77,10 +77,8 @@ static const struct
 
     /* data */
     { "skins",                                 &mc_data_str, MC_SKINS_SUBDIR},
-    { "fish",                                  &mc_data_str, FISH_PREFIX},
     { "bashrc",                                &mc_data_str, "bashrc"},
     { "inputrc",                               &mc_data_str, "inputrc"},
-    { "extfs.d",                               &mc_data_str, MC_EXTFS_DIR},
     { "history",                               &mc_data_str, MC_HISTORY_FILE},
     { "filepos",                               &mc_data_str, MC_FILEPOS_FILE},
 
