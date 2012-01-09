@@ -1,4 +1,4 @@
-SUBDIRS = event mcconfig search skin tty vfs strutil widget .
+SUBDIRS = event mcconfig skin tty vfs strutil widget .
 
 if ENABLE_MCLIB
     LIB_VERSION=`echo $(LIBMC_VERSION) | \
@@ -16,7 +16,6 @@ endif
 SUBLIB_includes = \
 	event.h event-types.h \
 	mcconfig.h \
-	search.h \
 	skin.h \
 	strescape.h \
 	strutil.h \
@@ -54,7 +53,6 @@ libmc_la_CFLAGS= $(GLIB_CFLAGS) -I$(top_srcdir) $(PCRE_CFLAGS)
 libmc_la_LIBADD = \
 	event/libmcevent.la \
 	mcconfig/libmcconfig.la \
-	search/libsearch.la \
 	strutil/libmcstrutil.la \
 	skin/libmcskin.la \
 	tty/libmctty.la \

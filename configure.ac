@@ -256,8 +256,6 @@ linux*)
     ;;
 esac
 
-MC_CHECK_SEARCH_TYPE
-
 dnl
 dnl Check nroff and the options it supports
 dnl
@@ -449,7 +447,6 @@ src/filemanager/Makefile
 lib/Makefile
 lib/event/Makefile
 lib/mcconfig/Makefile
-lib/search/Makefile
 lib/skin/Makefile
 lib/strutil/Makefile
 lib/tty/Makefile
@@ -491,5 +488,4 @@ Configuration:
   Mouse support:              ${mouse_lib}
   X11 events support:         ${textmode_x11_support}
   Support for charset:        ${charset_msg}
-  Search type:                ${SEARCH_TYPE}
 "
