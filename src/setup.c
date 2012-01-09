@@ -44,8 +44,6 @@
 #include "lib/util.h"
 #include "lib/widget.h"
 
-#include "lib/vfs/vfs.h"
-
 #ifdef HAVE_CHARSET
 #include "lib/charsets.h"
 #endif

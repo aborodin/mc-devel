@@ -35,16 +35,6 @@ typedef enum
         | CANON_PATH_REMSLASHDOTS | CANON_PATH_REMDOUBLEDOTS | CANON_PATH_GUARDUNC
 } CANON_PATH_FLAGS;
 
-enum compression_type
-{
-    COMPRESSION_NONE,
-    COMPRESSION_GZIP,
-    COMPRESSION_BZIP,
-    COMPRESSION_BZIP2,
-    COMPRESSION_LZMA,
-    COMPRESSION_XZ
-};
-
 /*** structures declarations (and typedefs of structures)*****************************************/
 
 /* keys are set only during sorting */
@@ -175,11 +165,6 @@ int mc_mkstemps (char **pname, const char *prefix, const char *suffix);
 #else
 char *mc_realpath (const char *path, char *resolved_path);
 #endif
-
-/* Looks for ``magic'' bytes at the start of the VFS file to guess the
- * compression type. Side effect: modifies the file position. */
-enum compression_type get_compression_type (int fd, const char *);
-const char *decompress_extension (int type);
 
 GList *list_append_unique (GList * list, char *text);
 

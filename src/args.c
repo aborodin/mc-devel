@@ -30,7 +30,6 @@
 #include "lib/global.h"
 #include "lib/tty/tty.h"
 #include "lib/strutil.h"
-#include "lib/vfs/vfs.h"
 #include "lib/util.h"           /* x_basename() */
 
 #include "src/main.h"

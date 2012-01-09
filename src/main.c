@@ -51,7 +51,6 @@
 #include "lib/fileloc.h"
 #include "lib/strutil.h"
 #include "lib/util.h"
-#include "lib/vfs/vfs.h"        /* vfs_init(), vfs_shut() */
 #include "lib/widget.h"
 
 #include "events_init.h"
@@ -162,12 +161,6 @@ main (int argc, char *argv[])
     /* do it after the screen library initialization to show the error message */
     mc_config_init_config_paths (&error);
 
-    if (error == NULL && mc_config_deprecated_dir_present ())
-        mc_config_migrate_from_old_place (&error);
-
-    vfs_init ();
-    vfs_setup_work_dir ();
-
     if (!mc_args_handle (argc, argv, "mc"))
         exit (EXIT_FAILURE);
 
@@ -233,9 +226,6 @@ main (int argc, char *argv[])
         do_nc ();
 
     free_keymap_defs ();
-
-    /* Virtual File System shutdown */
-    vfs_shut ();
 
     mc_skin_deinit ();
     tty_colors_done ();

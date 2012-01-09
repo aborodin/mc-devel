@@ -61,11 +61,9 @@
 #include <grp.h>
 
 #include "lib/global.h"
-#include "lib/vfs/vfs.h"        /* VFS_ENCODING_PREFIX */
 #include "lib/strutil.h"        /* str_move() */
 #include "lib/util.h"
 #include "lib/widget.h"         /* message() */
-#include "lib/vfs/xdirentry.h"
 
 #ifdef HAVE_CHARSET
 #include "lib/charsets.h"
@@ -555,7 +553,6 @@ custom_canonicalize_pathname (char *path, CANON_PATH_FLAGS flags)
     char *p, *s;
     size_t len;
     char *lpath = path;         /* path without leading UNC part */
-    const size_t url_delim_len = strlen (VFS_PATH_URL_DELIMITER);
 
     /* Detect and preserve UNC paths: //server/... */
     if ((flags & CANON_PATH_GUARDUNC) && path[0] == PATH_SEP && path[1] == PATH_SEP)
@@ -605,9 +602,6 @@ custom_canonicalize_pathname (char *path, CANON_PATH_FLAGS flags)
         p = lpath + strlen (lpath) - 1;
         while (p > lpath && *p == PATH_SEP)
         {
-            if (p >= lpath - (url_delim_len + 1)
-                && strncmp (p - url_delim_len + 1, VFS_PATH_URL_DELIMITER, url_delim_len) == 0)
-                break;
             *p-- = 0;
         }
 
@@ -629,10 +623,7 @@ custom_canonicalize_pathname (char *path, CANON_PATH_FLAGS flags)
         len = strlen (lpath);
         if (len < 2)
             return;
-        if (lpath[len - 1] == PATH_SEP
-            && (len < url_delim_len
-                || strncmp (lpath + len - url_delim_len, VFS_PATH_URL_DELIMITER,
-                            url_delim_len) != 0))
+        if (lpath[len - 1] == PATH_SEP)
         {
             lpath[len - 1] = '\0';
         }
@@ -655,8 +646,6 @@ custom_canonicalize_pathname (char *path, CANON_PATH_FLAGS flags)
 
     if (flags & CANON_PATH_REMDOUBLEDOTS)
     {
-        const size_t enc_prefix_len = strlen (VFS_ENCODING_PREFIX);
-
         /* Collapse "/.." with the previous part of path */
         p = lpath;
         while (p[0] && p[1] && p[2])
@@ -669,40 +658,9 @@ custom_canonicalize_pathname (char *path, CANON_PATH_FLAGS flags)
 
             /* search for the previous token */
             s = p - 1;
-            if (s >= lpath + url_delim_len - 2
-                && strncmp (s - url_delim_len + 2, VFS_PATH_URL_DELIMITER, url_delim_len) == 0)
-            {
-                s -= (url_delim_len - 2);
-                while (s >= lpath && *s-- != PATH_SEP);
-            }
 
             while (s >= lpath)
             {
-                if (s - url_delim_len > lpath
-                    && strncmp (s - url_delim_len, VFS_PATH_URL_DELIMITER, url_delim_len) == 0)
-                {
-                    char *vfs_prefix = s - url_delim_len;
-                    struct vfs_class *vclass;
-
-                    while (vfs_prefix > lpath && *--vfs_prefix != PATH_SEP);
-                    if (*vfs_prefix == PATH_SEP)
-                        vfs_prefix++;
-                    *(s - url_delim_len) = '\0';
-
-                    vclass = vfs_prefix_to_class (vfs_prefix);
-                    *(s - url_delim_len) = *VFS_PATH_URL_DELIMITER;
-
-                    if (vclass != NULL)
-                    {
-                        struct vfs_s_subclass *sub = (struct vfs_s_subclass *) vclass->data;
-                        if (sub != NULL && sub->flags & VFS_S_REMOTE)
-                        {
-                            s = vfs_prefix;
-                            continue;
-                        }
-                    }
-                }
-
                 if (*s == PATH_SEP)
                     break;
 
@@ -728,14 +686,7 @@ custom_canonicalize_pathname (char *path, CANON_PATH_FLAGS flags)
                 else
                 {
                     /* "token/../foo" -> "foo" */
-#if HAVE_CHARSET
-                    if ((strncmp (s, VFS_ENCODING_PREFIX, enc_prefix_len) == 0)
-                        && (is_supported_encoding (s + enc_prefix_len)))
-                        /* special case: remove encoding */
-                        str_move (s, p + 1);
-                    else
-#endif /* HAVE_CHARSET */
-                        str_move (s, p + 4);
+                    str_move (s, p + 4);
                 }
                 p = (s > lpath) ? s - 1 : s;
                 continue;
@@ -756,33 +707,8 @@ custom_canonicalize_pathname (char *path, CANON_PATH_FLAGS flags)
                 /* "foo/token/.." -> "foo" */
                 if (s == lpath + 1)
                     s[0] = 0;
-#if HAVE_CHARSET
-                else if ((strncmp (s, VFS_ENCODING_PREFIX, enc_prefix_len) == 0)
-                         && (is_supported_encoding (s + enc_prefix_len)))
-                {
-                    /* special case: remove encoding */
-                    s[0] = '.';
-                    s[1] = '.';
-                    s[2] = '\0';
-
-                    /* search for the previous token */
-                    /* s[-1] == PATH_SEP */
-                    p = s - 1;
-                    while (p >= lpath && *p != PATH_SEP)
-                        p--;
-
-                    if (p != NULL)
-                        continue;
-                }
-#endif /* HAVE_CHARSET */
                 else
-                {
-                    if (s >= lpath + url_delim_len
-                        && strncmp (s - url_delim_len, VFS_PATH_URL_DELIMITER, url_delim_len) == 0)
-                        *s = '\0';
-                    else
-                        s[-1] = '\0';
-                }
+                    s[-1] = '\0';
                 break;
             }
 

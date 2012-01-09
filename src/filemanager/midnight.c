@@ -101,6 +101,7 @@ create_panels_and_run_mc (void)
 static cb_ret_t
 midnight_callback (Dlg_head * h, Widget * sender, dlg_msg_t msg, int parm, void *data)
 {
+    dlg_stop (h);
     return default_dlg_callback (h, sender, msg, parm, data);
 }
 

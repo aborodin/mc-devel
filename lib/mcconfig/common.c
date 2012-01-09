@@ -30,7 +30,6 @@
 #include <errno.h>              /* extern int errno */
 
 #include "lib/global.h"
-#include "lib/vfs/vfs.h"        /* mc_stat */
 #include "lib/util.h"
 #include "lib/mcconfig.h"
 
@@ -66,7 +65,7 @@ mc_config_new_or_override_file (mc_config_t * mc_config, const gchar * ini_path,
     }
     mc_util_make_backup_if_possible (ini_path, "~");
 
-    fd = mc_open (ini_path, O_WRONLY | O_TRUNC, 0);
+    fd = open (ini_path, O_WRONLY | O_TRUNC, 0);
     if (fd == -1)
     {
         g_propagate_error (error, g_error_new (MC_ERROR, 0, "%s", unix_error_string (errno)));
@@ -75,9 +74,9 @@ mc_config_new_or_override_file (mc_config_t * mc_config, const gchar * ini_path,
     }
 
     for (written_data = data, total_written = len;
-         (cur_written = mc_write (fd, (const void *) written_data, total_written)) > 0;
+         (cur_written = write (fd, (const void *) written_data, total_written)) > 0;
          written_data += cur_written, total_written -= cur_written);
-    mc_close (fd);
+    close (fd);
     g_free (data);
 
     if (cur_written == -1)
@@ -115,7 +114,7 @@ mc_config_init (const gchar * ini_path)
     if (ini_path == NULL)
         return mc_config;
 
-    if (exist_file (ini_path) && mc_stat (ini_path, &st) == 0 && st.st_size != 0)
+    if (exist_file (ini_path) && stat (ini_path, &st) == 0 && st.st_size != 0)
     {
         /* file exists and not empty */
         g_key_file_load_from_file (mc_config->handle, ini_path, G_KEY_FILE_KEEP_COMMENTS, NULL);

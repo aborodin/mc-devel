@@ -52,7 +52,6 @@
 #include "lib/global.h"
 #include "lib/mcconfig.h"
 #include "lib/fileloc.h"
-#include "lib/vfs/vfs.h"
 #include "lib/strutil.h"
 #include "lib/util.h"
 
@@ -135,7 +134,7 @@ resolve_symlinks (const char *path)
         }
         c = *q;
         *q = 0;
-        if (mc_lstat (path, &mybuf) < 0)
+        if (lstat (path, &mybuf) < 0)
         {
             g_free (buf);
             g_free (buf2);
@@ -146,7 +145,7 @@ resolve_symlinks (const char *path)
             strcpy (r, p + 1);
         else
         {
-            len = mc_readlink (path, buf2, MC_MAXPATHLEN - 1);
+            len = readlink (path, buf2, MC_MAXPATHLEN - 1);
             if (len < 0)
             {
                 g_free (buf);
@@ -724,29 +723,18 @@ extract_line (const char *s, const char *top)
 const char *
 x_basename (const char *s)
 {
-    const char *url_delim, *path_sep;
+    const char *path_sep;
 
-    url_delim = g_strrstr (s, VFS_PATH_URL_DELIMITER);
     path_sep = strrchr (s, PATH_SEP);
 
-    if (url_delim == NULL
-        || url_delim < path_sep - strlen (VFS_PATH_URL_DELIMITER)
-        || url_delim - s + strlen (VFS_PATH_URL_DELIMITER) < strlen (s))
+    /* avoid trailing PATH_SEP, if present */
+    if (s[strlen (s) - 1] == PATH_SEP)
     {
-        /* avoid trailing PATH_SEP, if present */
-        if (s[strlen (s) - 1] == PATH_SEP)
-        {
-            while (--path_sep > s && *path_sep != PATH_SEP);
-            return (path_sep != s) ? path_sep + 1 : s;
-        }
-        else
-            return (path_sep != NULL) ? path_sep + 1 : s;
+        while (--path_sep > s && *path_sep != PATH_SEP);
+        return (path_sep != s) ? path_sep + 1 : s;
     }
-
-    while (--url_delim > s && *url_delim != PATH_SEP);
-    while (--url_delim > s && *url_delim != PATH_SEP);
-
-    return (url_delim == s) ? s : url_delim + 1;
+    else
+        return (path_sep != NULL) ? path_sep + 1 : s;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -877,109 +865,6 @@ strip_ctrl_codes (char *s)
     }
     *w = 0;
     return s;
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-enum compression_type
-get_compression_type (int fd, const char *name)
-{
-    unsigned char magic[16];
-    size_t str_len;
-
-    /* Read the magic signature */
-    if (mc_read (fd, (char *) magic, 4) != 4)
-        return COMPRESSION_NONE;
-
-    /* GZIP_MAGIC and OLD_GZIP_MAGIC */
-    if (magic[0] == 037 && (magic[1] == 0213 || magic[1] == 0236))
-    {
-        return COMPRESSION_GZIP;
-    }
-
-    /* PKZIP_MAGIC */
-    if (magic[0] == 0120 && magic[1] == 0113 && magic[2] == 003 && magic[3] == 004)
-    {
-        /* Read compression type */
-        mc_lseek (fd, 8, SEEK_SET);
-        if (mc_read (fd, (char *) magic, 2) != 2)
-            return COMPRESSION_NONE;
-
-        /* Gzip can handle only deflated (8) or stored (0) files */
-        if ((magic[0] != 8 && magic[0] != 0) || magic[1] != 0)
-            return COMPRESSION_NONE;
-
-        /* Compatible with gzip */
-        return COMPRESSION_GZIP;
-    }
-
-    /* PACK_MAGIC and LZH_MAGIC and compress magic */
-    if (magic[0] == 037 && (magic[1] == 036 || magic[1] == 0240 || magic[1] == 0235))
-    {
-        /* Compatible with gzip */
-        return COMPRESSION_GZIP;
-    }
-
-    /* BZIP and BZIP2 files */
-    if ((magic[0] == 'B') && (magic[1] == 'Z') && (magic[3] >= '1') && (magic[3] <= '9'))
-    {
-        switch (magic[2])
-        {
-        case '0':
-            return COMPRESSION_BZIP;
-        case 'h':
-            return COMPRESSION_BZIP2;
-        }
-    }
-
-    /* Support for LZMA (only utils format with magic in header).
-     * This is the default format of LZMA utils 4.32.1 and later. */
-
-    if (mc_read (fd, (char *) magic + 4, 2) != 2)
-        return COMPRESSION_NONE;
-
-    /* LZMA utils format */
-    if (magic[0] == 0xFF
-        && magic[1] == 'L'
-        && magic[2] == 'Z' && magic[3] == 'M' && magic[4] == 'A' && magic[5] == 0x00)
-        return COMPRESSION_LZMA;
-
-    /* XZ compression magic */
-    if (magic[0] == 0xFD
-        && magic[1] == 0x37
-        && magic[2] == 0x7A && magic[3] == 0x58 && magic[4] == 0x5A && magic[5] == 0x00)
-        return COMPRESSION_XZ;
-
-    str_len = strlen (name);
-    /* HACK: we must belive to extention of LZMA file :) ... */
-    if ((str_len > 5 && strcmp (&name[str_len - 5], ".lzma") == 0) ||
-        (str_len > 4 && strcmp (&name[str_len - 4], ".tlz") == 0))
-        return COMPRESSION_LZMA;
-
-    return COMPRESSION_NONE;
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-const char *
-decompress_extension (int type)
-{
-    switch (type)
-    {
-    case COMPRESSION_GZIP:
-        return "/ugz" VFS_PATH_URL_DELIMITER;
-    case COMPRESSION_BZIP:
-        return "/ubz" VFS_PATH_URL_DELIMITER;
-    case COMPRESSION_BZIP2:
-        return "/ubz2" VFS_PATH_URL_DELIMITER;
-    case COMPRESSION_LZMA:
-        return "/ulzma" VFS_PATH_URL_DELIMITER;
-    case COMPRESSION_XZ:
-        return "/uxz" VFS_PATH_URL_DELIMITER;
-    }
-    /* Should never reach this place */
-    fprintf (stderr, "Fatal: decompress_extension called with an unknown argument\n");
-    return 0;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -1514,7 +1399,7 @@ mc_util_unlink_backup_if_possible (const char *file_name, const char *backup_suf
         return FALSE;
 
     if (exist_file (backup_path))
-        mc_unlink (backup_path);
+        unlink (backup_path);
 
     g_free (backup_path);
     return TRUE;

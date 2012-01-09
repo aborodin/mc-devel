@@ -258,17 +258,6 @@ typedef struct
         gboolean alternate_plus_minus;
 
     } tty;
-
-    struct
-    {
-        /* Set when cd symlink following is desirable (bash mode) */
-        gboolean cd_symlinks;
-
-        /* Preallocate space before file copying */
-        gboolean preallocate_space;
-
-    } vfs;
-
 } mc_global_t;
 
 /*** global variables defined in .c file *********************************************************/

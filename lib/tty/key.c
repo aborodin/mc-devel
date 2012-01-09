@@ -44,8 +44,6 @@
 
 #include "lib/global.h"
 
-#include "lib/vfs/vfs.h"
-
 #include "tty.h"
 #include "tty-internal.h"       /* mouse_enabled */
 #include "mouse.h"
@@ -2036,8 +2034,6 @@ tty_get_event (struct Gpm_Event *event, gboolean redo_event, gboolean block)
     else
         dirty++;
 
-    vfs_timeout_handler ();
-
     /* Ok, we use (event->x < 0) to signal that the event does not contain
        a suitable position for the mouse, so we can't use show_mouse_pointer
        on it.
@@ -2086,7 +2082,7 @@ tty_get_event (struct Gpm_Event *event, gboolean redo_event, gboolean block)
         {
             int seconds;
 
-            seconds = vfs_timeouts ();
+            seconds = 60; /* vfs_timeouts (); */
             time_addr = NULL;
 
             if (seconds != 0)
@@ -2124,7 +2120,6 @@ tty_get_event (struct Gpm_Event *event, gboolean redo_event, gboolean block)
                 return EV_MOUSE;
             if (!block || mc_global.tty.winch_flag)
                 return EV_NONE;
-            vfs_timeout_handler ();
         }
         if (flag == -1 && errno == EINTR)
             return EV_NONE;

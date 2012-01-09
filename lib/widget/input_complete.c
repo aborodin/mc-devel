@@ -45,7 +45,6 @@
 
 #include "lib/tty/tty.h"
 #include "lib/tty/key.h"        /* XCTRL and ALT macros */
-#include "lib/vfs/vfs.h"
 #include "lib/strescape.h"
 #include "lib/strutil.h"
 #include "lib/util.h"
@@ -179,13 +178,13 @@ filename_completion_function (const char *text, int state, input_complete_t flag
            and `command`.
            Maybe a dream - UNIMPLEMENTED yet. */
 
-        directory = mc_opendir (dirname);
+        directory = opendir (dirname);
         filename_len = strlen (filename);
     }
 
     /* Now that we have some state, we can read the directory. */
 
-    while (directory && (entry = mc_readdir (directory)))
+    while (directory && (entry = readdir (directory)))
     {
         if (!str_is_valid_string (entry->d_name))
             continue;
@@ -215,7 +214,7 @@ filename_completion_function (const char *text, int state, input_complete_t flag
             tmp = g_strconcat (dirname, PATH_SEP_STR, entry->d_name, (char *) NULL);
             canonicalize_pathname (tmp);
             /* Unix version */
-            if (!mc_stat (tmp, &tempstat))
+            if (stat (tmp, &tempstat) == 0)
             {
                 uid_t my_uid = getuid ();
                 gid_t my_gid = getgid ();
@@ -247,9 +246,9 @@ filename_completion_function (const char *text, int state, input_complete_t flag
 
     if (entry == NULL)
     {
-        if (directory)
+        if (directory != NULL)
         {
-            mc_closedir (directory);
+            closedir (directory);
             directory = NULL;
         }
         g_free (dirname);

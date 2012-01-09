@@ -1,4 +1,4 @@
-SUBDIRS = event mcconfig skin tty vfs strutil widget .
+SUBDIRS = event mcconfig skin tty strutil widget .
 
 if ENABLE_MCLIB
     LIB_VERSION=`echo $(LIBMC_VERSION) | \
@@ -36,7 +36,6 @@ libmc_la_SOURCES = \
 	glibcompat.c glibcompat.h \
 	global.c global.h \
 	keybind.c keybind.h \
-	lock.c lock.h \
 	serialize.c serialize.h \
 	timefmt.c timefmt.h
 
@@ -56,7 +55,6 @@ libmc_la_LIBADD = \
 	strutil/libmcstrutil.la \
 	skin/libmcskin.la \
 	tty/libmctty.la \
-	vfs/libmcvfs.la \
 	widget/libmcwidget.la
 
 libmc_la_LIBADD += $(MCLIBS) $(SLANGLIB)

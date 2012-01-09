@@ -228,8 +228,6 @@ AC_CHECK_LIB(seq, get_process_stats, [
 		  [Define if you have function `get_process_stats' and
 have to use that instead of gettimeofday])])
 
-AC_MC_VFS_CHECKS
-
 dnl
 dnl Check for gpm mouse support (Linux only)
 dnl
@@ -450,8 +448,6 @@ lib/mcconfig/Makefile
 lib/skin/Makefile
 lib/strutil/Makefile
 lib/tty/Makefile
-
-lib/vfs/Makefile
 
 lib/widget/Makefile
 

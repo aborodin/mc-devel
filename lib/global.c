@@ -86,13 +86,6 @@ mc_global_t mc_global = {
         .old_mouse = FALSE,
         .alternate_plus_minus = FALSE,
     },
-
-    .vfs =
-    {
-        .cd_symlinks = TRUE,
-        .preallocate_space = FALSE,
-    }
-
 };
 /* *INDENT-ON* */
 
