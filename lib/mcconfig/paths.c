@@ -65,25 +65,15 @@ static const struct
     /* *INDENT-OFF* */
     /* config */
     { "ini",                                   &mc_config_str, MC_CONFIG_FILE},
-    { "filehighlight.ini",                     &mc_config_str, MC_FHL_INI_FILE},
-    { "hotlist",                               &mc_config_str, MC_HOTLIST_FILE},
     { "mc.keymap",                             &mc_config_str, GLOBAL_KEYMAP_FILE},
-    { "menu",                                  &mc_config_str, MC_USERMENU_FILE},
-    { "panels.ini",                            &mc_config_str, MC_PANELS_FILE},
-
-    /* User should move this file with applying some changes in file */
-    { "",                                      &mc_config_str, MC_FILEBIND_FILE},
 
     /* data */
     { "skins",                                 &mc_data_str, MC_SKINS_SUBDIR},
     { "bashrc",                                &mc_data_str, "bashrc"},
     { "inputrc",                               &mc_data_str, "inputrc"},
     { "history",                               &mc_data_str, MC_HISTORY_FILE},
-    { "filepos",                               &mc_data_str, MC_FILEPOS_FILE},
 
-    /* cache */
     { "log",                                   &mc_cache_str, "mc.log"},
-    { "Tree",                                  &mc_cache_str, MC_TREESTORE_FILE},
 
     {NULL, NULL, NULL}
     /* *INDENT-ON* */
@@ -99,13 +89,7 @@ static const struct
 } mc_config_migrate_rules_fix[] =
 {
     /* *INDENT-OFF* */
-    { &mc_data_str, MC_USERMENU_FILE,                       &mc_config_str},
-    { &mc_data_str, MC_FILEBIND_FILE,                       &mc_config_str},
-
     { &mc_cache_str, MC_HISTORY_FILE,                       &mc_data_str},
-    { &mc_cache_str, MC_FILEPOS_FILE,                       &mc_data_str},
-
-    { &mc_cache_str, MC_PANELS_FILE,                        &mc_config_str},
 
     {NULL, NULL, NULL}
     /* *INDENT-ON* */

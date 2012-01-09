@@ -19,7 +19,6 @@ mc_SOURCES = \
 	args.c args.h \
 	events_init.c events_init.h \
 	help.c help.h \
-	history.h \
 	keybind-defaults.c keybind-defaults.h \
 	main.c main.h \
 	setup.c setup.h \

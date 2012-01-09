@@ -37,28 +37,6 @@ typedef enum
 
 /*** structures declarations (and typedefs of structures)*****************************************/
 
-/* keys are set only during sorting */
-typedef struct
-{
-    /* File attributes */
-    size_t fnamelen;
-    char *fname;
-    struct stat st;
-    /* key used for comparing names */
-    char *sort_key;
-    /* key used for comparing extensions */
-    char *second_sort_key;
-
-    /* Flags */
-    struct
-    {
-        unsigned int marked:1;  /* File marked in pane window */
-        unsigned int link_to_dir:1;     /* If this is a link, does it point to directory? */
-        unsigned int stale_link:1;      /* If this is a symlink and points to Charon's land */
-        unsigned int dir_size_computed:1;       /* Size of directory was computed with dirsizes_cmd */
-    } f;
-} file_entry;
-
 /*** global variables defined in .c file *********************************************************/
 
 extern struct sigaction startup_handler;
@@ -167,14 +145,6 @@ char *mc_realpath (const char *path, char *resolved_path);
 #endif
 
 GList *list_append_unique (GList * list, char *text);
-
-/* Position saving and restoring */
-/* Load position for the given filename */
-void load_file_position (const char *filename, long *line, long *column, off_t * offset,
-                         GArray ** bookmarks);
-/* Save position for the given filename */
-void save_file_position (const char *filename, long line, long column, off_t offset,
-                         GArray * bookmarks);
 
 
 /* if ch is in [A-Za-z], returns the corresponding control character,
