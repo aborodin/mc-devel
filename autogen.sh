@@ -28,9 +28,6 @@ fi
 
 cd "$srcdir"
 
-# The autoconf cache (version after 2.52) is not reliable yet.
-rm -rf autom4te.cache src/vfs/smbfs/helpers/autom4te.cache
-
 if test ! -d config; then
   mkdir config
 fi
@@ -71,17 +68,6 @@ fi
 $AUTOMAKE -a
 test -f Makefile.in || \
   { echo "automake failed to generate Makefile.in" >&2; exit 1; }
-
-cd src/vfs/smbfs/helpers
-date -u >include/stamp-h.in
-
-$AUTOHEADER
-test -f include/config.h.in || \
-  { echo "autoheader failed to generate src/vfs/smbfs/helpers/include/config.h.in" >&2; exit 1; }
-
-$AUTOCONF
-test -f configure || \
-  { echo "autoconf failed to generate src/vfs/smbfs/helpers/configure" >&2; exit 1; }
 ) || exit 1
 
 $srcdir/maint/version.sh "$srcdir"

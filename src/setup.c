@@ -45,13 +45,6 @@
 
 #include "lib/vfs/vfs.h"
 
-#ifdef ENABLE_VFS_FTP
-#include "src/vfs/ftpfs/ftpfs.h"
-#endif
-#ifdef ENABLE_VFS_FISH
-#include "src/vfs/fish/fish.h"
-#endif
-
 #ifdef HAVE_CHARSET
 #include "lib/charsets.h"
 #endif
@@ -272,22 +265,6 @@ static const struct
     { "num_history_items_recorded", &num_history_items_recorded },
     { "file_op_compute_totals", &file_op_compute_totals },
     { "classic_progressbar", &classic_progressbar},
-#ifdef ENABLE_VFS
-    { "vfs_timeout", &vfs_timeout },
-#ifdef ENABLE_VFS_FTP
-    { "ftpfs_directory_timeout", &ftpfs_directory_timeout },
-    { "use_netrc", &ftpfs_use_netrc },
-    { "ftpfs_retry_seconds", &ftpfs_retry_seconds },
-    { "ftpfs_always_use_proxy", &ftpfs_always_use_proxy },
-    { "ftpfs_use_passive_connections", &ftpfs_use_passive_connections },
-    { "ftpfs_use_passive_connections_over_proxy", &ftpfs_use_passive_connections_over_proxy },
-    { "ftpfs_use_unix_list_options", &ftpfs_use_unix_list_options },
-    { "ftpfs_first_cd_then_ls", &ftpfs_first_cd_then_ls },
-#endif /* ENABLE_VFS_FTP */
-#ifdef ENABLE_VFS_FISH
-    { "fish_directory_timeout", &fish_directory_timeout },
-#endif /* ENABLE_VFS_FISH */
-#endif /* ENABLE_VFS */
     /* option_tab_spacing is used in internal viewer */
     { "editor_tab_spacing", &option_tab_spacing },
     { "nice_rotating_dash", &nice_rotating_dash },
@@ -877,13 +854,6 @@ load_setup (void)
         mc_config_get_string (mc_main_config, "Misc", "timeformat_recent", FMTTIME);
     user_old_timeformat = mc_config_get_string (mc_main_config, "Misc", "timeformat_old", FMTYEAR);
 
-#ifdef ENABLE_VFS_FTP
-    ftpfs_proxy_host = mc_config_get_string (mc_main_config, "Misc", "ftp_proxy_host", "gate");
-    ftpfs_ignore_chattr_errors = mc_config_get_bool (mc_main_config, CONFIG_APP_SECTION,
-                                                     "ignore_ftp_chattr_errors", TRUE);
-    ftpfs_init_passwd ();
-#endif /* ENABLE_VFS_FTP */
-
     /* The default color and the terminal dependent color */
     mc_global.tty.setup_color_string =
         mc_config_get_string (mc_main_config, "Colors", "base_color", "");
@@ -953,12 +923,6 @@ save_setup (gboolean save_options, gboolean save_panel_options)
         panels_save_options ();
         save_panelize ();
         /* directory_history_save (); */
-
-#ifdef ENABLE_VFS_FTP
-        mc_config_set_string (mc_main_config, "Misc", "ftpfs_password", ftpfs_anonymous_passwd);
-        if (ftpfs_proxy_host)
-            mc_config_set_string (mc_main_config, "Misc", "ftp_proxy_host", ftpfs_proxy_host);
-#endif /* ENABLE_VFS_FTP */
 
 #ifdef HAVE_CHARSET
         mc_config_set_string (mc_main_config, "Misc", "display_codepage",
@@ -1079,24 +1043,6 @@ load_key_defs (void)
     load_keys_from_section ("general", mc_main_config);
     load_keys_from_section (getenv ("TERM"), mc_main_config);
 }
-
-/* --------------------------------------------------------------------------------------------- */
-
-#ifdef ENABLE_VFS_FTP
-char *
-load_anon_passwd (void)
-{
-    char *buffer;
-
-    buffer = mc_config_get_string (mc_main_config, "Misc", "ftpfs_password", "");
-
-    if ((buffer != NULL) && (buffer[0] != '\0'))
-        return buffer;
-
-    g_free (buffer);
-    return NULL;
-}
-#endif /* ENABLE_VFS_FTP */
 
 /* --------------------------------------------------------------------------------------------- */
 

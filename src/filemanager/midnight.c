@@ -194,15 +194,6 @@ create_panel_menu (void)
     entries = g_list_prepend (entries, menu_entry_create (_("&Encoding..."), CK_SelectCodepage));
 #endif
     entries = g_list_prepend (entries, menu_separator_create ());
-#ifdef ENABLE_VFS_FTP
-    entries = g_list_prepend (entries, menu_entry_create (_("FT&P link..."), CK_ConnectFtp));
-#endif
-#ifdef ENABLE_VFS_FISH
-    entries = g_list_prepend (entries, menu_entry_create (_("S&hell link..."), CK_ConnectFish));
-#endif
-#ifdef ENABLE_VFS_SMB
-    entries = g_list_prepend (entries, menu_entry_create (_("SM&B link..."), CK_ConnectSmb));
-#endif
     entries = g_list_prepend (entries, menu_entry_create (_("Paneli&ze"), CK_Panelize));
     entries = g_list_prepend (entries, menu_separator_create ());
     entries = g_list_prepend (entries, menu_entry_create (_("&Rescan"), CK_Reread));
@@ -278,16 +269,8 @@ create_command_menu (void)
 #endif
     entries = g_list_prepend (entries, menu_entry_create (_("Screen lis&t"), CK_ScreenList));
     entries = g_list_prepend (entries, menu_separator_create ());
-#ifdef ENABLE_VFS_UNDELFS
-    entries =
-        g_list_prepend (entries,
-                        menu_entry_create (_("&Undelete files (ext2fs only)"), CK_Undelete));
-#endif
 #ifdef LISTMODE_EDITOR
     entries = g_list_prepend (entries, menu_entry_create (_("&Listing format edit"), CK_ListMode));
-#endif
-#if defined (ENABLE_VFS_UNDELFS) || defined (LISTMODE_EDITOR)
-    entries = g_list_prepend (entries, menu_separator_create ());
 #endif
     entries =
         g_list_prepend (entries,
@@ -1122,21 +1105,6 @@ midnight_execute_cmd (Widget * sender, unsigned long command)
     case CK_Find:
         find_cmd ();
         break;
-#ifdef ENABLE_VFS_FISH
-    case CK_ConnectFish:
-        fishlink_cmd ();
-        break;
-#endif
-#ifdef ENABLE_VFS_FTP
-    case CK_ConnectFtp:
-        ftplink_cmd ();
-        break;
-#endif
-#ifdef ENABLE_VFS_SMB
-    case CK_ConnectSmb:
-        smblink_cmd ();
-        break;
-#endif /* ENABLE_VFS_SMB */
     case CK_Panelize:
         cd_panelize_cmd ();
         break;
@@ -1269,11 +1237,6 @@ midnight_execute_cmd (Widget * sender, unsigned long command)
     case CK_Tree:
         treebox_cmd ();
         break;
-#ifdef ENABLE_VFS_UNDELFS
-    case CK_Undelete:
-        undelete_cmd ();
-        break;
-#endif
     case CK_Unselect:
         unselect_cmd ();
         break;

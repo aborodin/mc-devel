@@ -151,15 +151,6 @@ static name_keymap_t command_names[] = {
     {"LinkSymbolicEdit", CK_LinkSymbolicEdit},
     {"ExternalPanelize", CK_ExternalPanelize},
     {"Filter", CK_Filter},
-#ifdef ENABLE_VFS_FISH
-    {"ConnectFish", CK_ConnectFish},
-#endif
-#ifdef ENABLE_VFS_FTP
-    {"ConnectFtp", CK_ConnectFtp},
-#endif
-#ifdef ENABLE_VFS_SMB
-    {"ConnectSmb", CK_ConnectSmb},
-#endif
     {"PanelInfo", CK_PanelInfo},
 #ifdef WITH_BACKGROUND
     {"Jobs", CK_Jobs},
@@ -180,9 +171,6 @@ static name_keymap_t command_names[] = {
     {"LinkSymbolic", CK_LinkSymbolic},
     {"PanelTree", CK_PanelTree},
     {"Tree", CK_Tree},
-#ifdef ENABLE_VFS_UNDELFS
-    {"Undelete", CK_Undelete},
-#endif
     {"PutCurrentLink", CK_PutCurrentLink},
     {"PutOtherLink", CK_PutOtherLink},
     {"HotListAdd", CK_HotListAdd},

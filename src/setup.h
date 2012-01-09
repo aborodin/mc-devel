@@ -101,9 +101,6 @@ void setup_save_config_show_error (const char *filename, GError ** error);
 void save_layout (void);
 
 void load_key_defs (void);
-#ifdef ENABLE_VFS_FTP
-char *load_anon_passwd (void);
-#endif /* ENABLE_VFS_FTP */
 
 void load_keymap_defs (gboolean load_from_file);
 void free_keymap_defs (void);

@@ -61,8 +61,6 @@
 #include "filemanager/command.h"        /* cmdline */
 #include "filemanager/panel.h"          /* panalized_panel */
 
-#include "vfs/plugins_init.h"
-
 #include "events_init.h"
 #include "args.h"
 #include "subshell.h"
@@ -402,7 +400,6 @@ main (int argc, char *argv[])
         mc_config_migrate_from_old_place (&error);
 
     vfs_init ();
-    vfs_plugins_init ();
     vfs_setup_work_dir ();
 
     if (!mc_args_handle (argc, argv, "mc"))

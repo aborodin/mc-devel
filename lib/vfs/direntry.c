@@ -410,9 +410,6 @@ vfs_s_free_super (struct vfs_class *me, struct vfs_s_super *super)
     MEDATA->supers = g_list_remove (MEDATA->supers, super);
 
     CALL (free_archive) (me, super);
-#ifdef ENABLE_VFS_NET
-    vfs_path_element_free (super->path_element);
-#endif
     g_free (super->name);
     g_free (super);
 }
@@ -1426,113 +1423,6 @@ vfs_getid (const vfs_path_t * vpath)
 
     return (*path_element->class->getid) (vpath);
 }
-
-/* --------------------------------------------------------------------------------------------- */
-/* ----------- Utility functions for networked filesystems  -------------- */
-
-#ifdef ENABLE_VFS_NET
-int
-vfs_s_select_on_two (int fd1, int fd2)
-{
-    fd_set set;
-    struct timeval time_out;
-    int v;
-    int maxfd = (fd1 > fd2 ? fd1 : fd2) + 1;
-
-    time_out.tv_sec = 1;
-    time_out.tv_usec = 0;
-    FD_ZERO (&set);
-    FD_SET (fd1, &set);
-    FD_SET (fd2, &set);
-    v = select (maxfd, &set, 0, 0, &time_out);
-    if (v <= 0)
-        return v;
-    if (FD_ISSET (fd1, &set))
-        return 1;
-    if (FD_ISSET (fd2, &set))
-        return 2;
-    return -1;
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-int
-vfs_s_get_line (struct vfs_class *me, int sock, char *buf, int buf_len, char term)
-{
-    FILE *logfile = MEDATA->logfile;
-    int i;
-    char c;
-
-    for (i = 0; i < buf_len - 1; i++, buf++)
-    {
-        if (read (sock, buf, sizeof (char)) <= 0)
-            return 0;
-        if (logfile)
-        {
-            size_t ret1;
-            int ret2;
-            ret1 = fwrite (buf, 1, 1, logfile);
-            ret2 = fflush (logfile);
-        }
-        if (*buf == term)
-        {
-            *buf = 0;
-            return 1;
-        }
-    }
-
-    /* Line is too long - terminate buffer and discard the rest of line */
-    *buf = 0;
-    while (read (sock, &c, sizeof (c)) > 0)
-    {
-        if (logfile)
-        {
-            size_t ret1;
-            int ret2;
-            ret1 = fwrite (&c, 1, 1, logfile);
-            ret2 = fflush (logfile);
-        }
-        if (c == '\n')
-            return 1;
-    }
-    return 0;
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-int
-vfs_s_get_line_interruptible (struct vfs_class *me, char *buffer, int size, int fd)
-{
-    int n;
-    int i;
-
-    (void) me;
-
-    tty_enable_interrupt_key ();
-    for (i = 0; i < size - 1; i++)
-    {
-        n = read (fd, buffer + i, 1);
-        tty_disable_interrupt_key ();
-        if (n == -1 && errno == EINTR)
-        {
-            buffer[i] = 0;
-            return EINTR;
-        }
-        if (n == 0)
-        {
-            buffer[i] = 0;
-            return 0;
-        }
-        if (buffer[i] == '\n')
-        {
-            buffer[i] = 0;
-            return 1;
-        }
-    }
-    buffer[size - 1] = 0;
-    return 0;
-}
-#endif /* ENABLE_VFS_NET */
 
 /* --------------------------------------------------------------------------------------------- */
 /**

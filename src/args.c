@@ -33,10 +33,6 @@
 #include "lib/vfs/vfs.h"
 #include "lib/util.h"           /* x_basename() */
 
-#ifdef ENABLE_VFS_SMB
-#include "src/vfs/smbfs/smbfs.h"        /* smbfs_set_debugf()  */
-#endif
-
 #include "src/main.h"
 #include "src/textconf.h"
 
@@ -151,24 +147,6 @@ static const GOptionEntry argument_main_table[] = {
      NULL
     },
 #endif
-
-    /* debug options */
-#ifdef ENABLE_VFS_FTP
-    {
-     "ftplog", 'l', G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_STRING,
-     &mc_args__netfs_logfile,
-     N_("Log ftp dialog to specified file"),
-     "<file>"
-    },
-#endif /* ENABLE_VFS_FTP */
-#ifdef ENABLE_VFS_SMB
-    {
-     "debuglevel", 'D', G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_INT,
-     &mc_args__debug_level,
-     N_("Set debug level"),
-     "<integer>"
-    },
-#endif /* ENABLE_VFS_SMB */
 
     /* single file operations */
     {
@@ -421,21 +399,6 @@ mc_setup_by_args (int argc, char *argv[])
 {
     const char *base;
     char *tmp;
-
-#ifdef ENABLE_VFS_SMB
-    if (mc_args__debug_level != 0)
-        smbfs_set_debug (mc_args__debug_level);
-#endif /* ENABLE_VFS_SMB */
-
-    if (mc_args__netfs_logfile != NULL)
-    {
-#ifdef ENABLE_VFS_FTP
-        mc_setctl ("ftp://", VFS_SETCTL_LOGFILE, (void *) mc_args__netfs_logfile);
-#endif /* ENABLE_VFS_FTP */
-#ifdef ENABLE_VFS_SMB
-        mc_setctl ("smb://", VFS_SETCTL_LOGFILE, (void *) mc_args__netfs_logfile);
-#endif /* ENABLE_VFS_SMB */
-    }
 
     base = x_basename (argv[0]);
     tmp = (argc > 0) ? argv[1] : NULL;

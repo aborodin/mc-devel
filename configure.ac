@@ -494,54 +494,6 @@ src/man2hlp/Makefile
 src/viewer/Makefile
 src/filemanager/Makefile
 
-src/vfs/Makefile
-
-src/vfs/cpio/Makefile
-
-src/vfs/extfs/Makefile
-src/vfs/extfs/helpers/Makefile
-src/vfs/extfs/helpers/a+
-src/vfs/extfs/helpers/apt+
-src/vfs/extfs/helpers/audio
-src/vfs/extfs/helpers/deb
-src/vfs/extfs/helpers/deba
-src/vfs/extfs/helpers/debd
-src/vfs/extfs/helpers/dpkg+
-src/vfs/extfs/helpers/iso9660
-src/vfs/extfs/helpers/hp48+
-src/vfs/extfs/helpers/lslR
-src/vfs/extfs/helpers/mailfs
-src/vfs/extfs/helpers/patchfs
-src/vfs/extfs/helpers/rpms+
-src/vfs/extfs/helpers/s3+
-src/vfs/extfs/helpers/uace
-src/vfs/extfs/helpers/ualz
-src/vfs/extfs/helpers/uar
-src/vfs/extfs/helpers/uarc
-src/vfs/extfs/helpers/uarj
-src/vfs/extfs/helpers/uc1541
-src/vfs/extfs/helpers/ucab
-src/vfs/extfs/helpers/uha
-src/vfs/extfs/helpers/ulha
-src/vfs/extfs/helpers/urar
-src/vfs/extfs/helpers/uzip
-src/vfs/extfs/helpers/uzoo
-
-src/vfs/fish/Makefile
-src/vfs/fish/helpers/Makefile
-
-src/vfs/ftpfs/Makefile
-
-src/vfs/local/Makefile
-
-src/vfs/sfs/Makefile
-
-src/vfs/smbfs/Makefile
-
-src/vfs/tar/Makefile
-
-src/vfs/undelfs/Makefile
-
 lib/Makefile
 lib/event/Makefile
 lib/filehighlight/Makefile
@@ -585,8 +537,6 @@ Configuration:
   Source code location:       ${srcdir}
   Compiler:                   ${CC}
   Compiler flags:             ${CFLAGS}
-  File system:                ${vfs_type}
-                              ${vfs_flags}
   Screen library:             ${screen_msg}
   Mouse support:              ${mouse_lib}
   X11 events support:         ${textmode_x11_support}

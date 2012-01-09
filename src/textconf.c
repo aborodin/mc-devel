@@ -44,36 +44,6 @@
 
 /*** file scope variables ************************************************************************/
 
-#ifdef ENABLE_VFS
-static const char *const vfs_supported[] = {
-#ifdef ENABLE_VFS_CPIO
-    "cpiofs",
-#endif
-#ifdef ENABLE_VFS_TAR
-    "tarfs",
-#endif
-#ifdef ENABLE_VFS_SFS
-    "sfs",
-#endif
-#ifdef ENABLE_VFS_EXTFS
-    "extfs",
-#endif
-#ifdef ENABLE_VFS_UNDELFS
-    "ext2undelfs",
-#endif
-#ifdef ENABLE_VFS_FTP
-    "ftpfs",
-#endif
-#ifdef ENABLE_VFS_FISH
-    "fish",
-#endif
-#ifdef ENABLE_VFS_SMB
-    "smbfs",
-#endif /* ENABLE_VFS_SMB */
-    NULL
-};
-#endif /* ENABLE_VFS */
-
 static const char *const features[] = {
 #ifdef HAVE_SLANG
     N_("Using the S-Lang library with terminfo database\n"),
@@ -138,13 +108,6 @@ show_version (void)
     for (i = 0; features[i] != NULL; i++)
         printf ("%s", _(features[i]));
 
-#ifdef ENABLE_VFS
-    printf (_("Virtual File Systems:"));
-    for (i = 0; vfs_supported[i] != NULL; i++)
-        printf ("%s %s", i == 0 ? "" : ",", _(vfs_supported[i]));
-    printf ("\n");
-#endif /* ENABLE_VFS */
-
     (void) printf (_("Data types:"));
 #define TYPE_INFO(T) \
     (void)printf(" %s: %d;", #T, (int) (CHAR_BIT * sizeof(T)))
@@ -178,15 +141,6 @@ show_datadirs_extended (void)
     PRINTF_SECTION (_("Config directory:"), mc_global.sysconfig_dir);
     PRINTF_SECTION (_("Data directory:"), mc_global.share_data_dir);
 
-#if defined ENABLE_VFS_EXTFS || defined ENABLE_VFS_FISH
-    PRINTF_SECTION (_("VFS plugins and scripts:"), LIBEXECDIR);
-#ifdef ENABLE_VFS_EXTFS
-    PRINTF2 ("extfs.d:", LIBEXECDIR, MC_EXTFS_DIR "/");
-#endif
-#ifdef ENABLE_VFS_FISH
-    PRINTF2 ("fish:", LIBEXECDIR, FISH_PREFIX "/");
-#endif
-#endif /* ENABLE_VFS_EXTFS || defiined ENABLE_VFS_FISH */
     (void) puts ("");
 
     PRINTF_GROUP (_("User data"));
@@ -194,12 +148,6 @@ show_datadirs_extended (void)
     PRINTF_SECTION2 (_("Config directory:"), mc_config_get_path ());
     PRINTF_SECTION2 (_("Data directory:"), mc_config_get_data_path ());
     PRINTF ("skins:", mc_config_get_data_path (), MC_SKINS_SUBDIR "/");
-#ifdef ENABLE_VFS_EXTFS
-    PRINTF ("extfs.d:", mc_config_get_data_path (), MC_EXTFS_DIR "/");
-#endif
-#ifdef ENABLE_VFS_FISH
-    PRINTF ("fish:", mc_config_get_data_path (), FISH_PREFIX "/");
-#endif
 
     PRINTF_SECTION2 (_("Cache directory:"), mc_config_get_cache_path ());
 

@@ -23,10 +23,6 @@
 
 /*** typedefs(not structures) and defined constants **********************************************/
 
-#if defined (ENABLE_VFS_FTP) || defined (ENABLE_VFS_FISH) || defined (ENABLE_VFS_SMB)
-#define ENABLE_VFS_NET 1
-#endif
-
 /**
  * This is the type of callback function passed to vfs_fill_names.
  * It gets the name of the virtual file system as its first argument.
@@ -205,10 +201,6 @@ union vfs_dirent
 /*** global variables defined in .c file *********************************************************/
 
 extern int vfs_timeout;
-
-#ifdef ENABLE_VFS_NET
-extern int use_netrc;
-#endif
 
 /*** declarations of public functions ************************************************************/
 

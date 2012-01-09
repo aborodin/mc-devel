@@ -1,4 +1,4 @@
-SUBDIRS = filemanager man2hlp vfs viewer
+SUBDIRS = filemanager man2hlp viewer
 
 AM_CPPFLAGS = \
 	-DLOCALEDIR=\""$(localedir)"\" \
@@ -17,15 +17,9 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 bin_PROGRAMS = mc
 
 mc_LDADD = \
-	vfs/libmc-vfs.la \
 	viewer/libmcviewer.la \
 	filemanager/libmcfilemanager.la \
 	$(top_builddir)/lib/libmc.la
-
-if ENABLE_VFS_SMB
-# this is a hack for linking with own samba library in simple way
-mc_LDADD += vfs/smbfs/helpers/libsamba.a
-endif
 
 SRC_mc_conssaver = \
 	cons.handler.c consaver/cons.saver.h

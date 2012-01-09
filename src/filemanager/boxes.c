@@ -48,12 +48,6 @@
 #include "lib/strutil.h"
 
 #include "lib/vfs/vfs.h"
-#ifdef ENABLE_VFS_FTP
-#include "src/vfs/ftpfs/ftpfs.h"
-#endif /* ENABLE_VFS_FTP */
-#ifdef ENABLE_VFS_SMB
-#include "src/vfs/smbfs/smbfs.h"
-#endif /* ENABLE_VFS_SMB */
 
 #include "lib/util.h"           /* Q_() */
 #include "lib/widget.h"
@@ -80,12 +74,7 @@
 
 #ifdef ENABLE_VFS
 #define VFSX 56
-
-#ifdef ENABLE_VFS_FTP
-#define VFSY 17
-#else
 #define VFSY 8
-#endif /* ENABLE_VFS_FTP */
 #endif /* ENABLE_VFS */
 
 #ifdef WITH_BACKGROUND
@@ -114,11 +103,6 @@ static WCheck *inpcheck;
 
 #ifdef ENABLE_VFS
 static char *ret_timeout;
-#ifdef ENABLE_VFS_FTP
-static char *ret_ftp_proxy;
-static char *ret_passwd;
-static char *ret_directory_timeout;
-#endif /* ENABLE_VFS_FTP */
 #endif /* ENABLE_VFS */
 
 #ifdef WITH_BACKGROUND
@@ -417,37 +401,6 @@ tree_callback (Dlg_head * h, Widget * sender, dlg_msg_t msg, int parm, void *dat
 }
 
 /* --------------------------------------------------------------------------------------------- */
-
-#ifdef ENABLE_VFS
-#ifdef ENABLE_VFS_FTP
-
-static cb_ret_t
-confvfs_callback (Dlg_head * h, Widget * sender, dlg_msg_t msg, int parm, void *data)
-{
-    switch (msg)
-    {
-    case DLG_ACTION:
-        /* message from "Always use ftp proxy" checkbutton */
-        if (sender != NULL && sender->id == 6)
-        {
-            const gboolean not_use = !(((WCheck *) sender)->state & C_BOOL);
-            Widget *w;
-
-            /* input */
-            w = dlg_find_by_id (h, sender->id - 1);
-            widget_disable (*w, not_use);
-            send_message (w, WIDGET_DRAW, 0);
-
-            return MSG_HANDLED;
-        }
-        return MSG_NOT_HANDLED;
-
-    default:
-        return default_dlg_callback (h, sender, msg, parm, data);
-    }
-}
-#endif /* ENABLE_VFS_FTP */
-#endif /* ENABLE_VFS */
 
 #ifdef WITH_BACKGROUND
 static void
@@ -929,31 +882,10 @@ void
 configure_vfs (void)
 {
     char buffer2[BUF_TINY];
-#ifdef ENABLE_VFS_FTP
-    char buffer3[BUF_TINY];
-#endif
 
     QuickWidget confvfs_widgets[] = {
         /*  0 */ QUICK_BUTTON (30, VFSX, VFSY - 3, VFSY, N_("&Cancel"), B_CANCEL, NULL),
         /*  1 */ QUICK_BUTTON (12, VFSX, VFSY - 3, VFSY, N_("&OK"), B_ENTER, NULL),
-#ifdef ENABLE_VFS_FTP
-        /*  2 */ QUICK_CHECKBOX (4, VFSX, 12, VFSY, N_("Use passive mode over pro&xy"),
-                                 &ftpfs_use_passive_connections_over_proxy),
-        /*  3 */ QUICK_CHECKBOX (4, VFSX, 11, VFSY, N_("Use &passive mode"),
-                                 &ftpfs_use_passive_connections),
-        /*  4 */ QUICK_CHECKBOX (4, VFSX, 10, VFSY, N_("&Use ~/.netrc"), &ftpfs_use_netrc),
-        /*  5 */ QUICK_INPUT (4, VFSX, 9, VFSY, ftpfs_proxy_host, 48, 0, "input-ftp-proxy",
-                              &ret_ftp_proxy),
-        /*  6 */ QUICK_CHECKBOX (4, VFSX, 8, VFSY, N_("&Always use ftp proxy"),
-                                 &ftpfs_always_use_proxy),
-        /*  7 */ QUICK_LABEL (49, VFSX, 7, VFSY, N_("sec")),
-        /*  8 */ QUICK_INPUT (38, VFSX, 7, VFSY, buffer3, 10, 0, "input-timeout",
-                              &ret_directory_timeout),
-        /*  9 */ QUICK_LABEL (4, VFSX, 7, VFSY, N_("ftpfs directory cache timeout:")),
-        /* 10 */ QUICK_INPUT (4, VFSX, 6, VFSY, ftpfs_anonymous_passwd, 48, 0, "input-passwd",
-                              &ret_passwd),
-        /* 11 */ QUICK_LABEL (4, VFSX, 5, VFSY, N_("ftp anonymous password:")),
-#endif /* ENABLE_VFS_FTP */
         /* 12 */ QUICK_LABEL (49, VFSX, 3, VFSY, N_("sec")),
         /* 13 */ QUICK_INPUT (38, VFSX, 3, VFSY, buffer2, 10, 0, "input-timo-vfs", &ret_timeout),
         /* 14 */ QUICK_LABEL (4, VFSX, 3, VFSY, N_("Timeout for freeing VFSs:")),
@@ -963,20 +895,9 @@ configure_vfs (void)
     QuickDialog confvfs_dlg = {
         VFSX, VFSY, -1, -1, N_("Virtual File System Setting"),
         "[Virtual FS]", confvfs_widgets,
-#ifdef ENABLE_VFS_FTP
-        confvfs_callback,
-#else
         NULL,
-#endif
         FALSE
     };
-
-#ifdef ENABLE_VFS_FTP
-    g_snprintf (buffer3, sizeof (buffer3), "%i", ftpfs_directory_timeout);
-
-    if (!ftpfs_always_use_proxy)
-        confvfs_widgets[5].options = W_DISABLED;
-#endif
 
     g_snprintf (buffer2, sizeof (buffer2), "%i", vfs_timeout);
 
@@ -987,14 +908,6 @@ configure_vfs (void)
 
         if (vfs_timeout < 0 || vfs_timeout > 10000)
             vfs_timeout = 10;
-#ifdef ENABLE_VFS_FTP
-        g_free (ftpfs_anonymous_passwd);
-        ftpfs_anonymous_passwd = ret_passwd;
-        g_free (ftpfs_proxy_host);
-        ftpfs_proxy_host = ret_ftp_proxy;
-        ftpfs_directory_timeout = atoi (ret_directory_timeout);
-        g_free (ret_directory_timeout);
-#endif
     }
 
 #undef VFSX
@@ -1123,107 +1036,5 @@ jobs_cmd (void)
     destroy_dlg (jobs_dlg);
 }
 #endif /* WITH_BACKGROUND */
-
-/* --------------------------------------------------------------------------------------------- */
-
-#ifdef ENABLE_VFS_SMB
-struct smb_authinfo *
-vfs_smb_get_authinfo (const char *host, const char *share, const char *domain, const char *user)
-{
-    static int dialog_x = 44;
-    int b0 = 3, dialog_y = 12;
-    static const char *lc_labs[] = { N_("Domain:"), N_("Username:"), N_("Password:") };
-    static const char *buts[] = { N_("&OK"), N_("&Cancel") };
-    static int ilen = 30, istart = 14;
-    static int b2 = 30;
-    char *title;
-    WInput *in_password;
-    WInput *in_user;
-    WInput *in_domain;
-    Dlg_head *auth_dlg;
-    struct smb_authinfo *return_value = NULL;
-
-#ifdef ENABLE_NLS
-    static int i18n_flag = 0;
-
-    if (!i18n_flag)
-    {
-        register int i = sizeof (lc_labs) / sizeof (lc_labs[0]);
-        int l1, maxlen = 0;
-
-        while (i--)
-        {
-            l1 = str_term_width1 (lc_labs[i] = _(lc_labs[i]));
-            if (l1 > maxlen)
-                maxlen = l1;
-        }
-        i = maxlen + ilen + 7;
-        if (i > dialog_x)
-            dialog_x = i;
-
-        for (i = sizeof (buts) / sizeof (buts[0]), l1 = 0; i--;)
-        {
-            l1 += str_term_width1 (buts[i] = _(buts[i]));
-        }
-        l1 += 15;
-        if (l1 > dialog_x)
-            dialog_x = l1;
-
-        ilen = dialog_x - 7 - maxlen;   /* for the case of very long buttons :) */
-        istart = dialog_x - 3 - ilen;
-
-        b2 = dialog_x - (str_term_width1 (buts[1]) + 6);
-
-        i18n_flag = 1;
-    }
-
-#endif /* ENABLE_NLS */
-
-    if (!domain)
-        domain = "";
-    if (!user)
-        user = "";
-
-    title = g_strdup_printf (_("Password for \\\\%s\\%s"), host, share);
-
-    auth_dlg = create_dlg (TRUE, 0, 0, dialog_y, dialog_x, dialog_colors, NULL,
-                           "[Smb Authinfo]", title, DLG_CENTER | DLG_REVERSE);
-
-    g_free (title);
-
-    in_user =
-        input_new (5, istart, input_get_default_colors (), ilen, user, "auth_name",
-                   INPUT_COMPLETE_DEFAULT);
-    add_widget (auth_dlg, in_user);
-
-    in_domain =
-        input_new (3, istart, input_get_default_colors (), ilen, domain, "auth_domain",
-                   INPUT_COMPLETE_DEFAULT);
-
-    add_widget (auth_dlg, in_domain);
-    add_widget (auth_dlg, button_new (9, b2, B_CANCEL, NORMAL_BUTTON, buts[1], 0));
-    add_widget (auth_dlg, button_new (9, b0, B_ENTER, DEFPUSH_BUTTON, buts[0], 0));
-
-    in_password =
-        input_new (7, istart, input_get_default_colors (), ilen, "", "auth_password",
-                   INPUT_COMPLETE_DEFAULT);
-
-    in_password->completion_flags = 0;
-    in_password->is_password = 1;
-    add_widget (auth_dlg, in_password);
-
-    add_widget (auth_dlg, label_new (7, 3, lc_labs[2]));
-    add_widget (auth_dlg, label_new (5, 3, lc_labs[1]));
-    add_widget (auth_dlg, label_new (3, 3, lc_labs[0]));
-
-    if (run_dlg (auth_dlg) != B_CANCEL)
-        return_value = vfs_smb_authinfo_new (host, share, in_domain->buffer, in_user->buffer,
-                                             in_password->buffer);
-
-    destroy_dlg (auth_dlg);
-
-    return return_value;
-}
-#endif /* ENABLE_VFS_SMB */
 
 /* --------------------------------------------------------------------------------------------- */
