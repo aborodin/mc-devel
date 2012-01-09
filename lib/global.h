@@ -151,8 +151,7 @@ typedef enum
 {
     MC_RUN_FULL = 0,
     MC_RUN_EDITOR,
-    MC_RUN_VIEWER,
-    MC_RUN_DIFFVIEWER
+    MC_RUN_VIEWER
 } mc_run_mode_t;
 
 /*** structures declarations (and typedefs of structures)*****************************************/

@@ -27,10 +27,6 @@ extern GArray *editor_x_keymap;
 #endif
 extern GArray *viewer_keymap;
 extern GArray *viewer_hex_keymap;
-#ifdef USE_DIFF_VIEW
-extern GArray *diff_keymap;
-#endif
-
 
 extern const global_keymap_t *main_map;
 extern const global_keymap_t *main_x_map;
@@ -44,9 +40,6 @@ extern const global_keymap_t *editor_x_map;
 #endif
 extern const global_keymap_t *viewer_map;
 extern const global_keymap_t *viewer_hex_map;
-#ifdef USE_DIFF_VIEW
-extern const global_keymap_t *diff_map;
-#endif
 
 /*** declarations of public functions ************************************************************/
 

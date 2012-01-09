@@ -75,10 +75,6 @@
 #include "src/editor/edit.h"
 #endif
 
-#ifdef USE_DIFF_VIEW
-#include "src/diffviewer/ydiff.h"
-#endif
-
 #include "fileopctx.h"
 #include "file.h"               /* file operation routines */
 #include "find.h"               /* find_file() */
@@ -1251,21 +1247,6 @@ compare_dirs_cmd (void)
                  _("Both panels should be in the listing mode\nto use this command"));
     }
 }
-
-/* --------------------------------------------------------------------------------------------- */
-
-#ifdef USE_DIFF_VIEW
-void
-diff_view_cmd (void)
-{
-    dview_diff_cmd ();
-
-    if (mc_global.mc_run_mode == MC_RUN_FULL)
-        update_panels (UP_OPTIMIZE, UP_KEEPSEL);
-
-    dialog_switch_process_pending ();
-}
-#endif
 
 /* --------------------------------------------------------------------------------------------- */
 

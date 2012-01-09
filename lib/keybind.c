@@ -146,9 +146,6 @@ static name_keymap_t command_names[] = {
     {"DirSize", CK_DirSize},
     {"PanelListingSwitch", CK_PanelListingSwitch},
     {"CompareDirs", CK_CompareDirs},
-#ifdef USE_DIFF_VIEW
-    {"CompareFiles", CK_CompareFiles},
-#endif
     {"OptionsVfs", CK_OptionsVfs},
     {"OptionsConfirm", CK_OptionsConfirm},
     {"OptionsDisplayBits", CK_OptionsDisplayBits},
@@ -238,7 +235,7 @@ static name_keymap_t command_names[] = {
     /* tree */
     {"Forget", CK_Forget},
 
-#if defined (USE_INTERNAL_EDIT) || defined (USE_DIFF_VIEW)
+#if defined (USE_INTERNAL_EDIT)
     {"ShowNumbers", CK_ShowNumbers},
 #endif
 
@@ -319,23 +316,6 @@ static name_keymap_t command_names[] = {
     {"SearchBackward", CK_SearchBackward},
     {"SearchForwardContinue", CK_SearchForwardContinue},
     {"SearchBackwardContinue", CK_SearchBackwardContinue},
-
-#ifdef USE_DIFF_VIEW
-    /* diff viewer */
-    {"ShowSymbols", CK_ShowSymbols},
-    {"SplitFull", CK_SplitFull},
-    {"SplitEqual", CK_SplitEqual},
-    {"SplitMore", CK_SplitMore},
-    {"SplitLess", CK_SplitLess},
-    {"Tab2", CK_Tab2},
-    {"Tab3", CK_Tab3},
-    {"Tab4", CK_Tab4},
-    {"Tab8", CK_Tab8},
-    {"HunkNext", CK_HunkNext},
-    {"HunkPrev", CK_HunkPrev},
-    {"EditOther", CK_EditOther},
-    {"Merge", CK_Merge},
-#endif /* USE_DIFF_VIEW */
 
     {NULL, CK_IgnoreKey}
 };

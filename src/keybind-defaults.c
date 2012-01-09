@@ -48,9 +48,6 @@ GArray *editor_x_keymap = NULL;
 #endif
 GArray *viewer_keymap = NULL;
 GArray *viewer_hex_keymap = NULL;
-#ifdef USE_DIFF_VIEW
-GArray *diff_keymap = NULL;
-#endif
 
 const global_keymap_t *main_map = NULL;
 const global_keymap_t *main_x_map = NULL;
@@ -64,9 +61,6 @@ const global_keymap_t *editor_x_map = NULL;
 #endif
 const global_keymap_t *viewer_map = NULL;
 const global_keymap_t *viewer_hex_map = NULL;
-#ifdef USE_DIFF_VIEW
-const global_keymap_t *diff_map = NULL;
-#endif
 
 /*** file scope macro definitions ****************************************************************/
 
@@ -132,9 +126,6 @@ static const global_keymap_ini_t default_main_keymap[] = {
 
 static const global_keymap_ini_t default_main_x_keymap[] = {
     {"CompareDirs", "d"},
-#ifdef USE_DIFF_VIEW
-    {"CompareFiles", "ctrl-d"},
-#endif /* USE_DIFF_VIEW */
 #ifdef ENABLE_VFS
     {"VfsList", "a"},
 #endif /* ENABLE_VFS */
@@ -497,53 +488,6 @@ static const global_keymap_ini_t default_viewer_hex_keymap[] = {
     {NULL, NULL}
 };
 
-#ifdef  USE_DIFF_VIEW
-/* diff viewer */
-static const global_keymap_ini_t default_diff_keymap[] = {
-    {"ShowSymbols", "alt-s; s"},
-    {"ShowNumbers", "alt-n; l"},
-    {"SplitFull", "f"},
-    {"SplitEqual", "equal"},
-    {"SplitMore", "gt"},
-    {"SplitLess", "lt"},
-    {"Tab2", "2"},
-    {"Tab3", "3"},
-    {"Tab4", "4"},
-    {"Tab8", "8"},
-    {"Swap", "ctrl-u"},
-    {"Redo", "ctrl-r"},
-    {"HunkNext", "n; enter; space"},
-    {"HunkPrev", "p; backspace"},
-    {"Goto", "g; shift-g"},
-    {"Save", "f2"},
-    {"Edit", "f4"},
-    {"EditOther", "f14"},
-    {"Merge", "f5"},
-    {"Search", "f7"},
-    {"SearchContinue", "f17"},
-    {"Options", "f9"},
-    {"Top", "ctrl-home"},
-    {"Bottom", "ctrl-end"},
-    {"Down", "down"},
-    {"Up", "up"},
-    {"LeftQuick", "ctrl-left"},
-    {"RightQuick", "ctrl-right"},
-    {"Left", "left"},
-    {"Right", "right"},
-    {"PageDown", "pgdn"},
-    {"PageUp", "pgup"},
-    {"Home", "home"},
-    {"End", "end"},
-    {"Help", "f1"},
-    {"Quit", "f10; q; shift-q; esc"},
-#ifdef HAVE_CHARSET
-    {"SelectCodepage", "alt-e"},
-#endif
-    {"Shell", "ctrl-o"},
-    {NULL, NULL}
-};
-#endif
-
 /*** file scope macro definitions ****************************************************************/
 
 /*** file scope type declarations ****************************************************************/
@@ -588,9 +532,6 @@ create_default_keymap (void)
 #endif
     create_default_keymap_section (keymap, KEYMAP_SECTION_VIEWER, default_viewer_keymap);
     create_default_keymap_section (keymap, KEYMAP_SECTION_VIEWER_HEX, default_viewer_hex_keymap);
-#ifdef  USE_DIFF_VIEW
-    create_default_keymap_section (keymap, KEYMAP_SECTION_DIFFVIEWER, default_diff_keymap);
-#endif
 
     return keymap;
 }

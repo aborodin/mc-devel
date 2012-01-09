@@ -529,27 +529,6 @@ mc_setup_by_args (int argc, char *argv[])
         }
         mc_global.mc_run_mode = MC_RUN_VIEWER;
     }
-#ifdef USE_DIFF_VIEW
-    else if (strncmp (base, "mcd", 3) == 0 || strcmp (base, "diff") == 0)
-    {
-        /* mcd* or diff is link to mc */
-
-        if (argc < 3)
-        {
-            fprintf (stderr, "%s\n", _("Two files are required to evoke the diffviewer."));
-            exit (EXIT_FAILURE);
-        }
-
-        if (tmp != NULL)
-        {
-            mc_run_param0 = g_strdup (tmp);
-            tmp = (argc > 1) ? argv[2] : NULL;
-            if (tmp != NULL)
-                mc_run_param1 = g_strdup (tmp);
-            mc_global.mc_run_mode = MC_RUN_DIFFVIEWER;
-        }
-    }
-#endif /* USE_DIFF_VIEW */
     else
     {
         /* MC is run as mc */
@@ -559,10 +538,6 @@ mc_setup_by_args (int argc, char *argv[])
         case MC_RUN_EDITOR:
         case MC_RUN_VIEWER:
             /* mc_run_param0 is set up in parse_mc_e_argument() and parse_mc_v_argument() */
-            break;
-
-        case MC_RUN_DIFFVIEWER:
-            /* not implemented yet */
             break;
 
         case MC_RUN_FULL:

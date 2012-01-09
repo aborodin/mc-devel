@@ -77,7 +77,6 @@ void edit_mc_menu_cmd (void);
 void edit_fhl_cmd (void);
 void hotlist_cmd (void);
 void compare_dirs_cmd (void);
-void diff_view_cmd (void);
 void panel_tree_cmd (void);
 void link_cmd (link_type_t link_type);
 void edit_symlink_cmd (void);

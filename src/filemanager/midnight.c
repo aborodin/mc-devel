@@ -80,10 +80,6 @@
 #include "src/editor/edit.h"
 #endif
 
-#ifdef USE_DIFF_VIEW
-#include "src/diffviewer/ydiff.h"
-#endif
-
 #include "src/consaver/cons.saver.h"    /* show_console_contents */
 
 #include "midnight.h"
@@ -272,9 +268,6 @@ create_command_menu (void)
     entries = g_list_prepend (entries, menu_entry_create (_("Switch &panels on/off"), CK_Shell));
     entries =
         g_list_prepend (entries, menu_entry_create (_("&Compare directories"), CK_CompareDirs));
-#ifdef USE_DIFF_VIEW
-    entries = g_list_prepend (entries, menu_entry_create (_("C&ompare files"), CK_CompareFiles));
-#endif
     entries =
         g_list_prepend (entries, menu_entry_create (_("E&xternal panelize"), CK_ExternalPanelize));
     entries = g_list_prepend (entries, menu_entry_create (_("Show directory s&izes"), CK_DirSize));
@@ -954,11 +947,6 @@ mc_maybe_editor_or_viewer (void)
             g_free (path);
             break;
         }
-#ifdef USE_DIFF_VIEW
-    case MC_RUN_DIFFVIEWER:
-        diff_view (mc_run_param0, mc_run_param1, mc_run_param0, mc_run_param1);
-        break;
-#endif /* USE_DIFF_VIEW */
     default:
         break;
     }
@@ -1113,11 +1101,6 @@ midnight_execute_cmd (Widget * sender, unsigned long command)
     case CK_ScreenList:
         dialog_switch_list ();
         break;
-#ifdef USE_DIFF_VIEW
-    case CK_CompareFiles:
-        diff_view_cmd ();
-        break;
-#endif
     case CK_OptionsDisplayBits:
         display_bits_box ();
         break;

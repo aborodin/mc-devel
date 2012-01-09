@@ -4,10 +4,6 @@ if USE_EDIT
 SUBDIRS += editor
 endif
 
-if USE_DIFF
-SUBDIRS += diffviewer
-endif
-
 AM_CPPFLAGS = \
 	-DLOCALEDIR=\""$(localedir)"\" \
 	-DLIBEXECDIR=\""$(libexecdir)/@PACKAGE@/"\"
@@ -28,15 +24,11 @@ if USE_EDIT
 EDITLIB = editor/libedit.la
 endif
 
-if USE_DIFF
-DIFFLIB = diffviewer/libdiffviewer.la
-endif
-
 mc_LDADD = \
 	vfs/libmc-vfs.la \
 	viewer/libmcviewer.la \
 	filemanager/libmcfilemanager.la \
-	$(DIFFLIB) $(EDITLIB) \
+	$(EDITLIB) \
 	$(top_builddir)/lib/libmc.la
 
 if ENABLE_VFS_SMB
@@ -77,9 +69,6 @@ install-exec-hook:
 if USE_EDIT
 	$(MAKE) install_mcedit
 endif
-if USE_DIFF
-	$(MAKE) install_mcdiff
-endif
 
 #
 # Make relative symlinks, but do the right thing if LN_S is `ln' or `cp'.
@@ -90,14 +79,8 @@ install_mcview:
 install_mcedit:
 	cd $(DESTDIR)$(bindir)/$(binprefix) && rm -f mcedit && $(LN_S) mc mcedit
 
-install_mcdiff:
-	cd $(DESTDIR)$(bindir)/$(binprefix) && rm -f mcdiff && $(LN_S) mc mcdiff
-
 uninstall-hook:
 	rm -f $(DESTDIR)$(bindir)/$(binprefix)/mcview
 if USE_EDIT
 	rm -f $(DESTDIR)$(bindir)/$(binprefix)/mcedit
-endif
-if USE_DIFF
-	rm -f $(DESTDIR)$(bindir)/$(binprefix)/mcdiff
 endif
