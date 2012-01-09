@@ -29,7 +29,6 @@
 #define GLOBAL_KEYMAP_FILE      "mc.keymap"
 #define CHARSETS_LIST           "mc.charsets"
 #define MC_LIB_EXT              "mc.ext"
-#define MC_MACRO_FILE           "mc.macros"
 
 #define FISH_PREFIX             "fish"
 
@@ -65,17 +64,8 @@
 
 /* editor home directory */
 #define EDIT_DIR                "mcedit"
-
-/* file names */
-#define MC_EXTMACRO_FILE        EDIT_DIR PATH_SEP_STR "macros.d" PATH_SEP_STR "macro"
-#define EDIT_SYNTAX_FILE        EDIT_DIR PATH_SEP_STR "Syntax"
 #define EDIT_CLIP_FILE          EDIT_DIR PATH_SEP_STR "mcedit.clip"
-#define EDIT_BLOCK_FILE         EDIT_DIR PATH_SEP_STR "mcedit.block"
-#define EDIT_TEMP_FILE          EDIT_DIR PATH_SEP_STR "mcedit.temp"
 
-#define EDIT_GLOBAL_MENU        "mcedit.menu"
-#define EDIT_LOCAL_MENU         ".cedit.menu"
-#define EDIT_HOME_MENU          EDIT_DIR PATH_SEP_STR "menu"
 
 /*** enums ***************************************************************************************/
 

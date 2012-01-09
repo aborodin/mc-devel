@@ -70,10 +70,6 @@ static const struct
     { "hotlist",                               &mc_config_str, MC_HOTLIST_FILE},
     { "mc.keymap",                             &mc_config_str, GLOBAL_KEYMAP_FILE},
     { "menu",                                  &mc_config_str, MC_USERMENU_FILE},
-    { "cedit" PATH_SEP_STR "Syntax",           &mc_config_str, EDIT_SYNTAX_FILE},
-    { "cedit" PATH_SEP_STR "menu",             &mc_config_str, EDIT_HOME_MENU},
-    { "cedit" PATH_SEP_STR "edit.indent.rc",   &mc_config_str, EDIT_DIR PATH_SEP_STR "edit.indent.rc"},
-    { "cedit" PATH_SEP_STR "edit.spell.rc",    &mc_config_str, EDIT_DIR PATH_SEP_STR "edit.spell.rc"},
     { "panels.ini",                            &mc_config_str, MC_PANELS_FILE},
 
     /* User should move this file with applying some changes in file */
@@ -87,14 +83,10 @@ static const struct
     { "extfs.d",                               &mc_data_str, MC_EXTFS_DIR},
     { "history",                               &mc_data_str, MC_HISTORY_FILE},
     { "filepos",                               &mc_data_str, MC_FILEPOS_FILE},
-    { "cedit" PATH_SEP_STR "cooledit.clip",    &mc_data_str, EDIT_CLIP_FILE},
-    { "",                                      &mc_data_str, MC_MACRO_FILE},
 
     /* cache */
     { "log",                                   &mc_cache_str, "mc.log"},
     { "Tree",                                  &mc_cache_str, MC_TREESTORE_FILE},
-    { "cedit" PATH_SEP_STR "cooledit.temp",    &mc_cache_str, EDIT_TEMP_FILE},
-    { "cedit" PATH_SEP_STR "cooledit.block",   &mc_cache_str, EDIT_BLOCK_FILE},
 
     {NULL, NULL, NULL}
     /* *INDENT-ON* */
@@ -111,15 +103,10 @@ static const struct
 {
     /* *INDENT-OFF* */
     { &mc_data_str, MC_USERMENU_FILE,                       &mc_config_str},
-    { &mc_data_str, EDIT_SYNTAX_FILE,                       &mc_config_str},
-    { &mc_data_str, EDIT_HOME_MENU,                         &mc_config_str},
-    { &mc_data_str, EDIT_DIR PATH_SEP_STR "edit.indent.rc", &mc_config_str},
-    { &mc_data_str, EDIT_DIR PATH_SEP_STR "edit.spell.rc",  &mc_config_str},
     { &mc_data_str, MC_FILEBIND_FILE,                       &mc_config_str},
 
     { &mc_cache_str, MC_HISTORY_FILE,                       &mc_data_str},
     { &mc_cache_str, MC_FILEPOS_FILE,                       &mc_data_str},
-    { &mc_cache_str, EDIT_CLIP_FILE,                        &mc_data_str},
 
     { &mc_cache_str, MC_PANELS_FILE,                        &mc_config_str},
 
@@ -408,12 +395,6 @@ mc_config_migrate_from_old_place (GError ** error)
     size_t rule_index;
 
     old_dir = mc_config_get_deprecated_path ();
-
-    g_free (mc_config_init_one_config_path (mc_config_str, EDIT_DIR, error));
-#ifdef MC_HOMEDIR_XDG
-    g_free (mc_config_init_one_config_path (mc_cache_str, EDIT_DIR, error));
-    g_free (mc_config_init_one_config_path (mc_data_str, EDIT_DIR, error));
-#endif /* MC_HOMEDIR_XDG */
 
     for (rule_index = 0; mc_config_files_reference[rule_index].old_filename != NULL; rule_index++)
     {

@@ -25,8 +25,6 @@
 #define KEYMAP_SHORTCUT_LENGTH 32       /* FIXME: is 32 bytes enough for shortcut? */
 
 #define CK_PipeBlock(i)  (10000+(i))
-#define CK_Macro(i)      (20000+(i))
-#define CK_MacroLast     CK_Macro(0x7FFF)
 
 /*** enums ***************************************************************************************/
 
@@ -264,14 +262,6 @@ enum
     CK_MarkColumnScrollDown,
     CK_MarkColumnParagraphUp,
     CK_MarkColumnParagraphDown,
-    /* macros */
-    CK_MacroStartRecord,
-    CK_MacroStopRecord,
-    CK_MacroStartStopRecord,
-    CK_MacroDelete,
-    CK_RepeatStartRecord,
-    CK_RepeatStopRecord,
-    CK_RepeatStartStopRecord,
     /* misc commands */
     CK_InsertOverwrite,
     CK_ParagraphFormat,

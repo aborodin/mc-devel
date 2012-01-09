@@ -21,10 +21,6 @@ extern GArray *input_keymap;
 extern GArray *listbox_keymap;
 extern GArray *tree_keymap;
 extern GArray *help_keymap;
-#ifdef USE_INTERNAL_EDIT
-extern GArray *editor_keymap;
-extern GArray *editor_x_keymap;
-#endif
 extern GArray *viewer_keymap;
 extern GArray *viewer_hex_keymap;
 
@@ -34,10 +30,6 @@ extern const global_keymap_t *panel_map;
 extern const global_keymap_t *tree_map;
 extern const global_keymap_t *help_map;
 
-#ifdef USE_INTERNAL_EDIT
-extern const global_keymap_t *editor_map;
-extern const global_keymap_t *editor_x_map;
-#endif
 extern const global_keymap_t *viewer_map;
 extern const global_keymap_t *viewer_hex_map;
 

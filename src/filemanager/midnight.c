@@ -76,10 +76,6 @@
 #include "chown.h"
 #include "achown.h"
 
-#ifdef USE_INTERNAL_EDIT
-#include "src/editor/edit.h"
-#endif
-
 #include "src/consaver/cons.saver.h"    /* show_console_contents */
 
 #include "midnight.h"
@@ -934,11 +930,6 @@ mc_maybe_editor_or_viewer (void)
 {
     switch (mc_global.mc_run_mode)
     {
-#ifdef USE_INTERNAL_EDIT
-    case MC_RUN_EDITOR:
-        edit_file (mc_run_param0, mc_args__edit_start_line);
-        break;
-#endif /* USE_INTERNAL_EDIT */
     case MC_RUN_VIEWER:
         {
             char *path;
@@ -1107,11 +1098,6 @@ midnight_execute_cmd (Widget * sender, unsigned long command)
     case CK_Edit:
         edit_cmd ();
         break;
-#ifdef USE_INTERNAL_EDIT
-    case CK_EditForceInternal:
-        edit_cmd_force_internal ();
-        break;
-#endif
     case CK_EditExtensionsFile:
         ext_cmd ();
         break;
@@ -1623,10 +1609,6 @@ do_nc (void)
     midnight_colors[DLG_COLOR_HOT_FOCUS] = mc_skin_color_get ("dialog", "hotfocus");
     midnight_colors[DLG_COLOR_TITLE] = mc_skin_color_get ("dialog", "title");
 
-#ifdef USE_INTERNAL_EDIT
-    edit_stack_init ();
-#endif
-
     midnight_dlg = create_dlg (FALSE, 0, 0, LINES, COLS, midnight_colors, midnight_callback,
                                "[main]", NULL, DLG_WANT_IDLE);
 
@@ -1658,10 +1640,6 @@ do_nc (void)
     done_mc ();
     destroy_dlg (midnight_dlg);
     current_panel = NULL;
-
-#ifdef USE_INTERNAL_EDIT
-    edit_stack_free ();
-#endif
 
     if ((quit & SUBSHELL_EXIT) == 0)
         clr_scr ();

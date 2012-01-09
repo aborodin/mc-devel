@@ -135,9 +135,6 @@ static name_keymap_t command_names[] = {
     {"ExtendedKeyMap", CK_ExtendedKeyMap},
 
     /* main commands */
-#ifdef USE_INTERNAL_EDIT
-    {"EditForceInternal", CK_EditForceInternal},
-#endif
     {"View", CK_View},
     {"ViewRaw", CK_ViewRaw},
     {"ViewFile", CK_ViewFile},
@@ -234,75 +231,6 @@ static name_keymap_t command_names[] = {
 
     /* tree */
     {"Forget", CK_Forget},
-
-#if defined (USE_INTERNAL_EDIT)
-    {"ShowNumbers", CK_ShowNumbers},
-#endif
-
-#ifdef USE_INTERNAL_EDIT
-    {"Tab", CK_Tab},
-    {"ScrollUp", CK_ScrollUp},
-    {"ScrollDown", CK_ScrollDown},
-    {"Return", CK_Return},
-    {"ParagraphUp", CK_ParagraphUp},
-    {"ParagraphDown", CK_ParagraphDown},
-    {"EditFile", CK_EditFile},
-    {"MarkWord", CK_MarkWord},
-    {"MarkLine", CK_MarkLine},
-    {"MarkAll", CK_MarkAll},
-    {"Unmark", CK_Unmark},
-    {"MarkColumn", CK_MarkColumn},
-    {"BlockSave", CK_BlockSave},
-    {"InsertFile", CK_InsertFile},
-    {"InsertOverwrite", CK_InsertOverwrite},
-    {"Date", CK_Date},
-    {"DeleteLine", CK_DeleteLine},
-    {"DeleteToHome", CK_DeleteToHome},
-    {"DeleteToEnd", CK_DeleteToEnd},
-    {"EditMail", CK_Mail},
-    {"ParagraphFormat", CK_ParagraphFormat},
-    {"MatchBracket", CK_MatchBracket},
-    {"ExternalCommand", CK_ExternalCommand},
-    {"MacroStartRecord", CK_MacroStartRecord},
-    {"MacroStopRecord", CK_MacroStopRecord},
-    {"MacroStartStopRecord", CK_MacroStartStopRecord},
-    {"MacroDelete", CK_MacroDelete},
-    {"RepeatStartStopRecord", CK_RepeatStartStopRecord},
-    {"BookmarkFlush", CK_BookmarkFlush},
-    {"BookmarkNext", CK_BookmarkNext},
-    {"BookmarkPrev", CK_BookmarkPrev},
-    {"MarkPageUp", CK_MarkPageUp},
-    {"MarkPageDown", CK_MarkPageDown},
-    {"MarkToFileBegin", CK_MarkToFileBegin},
-    {"MarkToFileEnd", CK_MarkToFileEnd},
-    {"MarkToPageBegin", CK_MarkToPageBegin},
-    {"MarkToPageEnd", CK_MarkToPageEnd},
-    {"MarkScrollUp", CK_MarkScrollUp},
-    {"MarkScrollDown", CK_MarkScrollDown},
-    {"MarkParagraphUp", CK_MarkParagraphUp},
-    {"MarkParagraphDown", CK_MarkParagraphDown},
-    {"MarkColumnPageUp", CK_MarkColumnPageUp},
-    {"MarkColumnPageDown", CK_MarkColumnPageDown},
-    {"MarkColumnLeft", CK_MarkColumnLeft},
-    {"MarkColumnRight", CK_MarkColumnRight},
-    {"MarkColumnUp", CK_MarkColumnUp},
-    {"MarkColumnDown", CK_MarkColumnDown},
-    {"MarkColumnScrollUp", CK_MarkColumnScrollUp},
-    {"MarkColumnScrollDown", CK_MarkColumnScrollDown},
-    {"MarkColumnParagraphUp", CK_MarkColumnParagraphUp},
-    {"MarkColumnParagraphDown", CK_MarkColumnParagraphDown},
-    {"BlockShiftLeft", CK_BlockShiftLeft},
-    {"BlockShiftRight", CK_BlockShiftRight},
-    {"InsertLiteral", CK_InsertLiteral},
-    {"ShowTabTws", CK_ShowTabTws},
-    {"SyntaxOnOff", CK_SyntaxOnOff},
-    {"SyntaxChoose", CK_SyntaxChoose},
-    {"ShowMargin", CK_ShowMargin},
-    {"OptionsSaveMode", CK_OptionsSaveMode},
-    {"About", CK_About},
-    /* An action to run external script from macro */
-    {"ExecuteScript", CK_PipeBlock (0)},
-#endif /* USE_INTERNAL_EDIT */
 
     /* viewer */
     {"WrapMode", CK_WrapMode},

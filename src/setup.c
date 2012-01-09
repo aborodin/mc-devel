@@ -73,10 +73,6 @@
 #include "selcodepage.h"
 #endif
 
-#ifdef USE_INTERNAL_EDIT
-#include "src/editor/edit.h"
-#endif
-
 #include "src/viewer/mcviewer.h"        /* For the externs */
 
 #include "setup.h"
@@ -294,28 +290,6 @@ static const struct
 #endif /* ENABLE_VFS */
     /* option_tab_spacing is used in internal viewer */
     { "editor_tab_spacing", &option_tab_spacing },
-#ifdef USE_INTERNAL_EDIT
-    { "editor_word_wrap_line_length", &option_word_wrap_line_length },
-    { "editor_fill_tabs_with_spaces", &option_fill_tabs_with_spaces },
-    { "editor_return_does_auto_indent", &option_return_does_auto_indent },
-    { "editor_backspace_through_tabs", &option_backspace_through_tabs },
-    { "editor_fake_half_tabs", &option_fake_half_tabs },
-    { "editor_option_save_mode", &option_save_mode },
-    { "editor_option_save_position", &option_save_position },
-    { "editor_option_auto_para_formatting", &option_auto_para_formatting },
-    { "editor_option_typewriter_wrap", &option_typewriter_wrap },
-    { "editor_edit_confirm_save", &edit_confirm_save },
-    { "editor_syntax_highlighting", &option_syntax_highlighting },
-    { "editor_persistent_selections", &option_persistent_selections },
-    { "editor_cursor_beyond_eol", &option_cursor_beyond_eol },
-    { "editor_visible_tabs", &visible_tabs },
-    { "editor_visible_spaces", &visible_tws },
-    { "editor_line_state", &option_line_state },
-    { "editor_simple_statusbar", &simple_statusbar },
-    { "editor_check_new_line", &option_check_nl_at_eof },
-    { "editor_show_right_margin", &show_right_margin },
-    { "editor_group_undo", &option_group_undo },
-#endif /* USE_INTERNAL_EDIT */
     { "nice_rotating_dash", &nice_rotating_dash },
     { "horizontal_split",   &horizontal_split },
     { "mcview_remember_file_position", &mcview_remember_file_position },
@@ -331,9 +305,6 @@ static const struct
     char **opt_addr;
     const char *opt_defval;
 } str_options[] = {
-#ifdef USE_INTERNAL_EDIT
-    { "editor_backup_extension", &option_backup_ext, "~" },
-#endif
     { "mcview_eof", &mcview_show_eof, "" },
     {  NULL, NULL, NULL }
 };
@@ -865,11 +836,6 @@ load_setup (void)
     if (option_tab_spacing <= 0)
         option_tab_spacing = DEFAULT_TAB_SPACING;
 
-#ifdef USE_INTERNAL_EDIT
-    if (option_word_wrap_line_length <= 0)
-        option_word_wrap_line_length = DEFAULT_WRAP_LINE_LENGTH;
-#endif /* USE_INTERNAL_EDIT */
-
     /* overwrite old_esc_mode_timeout */
     kt = getenv ("KEYBOARD_KEY_TIMEOUT_US");
     if ((kt != NULL) && (kt[0] != '\0'))
@@ -1170,13 +1136,6 @@ load_keymap_defs (gboolean load_from_file)
         help_keymap = g_array_new (TRUE, FALSE, sizeof (global_keymap_t));
         load_keymap_from_section (KEYMAP_SECTION_HELP, help_keymap, mc_global_keymap);
 
-#ifdef USE_INTERNAL_EDIT
-        editor_keymap = g_array_new (TRUE, FALSE, sizeof (global_keymap_t));
-        load_keymap_from_section (KEYMAP_SECTION_EDITOR, editor_keymap, mc_global_keymap);
-        editor_x_keymap = g_array_new (TRUE, FALSE, sizeof (global_keymap_t));
-        load_keymap_from_section (KEYMAP_SECTION_EDITOR_EXT, editor_x_keymap, mc_global_keymap);
-#endif
-
         viewer_keymap = g_array_new (TRUE, FALSE, sizeof (global_keymap_t));
         load_keymap_from_section (KEYMAP_SECTION_VIEWER, viewer_keymap, mc_global_keymap);
         viewer_hex_keymap = g_array_new (TRUE, FALSE, sizeof (global_keymap_t));
@@ -1193,10 +1152,6 @@ load_keymap_defs (gboolean load_from_file)
     listbox_map = (global_keymap_t *) listbox_keymap->data;
     tree_map = (global_keymap_t *) tree_keymap->data;
     help_map = (global_keymap_t *) help_keymap->data;
-#ifdef USE_INTERNAL_EDIT
-    editor_map = (global_keymap_t *) editor_keymap->data;
-    editor_x_map = (global_keymap_t *) editor_x_keymap->data;
-#endif
     viewer_map = (global_keymap_t *) viewer_keymap->data;
     viewer_hex_map = (global_keymap_t *) viewer_hex_keymap->data;
 }
@@ -1222,12 +1177,6 @@ free_keymap_defs (void)
         g_array_free (tree_keymap, TRUE);
     if (help_keymap != NULL)
         g_array_free (help_keymap, TRUE);
-#ifdef USE_INTERNAL_EDIT
-    if (editor_keymap != NULL)
-        g_array_free (editor_keymap, TRUE);
-    if (editor_x_keymap != NULL)
-        g_array_free (editor_x_keymap, TRUE);
-#endif
     if (viewer_keymap != NULL)
         g_array_free (viewer_keymap, TRUE);
     if (viewer_hex_keymap != NULL)

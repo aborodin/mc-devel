@@ -71,10 +71,6 @@
 #include "src/history.h"
 #include "src/util.h"           /* check_for_default() */
 
-#ifdef USE_INTERNAL_EDIT
-#include "src/editor/edit.h"
-#endif
-
 #include "fileopctx.h"
 #include "file.h"               /* file operation routines */
 #include "find.h"               /* find_file() */
@@ -789,13 +785,8 @@ do_edit_at_line (const char *what, gboolean internal, int start_line)
 {
     static const char *editor = NULL;
 
-#ifdef USE_INTERNAL_EDIT
-    if (internal)
-        edit_file (what, start_line);
-    else
-#else
     (void) start_line;
-#endif /* USE_INTERNAL_EDIT */
+
     {
         if (editor == NULL)
         {
@@ -809,12 +800,7 @@ do_edit_at_line (const char *what, gboolean internal, int start_line)
     if (mc_global.mc_run_mode == MC_RUN_FULL)
         update_panels (UP_OPTIMIZE, UP_KEEPSEL);
 
-#ifdef USE_INTERNAL_EDIT
-    if (use_internal_edit)
-        dialog_switch_process_pending ();
-    else
-#endif /* USE_INTERNAL_EDIT */
-        repaint_screen ();
+    repaint_screen ();
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -825,17 +811,6 @@ edit_cmd (void)
     if (regex_command (selection (current_panel)->fname, "Edit", NULL) == 0)
         do_edit (selection (current_panel)->fname);
 }
-
-/* --------------------------------------------------------------------------------------------- */
-
-#ifdef USE_INTERNAL_EDIT
-void
-edit_cmd_force_internal (void)
-{
-    if (regex_command (selection (current_panel)->fname, "Edit", NULL) == 0)
-        do_edit_at_line (selection (current_panel)->fname, TRUE, 0);
-}
-#endif
 
 /* --------------------------------------------------------------------------------------------- */
 
@@ -1362,7 +1337,7 @@ help_cmd (void)
 void
 user_file_menu_cmd (void)
 {
-    (void) user_menu_cmd (NULL, NULL, -1);
+    (void) user_menu_cmd (NULL, -1);
 }
 
 /* --------------------------------------------------------------------------------------------- */

@@ -85,10 +85,6 @@ static const char *const features[] = {
 #error "Cannot compile mc without S-Lang or ncurses"
 #endif /* !HAVE_SLANG && !USE_NCURSES */
 
-#ifdef USE_INTERNAL_EDIT
-    N_("With builtin Editor\n"),
-#endif
-
 #ifdef HAVE_SUBSHELL_SUPPORT
 #ifdef SUBSHELL_OPTIONAL
     N_("With optional subshell support\n"),

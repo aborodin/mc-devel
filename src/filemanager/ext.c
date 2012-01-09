@@ -223,7 +223,7 @@ exec_extension (const char *filename, const char *lc_data, int *move_dir, int st
                             char *text;
 
                             if (*lc_data != 'f')
-                                text = expand_format (NULL, *lc_data, !is_cd);
+                                text = expand_format (*lc_data, !is_cd);
                             else
                             {
                                 if (do_local_copy)

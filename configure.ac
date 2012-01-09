@@ -366,21 +366,6 @@ subshell="$result"
 MC_WITH_SCREEN
 
 
-dnl
-dnl Internal editor support.
-dnl
-AC_ARG_WITH(edit,
-        [  --with-edit              Enable internal editor [[yes]]])
-
-if test x$with_edit != xno; then
-	AC_DEFINE(USE_INTERNAL_EDIT, 1, [Define to enable internal editor])
-	use_edit=yes
-	edit_msg="yes"
-	AC_MSG_NOTICE([using internal editor])
-else
-	edit_msg="no"
-fi
-
 dnl Check if the OS is supported by the console saver.
 cons_saver=""
 case $host_os in
@@ -476,7 +461,6 @@ AC_SUBST(MAN_DATE)
 AM_CONDITIONAL(USE_NLS, [test x"$USE_NLS" = xyes])
 AM_CONDITIONAL(USE_MAINTAINER_MODE, [test x"$USE_MAINTAINER_MODE" = xyes])
 AM_CONDITIONAL(USE_SCREEN_SLANG, [test x"$with_screen" = xslang])
-AM_CONDITIONAL(USE_EDIT, [test -n "$use_edit"])
 AM_CONDITIONAL(CHARSET, [test -n "$have_charset"])
 AM_CONDITIONAL(CONS_SAVER, [test -n "$cons_saver"])
 
@@ -502,12 +486,10 @@ contrib/dist/prototype
 
 misc/Makefile
 misc/skins/Makefile
-misc/macros.d/Makefile
 misc/mc.ext
 
 src/Makefile
 src/consaver/Makefile
-src/editor/Makefile
 src/man2hlp/Makefile
 src/viewer/Makefile
 src/filemanager/Makefile
@@ -573,11 +555,9 @@ lib/vfs/Makefile
 
 lib/widget/Makefile
 
-misc/syntax/Makefile
-
 doc/Makefile
 doc/hints/Makefile
-doc/man/mc.1 doc/man/mcedit.1 doc/man/mcview.1 doc/man/Makefile
+doc/man/mc.1 doc/man/mcview.1 doc/man/Makefile
 doc/man/es/mc.1 doc/man/es/Makefile
 doc/man/hu/mc.1 doc/man/hu/Makefile
 doc/man/it/mc.1 doc/man/it/Makefile
@@ -611,7 +591,6 @@ Configuration:
   Mouse support:              ${mouse_lib}
   X11 events support:         ${textmode_x11_support}
   With subshell support:      ${subshell}
-  Internal editor:            ${edit_msg}
   Support for charset:        ${charset_msg}
   Search type:                ${SEARCH_TYPE}
 "

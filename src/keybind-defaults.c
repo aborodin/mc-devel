@@ -42,10 +42,6 @@ GArray *input_keymap = NULL;
 GArray *listbox_keymap = NULL;
 GArray *tree_keymap = NULL;
 GArray *help_keymap = NULL;
-#ifdef USE_INTERNAL_EDIT
-GArray *editor_keymap = NULL;
-GArray *editor_x_keymap = NULL;
-#endif
 GArray *viewer_keymap = NULL;
 GArray *viewer_hex_keymap = NULL;
 
@@ -55,10 +51,6 @@ const global_keymap_t *panel_map = NULL;
 const global_keymap_t *tree_map = NULL;
 const global_keymap_t *help_map = NULL;
 
-#ifdef USE_INTERNAL_EDIT
-const global_keymap_t *editor_map = NULL;
-const global_keymap_t *editor_x_map = NULL;
-#endif
 const global_keymap_t *viewer_map = NULL;
 const global_keymap_t *viewer_hex_map = NULL;
 
@@ -305,114 +297,6 @@ static const global_keymap_ini_t default_help_keymap[] = {
     {NULL, NULL}
 };
 
-#ifdef USE_INTERNAL_EDIT
-static const global_keymap_ini_t default_editor_keymap[] = {
-    {"Enter", "enter"},
-    {"Return", "shift-enter"},  /* useful for pasting multiline text */
-    {"Tab", "tab"},
-    {"BackSpace", "backspace; ctrl-h"},
-    {"Delete", "delete; ctrl-d"},
-    {"Left", "left"},
-    {"Right", "right"},
-    {"Up", "up"},
-    {"Down", "down"},
-    {"Home", "home"},
-    {"End", "end"},
-    {"PageUp", "pgup"},
-    {"PageDown", "pgdn"},
-    {"WordLeft", "ctrl-left; ctrl-z"},
-    {"WordRight", "ctrl-right; ctrl-x"},
-    {"InsertOverwrite", "insert"},
-    {"Help", "f1"},
-    {"Save", "f2"},
-    {"Mark", "f3"},
-    {"Replace", "f4"},
-    {"Copy", "f5"},
-    {"Move", "f6"},
-    {"Search", "f7"},
-    {"Remove", "f8; ctrl-delete"},
-    {"Menu", "f9"},
-    {"Quit", "f10; esc"},
-    {"UserMenu", "f11"},
-    {"SaveAs", "f12; ctrl-f2"},
-    {"MarkColumn", "f13"},
-    {"ReplaceContinue", "f14; ctrl-f4"},
-    {"InsertFile", "f15"},
-    {"SearchContinue", "f17; ctrl-f7"},
-    {"EditNew", "ctrl-n"},
-    {"DeleteToWordBegin", "alt-backspace"},
-    {"DeleteToWordEnd", "alt-d"},
-    {"DeleteLine", "ctrl-y"},
-    {"DeleteToEnd", "ctrl-k"},
-    {"Undo", "ctrl-u; ctrl-backspace"},
-    {"Redo", "alt-r"},
-#ifdef HAVE_CHARSET
-    {"SelectCodepage", "alt-e"},
-#endif
-    {"Goto", "alt-l; alt-shift-l"},
-    {"Refresh", "ctrl-l"},
-    {"Shell", "ctrl-o"},
-    {"Top", "ctrl-home; ctrl-pgup; alt-lt"},
-    {"Bottom", "ctrl-end; ctrl-pgdn; alt-gt"},
-    {"TopOnScreen", "ctrl-pgup"},
-    {"BottomOnScreen", "ctrl-pgdn"},
-    {"ScrollUp", "ctrl-up"},
-    {"ScrollDown", "ctrl-down"},
-    {"Store", "ctrl-insert"},
-    {"Paste", "shift-insert"},
-    {"Cut", "shift-delete"},
-    {"BlockSave", "ctrl-f"},
-    {"MarkLeft", "shift-left"},
-    {"MarkRight", "shift-right"},
-    {"MarkUp", "shift-up"},
-    {"MarkDown", "shift-down"},
-    {"MarkPageUp", "shift-pgup"},
-    {"MarkPageDown", "shift-pgdn"},
-    {"MarkToWordBegin", "ctrl-shift-left"},
-    {"MarkToWordEnd", "ctrl-shift-right"},
-    {"MarkToHome", "shift-home"},
-    {"MarkToEnd", "shift-end"},
-    {"MarkToFileBegin", "ctrl-shift-home"},
-    {"MarkToFileEnd", "ctrl-shift-end"},
-    {"MarkToPageBegin", "ctrl-shift-pgup"},
-    {"MarkToPageEnd", "ctrl-shift-pgdn"},
-    {"MarkScrollUp", "ctrl-shift-up"},
-    {"MarkScrollDown", "ctrl-shift-down"},
-    {"MarkColumnLeft", "alt-left"},
-    {"MarkColumnRight", "alt-right"},
-    {"MarkColumnUp", "alt-up"},
-    {"MarkColumnDown", "alt-down"},
-    {"MarkColumnPageUp", "alt-pgup"},
-    {"MarkColumnPageDown", "alt-pgdn"},
-    {"InsertLiteral", "ctrl-q"},
-    {"Complete", "alt-tab"},
-    {"MatchBracket", "alt-b"},
-    {"ParagraphFormat", "alt-p"},
-    {"Bookmark", "alt-k"},
-    {"BookmarkFlush", "alt-o"},
-    {"BookmarkNext", "alt-j"},
-    {"BookmarkPrev", "alt-i"},
-    {"MacroStartStopRecord", "ctrl-r"},
-    {"MacroExecute", "ctrl-a"},
-    {"ShowNumbers", "alt-n"},
-    {"ShowTabTws", "alt-underline"},
-    {"SyntaxOnOff", "ctrl-s"},
-    {"Find", "alt-enter"},
-    {"FilePrev", "alt-minus"},
-    {"FileNext", "alt-plus"},
-    {"Sort", "alt-t"},
-    {"Mail", "alt-m"},
-    {"ExternalCommand", "alt-u"},
-    {"ExtendedKeyMap", "ctrl-x"},
-    {NULL, NULL}
-};
-
-/* emacs keyboard layout emulation */
-static const global_keymap_ini_t default_editor_x_keymap[] = {
-    {NULL, NULL}
-};
-#endif /* USE_INTERNAL_EDIT */
-
 /* viewer */
 static const global_keymap_ini_t default_viewer_keymap[] = {
     {"Help", "f1"},
@@ -526,10 +410,6 @@ create_default_keymap (void)
     create_default_keymap_section (keymap, KEYMAP_SECTION_LISTBOX, default_listbox_keymap);
     create_default_keymap_section (keymap, KEYMAP_SECTION_TREE, default_tree_keymap);
     create_default_keymap_section (keymap, KEYMAP_SECTION_HELP, default_help_keymap);
-#ifdef USE_INTERNAL_EDIT
-    create_default_keymap_section (keymap, KEYMAP_SECTION_EDITOR, default_editor_keymap);
-    create_default_keymap_section (keymap, KEYMAP_SECTION_EDITOR_EXT, default_editor_x_keymap);
-#endif
     create_default_keymap_section (keymap, KEYMAP_SECTION_VIEWER, default_viewer_keymap);
     create_default_keymap_section (keymap, KEYMAP_SECTION_VIEWER_HEX, default_viewer_hex_keymap);
 
