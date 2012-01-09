@@ -48,7 +48,6 @@
 #include "lib/tty/tty.h"
 #include "lib/tty/key.h"        /* For init_key() */
 #include "lib/skin.h"
-#include "lib/filehighlight.h"
 #include "lib/fileloc.h"
 #include "lib/strutil.h"
 #include "lib/util.h"

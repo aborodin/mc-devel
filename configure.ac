@@ -448,7 +448,6 @@ src/filemanager/Makefile
 
 lib/Makefile
 lib/event/Makefile
-lib/filehighlight/Makefile
 lib/mcconfig/Makefile
 lib/search/Makefile
 lib/skin/Makefile
