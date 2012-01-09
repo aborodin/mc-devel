@@ -53,17 +53,10 @@
 #include "lib/strutil.h"
 #include "lib/util.h"
 #include "lib/vfs/vfs.h"        /* vfs_init(), vfs_shut() */
-
-#include "filemanager/midnight.h"       /* current_panel */
-#include "filemanager/treestore.h"      /* tree_store_save */
-#include "filemanager/layout.h" /* command_prompt */
-#include "filemanager/ext.h"    /* flush_extension_file() */
-#include "filemanager/command.h"        /* cmdline */
-#include "filemanager/panel.h"          /* panalized_panel */
+#include "lib/widget.h"
 
 #include "events_init.h"
 #include "args.h"
-#include "subshell.h"
 #include "setup.h"              /* load_setup() */
 
 #ifdef HAVE_CHARSET
@@ -71,43 +64,19 @@
 #include "selcodepage.h"
 #endif /* HAVE_CHARSET */
 
-#include "consaver/cons.saver.h"        /* cons_saver_pid */
+#include "src/filemanager/midnight.h"   /* do_nc () */
 
 #include "main.h"
 
 /*** global variables ****************************************************************************/
 
-mc_fhl_t *mc_filehighlight;
-
 /* Set when main loop should be terminated */
-int quit = 0;
-
 #ifdef HAVE_CHARSET
 /* Numbers of (file I/O) and (input/display) codepages. -1 if not selected */
 int default_source_codepage = -1;
 char *autodetect_codeset = NULL;
 gboolean is_autodetect_codeset_enabled = FALSE;
 #endif /* !HAVE_CHARSET */
-
-/* If true use the internal viewer */
-int use_internal_view = 1;
-/* If set, use the builtin editor */
-int use_internal_edit = 1;
-
-char *mc_run_param0 = NULL;
-char *mc_run_param1 = NULL;
-
-/* The user's shell */
-char *shell = NULL;
-
-/* The prompt */
-const char *mc_prompt = NULL;
-
-/* Set to TRUE to suppress printing the last directory */
-int print_last_revert = FALSE;
-
-/* If set, then print to the given file the last directory we were at */
-char *last_wd_string = NULL;
 
 /*** file scope macro definitions ****************************************************************/
 
@@ -151,64 +120,6 @@ check_codeset (void)
 static void
 OS_Setup (void)
 {
-    const char *shell_env = getenv ("SHELL");
-
-    if ((shell_env == NULL) || (shell_env[0] == '\0'))
-    {
-        struct passwd *pwd;
-        pwd = getpwuid (geteuid ());
-        if (pwd != NULL)
-            shell = g_strdup (pwd->pw_shell);
-    }
-    else
-        shell = g_strdup (shell_env);
-
-    if ((shell == NULL) || (shell[0] == '\0'))
-    {
-        g_free (shell);
-        shell = g_strdup ("/bin/sh");
-    }
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-static void
-sigchld_handler_no_subshell (int sig)
-{
-#ifdef __linux__
-    int pid, status;
-
-    if (!mc_global.tty.console_flag != '\0')
-        return;
-
-    /* COMMENT: if it were true that after the call to handle_console(..INIT)
-       the value of mc_global.tty.console_flag never changed, we could simply not install
-       this handler at all if (!mc_global.tty.console_flag && !mc_global.tty.use_subshell). */
-
-    /* That comment is no longer true.  We need to wait() on a sigchld
-       handler (that's at least what the tarfs code expects currently). */
-
-    pid = waitpid (cons_saver_pid, &status, WUNTRACED | WNOHANG);
-
-    if (pid == cons_saver_pid)
-    {
-
-        if (WIFSTOPPED (status))
-        {
-            /* Someone has stopped cons.saver - restart it */
-            kill (pid, SIGCONT);
-        }
-        else
-        {
-            /* cons.saver has died - disable console saving */
-            handle_console (CONSOLE_DONE);
-            mc_global.tty.console_flag = '\0';
-        }
-    }
-    /* If we got here, some other child exited; ignore it */
-#endif /* __linux__ */
-
-    (void) sig;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -216,154 +127,10 @@ sigchld_handler_no_subshell (int sig)
 static void
 init_sigchld (void)
 {
-    struct sigaction sigchld_action;
-
-    sigchld_action.sa_handler =
-#ifdef HAVE_SUBSHELL_SUPPORT
-        mc_global.tty.use_subshell ? sigchld_handler :
-#endif /* HAVE_SUBSHELL_SUPPORT */
-        sigchld_handler_no_subshell;
-
-    sigemptyset (&sigchld_action.sa_mask);
-
-#ifdef SA_RESTART
-    sigchld_action.sa_flags = SA_RESTART;
-#else
-    sigchld_action.sa_flags = 0;
-#endif /* !SA_RESTART */
-
-    if (sigaction (SIGCHLD, &sigchld_action, NULL) == -1)
-    {
-#ifdef HAVE_SUBSHELL_SUPPORT
-        /*
-         * This may happen on QNX Neutrino 6, where SA_RESTART
-         * is defined but not implemented.  Fallback to no subshell.
-         */
-        mc_global.tty.use_subshell = FALSE;
-#endif /* HAVE_SUBSHELL_SUPPORT */
-    }
 }
 
 /* --------------------------------------------------------------------------------------------- */
 /*** public functions ****************************************************************************/
-/* --------------------------------------------------------------------------------------------- */
-
-int
-do_cd (const char *new_dir, enum cd_enum exact)
-{
-    gboolean res;
-    const char *_new_dir = new_dir;
-
-    if (current_panel->is_panelized && _new_dir[0] == '.' && _new_dir[1] == '.' && _new_dir[2] == 0)
-        _new_dir = panelized_panel.root;
-
-    res = do_panel_cd (current_panel, _new_dir, exact);
-
-#if HAVE_CHARSET
-    if (res)
-    {
-        vfs_path_t *vpath = vfs_path_from_str (current_panel->cwd);
-        vfs_path_element_t *path_element = vfs_path_get_by_index (vpath, -1);
-
-        if (path_element->encoding != NULL)
-            current_panel->codepage = get_codepage_index (path_element->encoding);
-        else
-            current_panel->codepage = SELECT_CHARSET_NO_TRANSLATE;
-
-        vfs_path_free (vpath);
-    }
-#endif /* HAVE_CHARSET */
-
-    return res ? 1 : 0;
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-#ifdef HAVE_SUBSHELL_SUPPORT
-gboolean
-do_load_prompt (void)
-{
-    gboolean ret = FALSE;
-
-    if (!read_subshell_prompt ())
-        return ret;
-
-    /* Don't actually change the prompt if it's invisible */
-    if (((Dlg_head *) top_dlg->data == midnight_dlg) && command_prompt)
-    {
-        setup_cmdline ();
-
-        /* since the prompt has changed, and we are called from one of the
-         * tty_get_event channels, the prompt updating does not take place
-         * automatically: force a cursor update and a screen refresh
-         */
-        update_cursor (midnight_dlg);
-        mc_refresh ();
-        ret = TRUE;
-    }
-    update_subshell_prompt = TRUE;
-    return ret;
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-int
-load_prompt (int fd, void *unused)
-{
-    (void) fd;
-    (void) unused;
-
-    do_load_prompt ();
-    return 0;
-}
-#endif /* HAVE_SUBSHELL_SUPPORT */
-
-/* --------------------------------------------------------------------------------------------- */
-
-/** Show current directory in the xterm title */
-void
-update_xterm_title_path (void)
-{
-    /* TODO: share code with midnight_get_title () */
-
-    const char *path;
-    char host[BUF_TINY];
-    char *p;
-    struct passwd *pw = NULL;
-    char *login = NULL;
-    int res = 0;
-
-    if (mc_global.tty.xterm_flag && xterm_title)
-    {
-        path = strip_home_and_password (current_panel->cwd);
-        res = gethostname (host, sizeof (host));
-        if (res)
-        {                       /* On success, res = 0 */
-            host[0] = '\0';
-        }
-        else
-        {
-            host[sizeof (host) - 1] = '\0';
-        }
-        pw = getpwuid (getuid ());
-        if (pw)
-        {
-            login = g_strdup_printf ("%s@%s", pw->pw_name, host);
-        }
-        else
-        {
-            login = g_strdup (host);
-        }
-        p = g_strdup_printf ("mc [%s]:%s", login, path);
-        fprintf (stdout, "\33]0;%s\7", str_term_form (p));
-        g_free (login);
-        g_free (p);
-        if (!mc_global.tty.alternate_plus_minus)
-            numeric_keypad_mode ();
-        (void) fflush (stdout);
-    }
-}
-
 /* --------------------------------------------------------------------------------------------- */
 
 int
@@ -416,18 +183,6 @@ main (int argc, char *argv[])
        calls any define_sequence */
     init_key ();
 
-    /* Must be done before installing the SIGCHLD handler [[FIXME]] */
-    handle_console (CONSOLE_INIT);
-
-#ifdef HAVE_SUBSHELL_SUPPORT
-    /* Don't use subshell when invoked as viewer or editor */
-    if (mc_global.mc_run_mode != MC_RUN_FULL)
-        mc_global.tty.use_subshell = FALSE;
-
-    if (mc_global.tty.use_subshell)
-        subshell_get_console_attributes ();
-#endif /* HAVE_SUBSHELL_SUPPORT */
-
     /* Install the SIGCHLD handler; must be done before init_subshell() */
     init_sigchld ();
 
@@ -453,7 +208,6 @@ main (int argc, char *argv[])
     {
         GError *error2 = NULL;
         isInitialized = mc_skin_init (&error2);
-        mc_filehighlight = mc_fhl_new (TRUE);
         dlg_set_default_colors ();
 
         if (!isInitialized)
@@ -471,48 +225,19 @@ main (int argc, char *argv[])
         error = NULL;
     }
 
-
-#ifdef HAVE_SUBSHELL_SUPPORT
-    /* Done here to ensure that the subshell doesn't  */
-    /* inherit the file descriptors opened below, etc */
-    if (mc_global.tty.use_subshell)
-        init_subshell ();
-
-#endif /* HAVE_SUBSHELL_SUPPORT */
-
     /* Also done after init_subshell, to save any shell init file messages */
-    if (mc_global.tty.console_flag != '\0')
-        handle_console (CONSOLE_SAVE);
-
     if (mc_global.tty.alternate_plus_minus)
         application_keypad_mode ();
-
-#ifdef HAVE_SUBSHELL_SUPPORT
-    if (mc_global.tty.use_subshell)
-    {
-        mc_prompt = strip_ctrl_codes (subshell_prompt);
-        if (mc_prompt == NULL)
-            mc_prompt = (geteuid () == 0) ? "# " : "$ ";
-    }
-    else
-#endif /* HAVE_SUBSHELL_SUPPORT */
-        mc_prompt = (geteuid () == 0) ? "# " : "$ ";
 
     /* Program main loop */
     if (!mc_global.widget.midnight_shutdown)
         do_nc ();
-
-    /* Save the tree store */
-    (void) tree_store_save ();
 
     free_keymap_defs ();
 
     /* Virtual File System shutdown */
     vfs_shut ();
 
-    flush_extension_file ();    /* does only free memory */
-
-    mc_fhl_free (&mc_filehighlight);
     mc_skin_deinit ();
     tty_colors_done ();
 
@@ -520,41 +245,14 @@ main (int argc, char *argv[])
 
     done_setup ();
 
-    if (mc_global.tty.console_flag != '\0' && (quit & SUBSHELL_EXIT) == 0)
-        handle_console (CONSOLE_RESTORE);
     if (mc_global.tty.alternate_plus_minus)
         numeric_keypad_mode ();
 
     (void) signal (SIGCHLD, SIG_DFL);   /* Disable the SIGCHLD handler */
 
-    if (mc_global.tty.console_flag != '\0')
-        handle_console (CONSOLE_DONE);
-
-    if (mc_global.mc_run_mode == MC_RUN_FULL && mc_args__last_wd_file != NULL
-        && last_wd_string != NULL && !print_last_revert)
-    {
-        int last_wd_fd;
-
-        last_wd_fd = open (mc_args__last_wd_file, O_WRONLY | O_CREAT | O_TRUNC | O_EXCL,
-                           S_IRUSR | S_IWUSR);
-        if (last_wd_fd != -1)
-        {
-            ssize_t ret1;
-            int ret2;
-            ret1 = write (last_wd_fd, last_wd_string, strlen (last_wd_string));
-            ret2 = close (last_wd_fd);
-        }
-    }
-    g_free (last_wd_string);
-
-    g_free (shell);
-
     done_key ();
 
     str_uninit_strings ();
-
-    g_free (mc_run_param0);
-    g_free (mc_run_param1);
 
     (void) mc_event_deinit (&error);
 

@@ -2,8 +2,6 @@
 
 SUBDIRS = skins
 
-LIBFILES_OUT = mc.ext
-
 noinst_DATA = xterm.ad
 
 pkgdata_DATA = \
@@ -18,16 +16,13 @@ LIBFILES_CONST = \
 	filehighlight.ini \
 	mc.keymap \
 	mc.keymap.default \
-	mc.keymap.emacs \
-	mc.menu \
-	mc.menu.sr
+	mc.keymap.emacs
 
 CLEANFILES = $(SCRIPTS_OUT)
 
 cfgdir = $(sysconfdir)/@PACKAGE@
 cfg_DATA = \
-	$(LIBFILES_CONST) \
-	$(LIBFILES_OUT)
+	$(LIBFILES_CONST)
 
 # Files processed by configure don't need to be here
 EXTRA_DIST = \

@@ -32,18 +32,7 @@
 
 #include "global.h"
 
-
-/* *INDENT-OFF* */
-#ifdef HAVE_SUBSHELL_SUPPORT
-#  ifdef SUBSHELL_OPTIONAL
-#    define SUBSHELL_USE FALSE
-#  else /* SUBSHELL_OPTIONAL */
-#    define SUBSHELL_USE TRUE
-#  endif /* SUBSHELL_OPTIONAL */
-#else /* !HAVE_SUBSHELL_SUPPORT */
-#    define SUBSHELL_USE FALSE
-#endif /* !HAVE_SUBSHELL_SUPPORT */
-/* *INDENT-ON* */
+#define SUBSHELL_USE FALSE
 
 /*** global variables ****************************************************************************/
 
@@ -86,10 +75,6 @@ mc_global_t mc_global = {
 #endif /* !LINUX_CONS_SAVER_C */
 
         .use_subshell = SUBSHELL_USE,
-
-#ifdef HAVE_SUBSHELL_SUPPORT
-        .subshell_pty = 0,
-#endif /* !HAVE_SUBSHELL_SUPPORT */
 
         .winch_flag = FALSE,
         .command_line_colors = NULL,

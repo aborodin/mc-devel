@@ -229,10 +229,6 @@ typedef struct
 #endif                          /* !LINUX_CONS_SAVER_C */
         /* If using a subshell for evaluating commands this is true */
         gboolean use_subshell;
-#ifdef HAVE_SUBSHELL_SUPPORT
-        /* File descriptors of the pseudoterminal used by the subshell */
-        int subshell_pty;
-#endif                          /* !HAVE_SUBSHELL_SUPPORT */
 
         /* colors specified on the command line: they override any other setting */
         char *command_line_colors;

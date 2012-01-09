@@ -16,11 +16,7 @@ extern gboolean mc_args__nomouse;
 extern gboolean mc_args__force_colors;
 extern gboolean mc_args__nokeymap;
 extern gboolean mc_args__version;
-extern int mc_args__edit_start_line;
-extern char *mc_args__last_wd_file;
-extern char *mc_args__netfs_logfile;
 extern char *mc_args__keymap_file;
-extern int mc_args__debug_level;
 
 /*** declarations of public functions ************************************************************/
 

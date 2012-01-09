@@ -55,14 +55,6 @@ static const char *const features[] = {
 #error "Cannot compile mc without S-Lang or ncurses"
 #endif /* !HAVE_SLANG && !USE_NCURSES */
 
-#ifdef HAVE_SUBSHELL_SUPPORT
-#ifdef SUBSHELL_OPTIONAL
-    N_("With optional subshell support\n"),
-#else
-    N_("With subshell support as default\n"),
-#endif
-#endif /* !HAVE_SUBSHELL_SUPPORT */
-
 #ifdef HAVE_LIBGPM
     N_("With mouse support on xterm and Linux console\n"),
 #else

@@ -56,19 +56,8 @@ gboolean mc_args__force_colors = FALSE;
 /* Don't load keymap form file and use default one */
 gboolean mc_args__nokeymap = FALSE;
 
-/* Line to start the editor on */
-int mc_args__edit_start_line = 0;
-
-char *mc_args__last_wd_file = NULL;
-
-/* when enabled NETCODE, use folowing file as logfile */
-char *mc_args__netfs_logfile = NULL;
-
 /* keymap file */
 char *mc_args__keymap_file = NULL;
-
-/* Debug level */
-int mc_args__debug_level = 0;
 
 /*** file scope macro definitions ****************************************************************/
 
@@ -77,11 +66,6 @@ int mc_args__debug_level = 0;
 /*** file scope variables ************************************************************************/
 
 /* forward declarations */
-static gboolean parse_mc_e_argument (const gchar * option_name, const gchar * value,
-                                     gpointer data, GError ** error);
-static gboolean parse_mc_v_argument (const gchar * option_name, const gchar * value,
-                                     gpointer data, GError ** error);
-
 static GOptionContext *context;
 
 static gboolean mc_args__nouse_subshell = FALSE;
@@ -124,43 +108,6 @@ static const GOptionEntry argument_main_table[] = {
      N_("Print configure options"),
      NULL
     },
-
-    {
-     "printwd", 'P', G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_STRING,
-     &mc_args__last_wd_file,
-     N_("Print last working directory to specified file"),
-     "<file>"
-    },
-
-#ifdef HAVE_SUBSHELL_SUPPORT
-    {
-     "subshell", 'U', G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_NONE,
-     &mc_global.tty.use_subshell,
-     N_("Enables subshell support (default)"),
-     NULL
-    },
-
-    {
-     "nosubshell", 'u', G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_NONE,
-     &mc_args__nouse_subshell,
-     N_("Disables subshell support"),
-     NULL
-    },
-#endif
-
-    /* single file operations */
-    {
-     "view", 'v', G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK,
-     parse_mc_v_argument,
-     N_("Launches the file viewer on a file"),
-     "<file>"
-    },
-
-    {
-     "edit", 'e', G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK,
-     parse_mc_e_argument,
-     N_("Edits one file"),
-     "<file>"},
 
     {
      NULL, '\0', 0, 0, NULL, NULL, NULL /* Complete struct initialization */
@@ -394,133 +341,6 @@ mc_args_add_extended_info_to_help (void)
 
 /* --------------------------------------------------------------------------------------------- */
 
-static void
-mc_setup_by_args (int argc, char *argv[])
-{
-    const char *base;
-    char *tmp;
-
-    base = x_basename (argv[0]);
-    tmp = (argc > 0) ? argv[1] : NULL;
-
-    if (strncmp (base, "mce", 3) == 0 || strcmp (base, "vi") == 0)
-    {
-        /* mce* or vi is link to mc */
-
-        mc_run_param0 = g_strdup ("");
-        if (tmp != NULL)
-        {
-            /*
-             * Check for filename:lineno, followed by an optional colon.
-             * This format is used by many programs (especially compilers)
-             * in error messages and warnings. It is supported so that
-             * users can quickly copy and paste file locations.
-             */
-            char *end, *p;
-
-            end = tmp + strlen (tmp);
-            p = end;
-
-            if (p > tmp && p[-1] == ':')
-                p--;
-            while (p > tmp && g_ascii_isdigit ((gchar) p[-1]))
-                p--;
-            if (tmp < p && p < end && p[-1] == ':')
-            {
-                char *fname;
-                struct stat st;
-
-                fname = g_strndup (tmp, p - 1 - tmp);
-                /*
-                 * Check that the file before the colon actually exists.
-                 * If it doesn't exist, revert to the old behavior.
-                 */
-                if (mc_stat (tmp, &st) == -1 && mc_stat (fname, &st) != -1)
-                {
-                    mc_run_param0 = fname;
-                    mc_args__edit_start_line = atoi (p);
-                }
-                else
-                {
-                    g_free (fname);
-                    goto try_plus_filename;
-                }
-            }
-            else
-            {
-              try_plus_filename:
-                if (*tmp == '+' && g_ascii_isdigit ((gchar) tmp[1]))
-                {
-                    int start_line;
-
-                    start_line = atoi (tmp);
-
-                    /*
-                     * If start_line is zero, position the cursor at the
-                     * beginning of the file as other editors (vi, nano)
-                     */
-                    if (start_line == 0)
-                        start_line++;
-
-                    if (start_line > 0)
-                    {
-                        char *file;
-
-                        file = (argc > 1) ? argv[2] : NULL;
-                        if (file != NULL)
-                        {
-                            tmp = file;
-                            mc_args__edit_start_line = start_line;
-                        }
-                    }
-                }
-                mc_run_param0 = g_strdup (tmp);
-            }
-        }
-        mc_global.mc_run_mode = MC_RUN_EDITOR;
-    }
-    else if (strncmp (base, "mcv", 3) == 0 || strcmp (base, "view") == 0)
-    {
-        /* mcv* or view is link to mc */
-
-        if (tmp != NULL)
-            mc_run_param0 = g_strdup (tmp);
-        else
-        {
-            fprintf (stderr, "%s\n", _("No arguments given to the viewer."));
-            exit (EXIT_FAILURE);
-        }
-        mc_global.mc_run_mode = MC_RUN_VIEWER;
-    }
-    else
-    {
-        /* MC is run as mc */
-
-        switch (mc_global.mc_run_mode)
-        {
-        case MC_RUN_EDITOR:
-        case MC_RUN_VIEWER:
-            /* mc_run_param0 is set up in parse_mc_e_argument() and parse_mc_v_argument() */
-            break;
-
-        case MC_RUN_FULL:
-        default:
-            /* sets the current dir and the other dir */
-            if (tmp != NULL)
-            {
-                mc_run_param0 = g_strdup (tmp);
-                tmp = (argc > 1) ? argv[2] : NULL;
-                if (tmp != NULL)
-                    mc_run_param1 = g_strdup (tmp);
-            }
-            mc_global.mc_run_mode = MC_RUN_FULL;
-            break;
-        }
-    }
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
 static gboolean
 mc_args_process (int argc, char *argv[])
 {
@@ -550,13 +370,6 @@ mc_args_process (int argc, char *argv[])
     if (mc_args__force_colors)
         mc_global.tty.disable_colors = FALSE;
 
-#ifdef HAVE_SUBSHELL_SUPPORT
-    if (mc_args__nouse_subshell)
-        mc_global.tty.use_subshell = FALSE;
-#endif /* HAVE_SUBSHELL_SUPPORT */
-
-    mc_setup_by_args (argc, argv);
-
     return TRUE;
 }
 
@@ -580,38 +393,8 @@ mc_args__convert_help_to_syscharset (const gchar * charset, const gchar * error_
 
 /* --------------------------------------------------------------------------------------------- */
 
-static gboolean
-parse_mc_e_argument (const gchar * option_name, const gchar * value, gpointer data, GError ** error)
-{
-    (void) option_name;
-    (void) data;
-    (void) error;
-
-    mc_global.mc_run_mode = MC_RUN_EDITOR;
-    mc_run_param0 = g_strdup (value);
-
-    return TRUE;
-}
-
 /* --------------------------------------------------------------------------------------------- */
-
-static gboolean
-parse_mc_v_argument (const gchar * option_name, const gchar * value, gpointer data, GError ** error)
-{
-    (void) option_name;
-    (void) data;
-    (void) error;
-
-    mc_global.mc_run_mode = MC_RUN_VIEWER;
-    mc_run_param0 = g_strdup (value);
-
-    return TRUE;
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
 /*** public functions ****************************************************************************/
-
 /* --------------------------------------------------------------------------------------------- */
 
 gboolean

@@ -210,8 +210,6 @@ AC_TYPE_UID_T
 AC_FUNC_ALLOCA
 AC_FUNC_STRCOLL
 
-AC_MC_GET_FS_INFO
-
 dnl
 dnl X11 support.
 dnl Used to read keyboard modifiers when running under X11.
@@ -337,41 +335,7 @@ if $HAVE_FILECMD; then
 fi
 
 
-AC_MSG_CHECKING([for subshell support])
-AC_ARG_WITH(subshell,
-	[  --with-subshell          Compile in concurrent subshell [[yes]]
-  --with-subshell=optional Don't run concurrent shell by default [[no]]],
-	[result=no
-	if test x$withval = xoptional
-	then
-		AC_DEFINE(SUBSHELL_OPTIONAL, 1,
-			  [Define to make subshell support optional])
-		result="optional"
-	fi
-	if test x$withval = xyes
-        then
-		result="yes"
-	fi],
-	[dnl Default: enable the subshell support
-	result="yes"
-])
-if test "x$result" != xno; then
-	AC_DEFINE(HAVE_SUBSHELL_SUPPORT, 1,
-		  [Define to enable subshell support])
-fi
-AC_MSG_RESULT([$result])
-subshell="$result"
-
-
 MC_WITH_SCREEN
-
-
-dnl Check if the OS is supported by the console saver.
-cons_saver=""
-case $host_os in
-linux*)
-    cons_saver=yes
-esac
 
 
 dnl
@@ -454,7 +418,6 @@ AM_CONDITIONAL(USE_NLS, [test x"$USE_NLS" = xyes])
 AM_CONDITIONAL(USE_MAINTAINER_MODE, [test x"$USE_MAINTAINER_MODE" = xyes])
 AM_CONDITIONAL(USE_SCREEN_SLANG, [test x"$with_screen" = xslang])
 AM_CONDITIONAL(CHARSET, [test -n "$have_charset"])
-AM_CONDITIONAL(CONS_SAVER, [test -n "$cons_saver"])
 
 AC_CONFIG_FILES(
 [
@@ -478,10 +441,8 @@ contrib/dist/prototype
 
 misc/Makefile
 misc/skins/Makefile
-misc/mc.ext
 
 src/Makefile
-src/consaver/Makefile
 src/man2hlp/Makefile
 src/filemanager/Makefile
 
@@ -499,7 +460,6 @@ lib/vfs/Makefile
 lib/widget/Makefile
 
 doc/Makefile
-doc/hints/Makefile
 doc/man/mc.1 doc/man/Makefile
 doc/man/es/mc.1 doc/man/es/Makefile
 doc/man/hu/mc.1 doc/man/hu/Makefile
@@ -531,7 +491,6 @@ Configuration:
   Screen library:             ${screen_msg}
   Mouse support:              ${mouse_lib}
   X11 events support:         ${textmode_x11_support}
-  With subshell support:      ${subshell}
   Support for charset:        ${charset_msg}
   Search type:                ${SEARCH_TYPE}
 "

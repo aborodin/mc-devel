@@ -263,12 +263,6 @@ tty_change_screen_size (void)
         COLS = winsz.ws_col;
         LINES = winsz.ws_row;
 #endif
-#ifdef HAVE_SUBSHELL_SUPPORT
-        if (!mc_global.tty.use_subshell)
-            return;
-
-        tty_resize (mc_global.tty.subshell_pty);
-#endif
     }
 #endif /* TIOCGWINSZ */
 #endif /* defined(HAVE_SLANG) || NCURSES_VERSION_MAJOR >= 4 */
