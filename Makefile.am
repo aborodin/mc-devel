@@ -3,10 +3,6 @@ AUTOMAKE_OPTIONS = 1.5
 
 SUBDIRS = intl po lib src doc contrib misc
 
-if HAVE_TESTS
-    SUBDIRS += tests
-endif
-
 EXTRA_DIST = 
 
 dist_noinst_SCRIPTS = build-glib2.sh

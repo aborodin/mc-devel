@@ -478,8 +478,6 @@ if test "x$enable_werror" = xyes; then
 fi
 CFLAGS="$mc_configured_cflags $CFLAGS_OPTS $CFLAGS"
 
-MC_UNIT_TESTS
-
 AC_SUBST(CFLAGS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
@@ -616,18 +614,6 @@ doc/hlp/sr/Makefile
 intl/Makefile
 po/Makefile.in
 ])
-
-if test x$enable_tests != xno; then
-    AC_CONFIG_FILES([
-tests/Makefile
-tests/lib/Makefile
-tests/lib/mcconfig/Makefile
-tests/lib/search/Makefile
-tests/lib/vfs/Makefile
-])
-
-fi
-
 
 AC_OUTPUT
 
