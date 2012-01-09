@@ -398,14 +398,6 @@ else
 fi
 
 
-dnl Support for background operations
-AC_ARG_ENABLE([background],
-	      [  --enable-background     Support for background file operations [[yes]]])
-if test "x$enable_background" != xno; then
-    AC_DEFINE(WITH_BACKGROUND, 1, [Define to enable background file operations])
-fi
-
-
 dnl
 dnl User visible support for charset conversion.
 dnl

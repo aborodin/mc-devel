@@ -65,7 +65,6 @@ PanelInfo = i
 PanelQuickView = q
 ExternalPanelize = exclamation
 VfsList = a
-Jobs = j
 PutCurrentPath = p
 PutOtherPath = ctrl-p
 PutCurrentTagged = t

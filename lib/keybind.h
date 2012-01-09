@@ -142,7 +142,6 @@ enum
     CK_ExternalPanelize,
     CK_Filter,
     CK_PanelInfo,
-    CK_Jobs,
     CK_OptionsLayout,
     CK_Link,
     CK_PanelListing,

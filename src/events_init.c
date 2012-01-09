@@ -29,9 +29,6 @@
 
 #include "lib/event.h"
 
-#ifdef WITH_BACKGROUND
-#include "background.h"         /* (background_parent_call), background_parent_call_string() */
-#endif /* WITH_BACKGROUND */
 #include "clipboard.h"          /* clipboard events */
 #include "execute.h"            /* execute_suspend() */
 #include "help.h"               /* help_interactive_display() */
@@ -67,11 +64,6 @@ events_init (GError ** error)
 
         {MCEVENT_GROUP_CORE, "help", help_interactive_display, NULL},
         {MCEVENT_GROUP_CORE, "suspend", execute_suspend, NULL},
-
-#ifdef WITH_BACKGROUND
-        {MCEVENT_GROUP_CORE, "background_parent_call", background_parent_call, NULL},
-        {MCEVENT_GROUP_CORE, "background_parent_call_string", background_parent_call_string, NULL},
-#endif /* WITH_BACKGROUND */
 
         {NULL, NULL, NULL, NULL}
     };

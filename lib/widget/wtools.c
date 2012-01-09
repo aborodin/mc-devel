@@ -147,21 +147,6 @@ fg_message (int flags, const char *title, const char *text)
     destroy_dlg (d);
 }
 
-
-/* --------------------------------------------------------------------------------------------- */
-/** Show message box from background */
-
-#ifdef WITH_BACKGROUND
-static void
-bg_message (int dummy, int *flags, char *title, const char *text)
-{
-    (void) dummy;
-    title = g_strconcat (_("Background process:"), " ", title, (char *) NULL);
-    fg_message (*flags, title, text);
-    g_free (title);
-}
-#endif /* WITH_BACKGROUND */
-
 /* --------------------------------------------------------------------------------------------- */
 
 /**
@@ -263,39 +248,6 @@ fg_input_dialog_help (const char *header, const char *text, const char *help,
 
     return (ret != B_CANCEL) ? my_str : NULL;
 }
-
-/* --------------------------------------------------------------------------------------------- */
-
-#ifdef WITH_BACKGROUND
-static int
-wtools_parent_call (void *routine, gpointer ctx, int argc, ...)
-{
-    ev_background_parent_call_t event_data;
-
-    event_data.routine = routine;
-    event_data.ctx = ctx;
-    event_data.argc = argc;
-    va_start (event_data.ap, argc);
-    mc_event_raise (MCEVENT_GROUP_CORE, "background_parent_call", (gpointer) & event_data);
-    va_end (event_data.ap);
-    return event_data.ret.i;
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-static char *
-wtools_parent_call_string (void *routine, int argc, ...)
-{
-    ev_background_parent_call_t event_data;
-
-    event_data.routine = routine;
-    event_data.argc = argc;
-    va_start (event_data.ap, argc);
-    mc_event_raise (MCEVENT_GROUP_CORE, "background_parent_call_string", (gpointer) & event_data);
-    va_end (event_data.ap);
-    return event_data.ret.s;
-}
-#endif /* WITH_BACKGROUND */
 
 /* --------------------------------------------------------------------------------------------- */
 /*** public functions ****************************************************************************/
@@ -440,22 +392,7 @@ message (int flags, const char *title, const char *text, ...)
     if (title == MSG_ERROR)
         title = _("Error");
 
-#ifdef WITH_BACKGROUND
-    if (mc_global.we_are_background)
-    {
-        union
-        {
-            void *p;
-            void (*f) (int, int *, char *, const char *);
-        } func;
-        func.f = bg_message;
-
-        wtools_parent_call (func.p, NULL, 3, sizeof (flags), &flags, strlen (title), title,
-                            strlen (p), p);
-    }
-    else
-#endif /* WITH_BACKGROUND */
-        fg_message (flags, title, p);
+    fg_message (flags, title, p);
 
     g_free (p);
 }
@@ -472,24 +409,7 @@ char *
 input_dialog_help (const char *header, const char *text, const char *help,
                    const char *history_name, const char *def_text)
 {
-#ifdef WITH_BACKGROUND
-    if (mc_global.we_are_background)
-    {
-        union
-        {
-            void *p;
-            char *(*f) (const char *, const char *, const char *, const char *, const char *);
-        } func;
-        func.f = fg_input_dialog_help;
-        return wtools_parent_call_string (func.p, 5,
-                                          strlen (header), header, strlen (text),
-                                          text, strlen (help), help,
-                                          strlen (history_name), history_name,
-                                          strlen (def_text), def_text);
-    }
-    else
-#endif /* WITH_BACKGROUND */
-        return fg_input_dialog_help (header, text, help, history_name, def_text);
+    return fg_input_dialog_help (header, text, help, history_name, def_text);
 }
 
 /* --------------------------------------------------------------------------------------------- */

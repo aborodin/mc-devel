@@ -53,7 +53,6 @@
 #include "lib/widget.h"
 
 #include "src/setup.h"          /* For profile_name */
-#include "src/background.h"     /* task_list */
 
 #ifdef HAVE_CHARSET
 #include "lib/charsets.h"
@@ -77,13 +76,6 @@
 #define VFSY 8
 #endif /* ENABLE_VFS */
 
-#ifdef WITH_BACKGROUND
-#define B_STOP   (B_USER+1)
-#define B_RESUME (B_USER+2)
-#define B_KILL   (B_USER+3)
-#define JOBS_Y 15
-#endif /* WITH_BACKGROUND */
-
 /*** file scope type declarations ****************************************************************/
 
 /*** file scope variables ************************************************************************/
@@ -105,32 +97,7 @@ static WCheck *inpcheck;
 static char *ret_timeout;
 #endif /* ENABLE_VFS */
 
-#ifdef WITH_BACKGROUND
-static int JOBS_X = 60;
-static WListbox *bg_list;
-static Dlg_head *jobs_dlg;
-
-static int task_cb (WButton * button, int action);
-
-static struct
-{
-    const char *name;
-    int xpos;
-    int value;
-    bcback_fn callback;
-}
-job_buttons[] =
-{
-    /* *INDENT-OFF* */
-    { N_("&Stop"), 3, B_STOP, task_cb },
-    { N_("&Resume"), 12, B_RESUME, task_cb },
-    { N_("&Kill"), 23, B_KILL, task_cb },
-    { N_("&OK"), 35, B_CANCEL, NULL }
-    /* *INDENT-ON* */
-};
-
-#endif /* WITH_BACKGROUND */
-
+/* --------------------------------------------------------------------------------------------- */
 /*** file scope functions ************************************************************************/
 /* --------------------------------------------------------------------------------------------- */
 
@@ -399,80 +366,6 @@ tree_callback (Dlg_head * h, Widget * sender, dlg_msg_t msg, int parm, void *dat
         return default_dlg_callback (h, sender, msg, parm, data);
     }
 }
-
-/* --------------------------------------------------------------------------------------------- */
-
-#ifdef WITH_BACKGROUND
-static void
-jobs_fill_listbox (void)
-{
-    static const char *state_str[2];
-    TaskList *tl = task_list;
-
-    if (!state_str[0])
-    {
-        state_str[0] = _("Running");
-        state_str[1] = _("Stopped");
-    }
-
-    while (tl)
-    {
-        char *s;
-
-        s = g_strconcat (state_str[tl->state], " ", tl->info, (char *) NULL);
-        listbox_add_item (bg_list, LISTBOX_APPEND_AT_END, 0, s, (void *) tl);
-        g_free (s);
-        tl = tl->next;
-    }
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-static int
-task_cb (WButton * button, int action)
-{
-    TaskList *tl;
-    int sig = 0;
-
-    (void) button;
-
-    if (bg_list->list == NULL)
-        return 0;
-
-    /* Get this instance information */
-    listbox_get_current (bg_list, NULL, (void **) &tl);
-
-#ifdef SIGTSTP
-    if (action == B_STOP)
-    {
-        sig = SIGSTOP;
-        tl->state = Task_Stopped;
-    }
-    else if (action == B_RESUME)
-    {
-        sig = SIGCONT;
-        tl->state = Task_Running;
-    }
-    else
-#endif
-    if (action == B_KILL)
-    {
-        sig = SIGKILL;
-    }
-
-    if (sig == SIGKILL)
-        unregister_task_running (tl->pid, tl->fd);
-
-    kill (tl->pid, sig);
-    listbox_remove_list (bg_list);
-    jobs_fill_listbox ();
-
-    /* This can be optimized to just redraw this widget :-) */
-    dlg_redraw (jobs_dlg);
-
-    return 0;
-}
-#endif /* WITH_BACKGROUND */
 
 /* --------------------------------------------------------------------------------------------- */
 /*** public functions ****************************************************************************/
@@ -978,63 +871,5 @@ symlink_dialog (const char *existing, const char *new, char **ret_existing, char
         *ret_existing = NULL;
     }
 }
-
-/* --------------------------------------------------------------------------------------------- */
-
-#ifdef WITH_BACKGROUND
-void
-jobs_cmd (void)
-{
-    register int i;
-    int n_buttons = sizeof (job_buttons) / sizeof (job_buttons[0]);
-
-#ifdef ENABLE_NLS
-    static int i18n_flag = 0;
-    if (!i18n_flag)
-    {
-        int startx = job_buttons[0].xpos;
-        int len;
-
-        for (i = 0; i < n_buttons; i++)
-        {
-            job_buttons[i].name = _(job_buttons[i].name);
-
-            len = str_term_width1 (job_buttons[i].name) + 4;
-            JOBS_X = max (JOBS_X, startx + len + 3);
-
-            job_buttons[i].xpos = startx;
-            startx += len;
-        }
-
-        /* Last button - Ok a.k.a. Cancel :) */
-        job_buttons[n_buttons - 1].xpos =
-            JOBS_X - str_term_width1 (job_buttons[n_buttons - 1].name) - 7;
-
-        i18n_flag = 1;
-    }
-#endif /* ENABLE_NLS */
-
-    jobs_dlg = create_dlg (TRUE, 0, 0, JOBS_Y, JOBS_X, dialog_colors, NULL,
-                           "[Background jobs]", _("Background Jobs"), DLG_CENTER | DLG_REVERSE);
-
-    bg_list = listbox_new (2, 3, JOBS_Y - 9, JOBS_X - 7, FALSE, NULL);
-    add_widget (jobs_dlg, bg_list);
-
-    i = n_buttons;
-    while (i--)
-    {
-        add_widget (jobs_dlg, button_new (JOBS_Y - 4,
-                                          job_buttons[i].xpos, job_buttons[i].value,
-                                          NORMAL_BUTTON, job_buttons[i].name,
-                                          job_buttons[i].callback));
-    }
-
-    /* Insert all of task information in the list */
-    jobs_fill_listbox ();
-    run_dlg (jobs_dlg);
-
-    destroy_dlg (jobs_dlg);
-}
-#endif /* WITH_BACKGROUND */
 
 /* --------------------------------------------------------------------------------------------- */

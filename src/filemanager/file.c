@@ -72,7 +72,6 @@
 #include "lib/widget.h"
 
 #include "src/setup.h"
-#include "src/background.h"
 
 #include "layout.h"             /* rotate_dash() */
 
@@ -514,21 +513,6 @@ real_warn_same_file (enum OperationMode mode, const char *fmt, const char *a, co
 static FileProgressStatus
 warn_same_file (const char *fmt, const char *a, const char *b)
 {
-#ifdef WITH_BACKGROUND
-/* *INDENT-OFF* */
-    union
-    {
-        void *p;
-          FileProgressStatus (*f) (enum OperationMode, const char *fmt,
-                                   const char *a, const char *b);
-    } pntr;
-/* *INDENT-ON* */
-
-    pntr.f = real_warn_same_file;
-
-    if (mc_global.we_are_background)
-        return parent_call (pntr.p, NULL, 3, strlen (fmt), fmt, strlen (a), a, strlen (b), b);
-#endif
     return real_warn_same_file (Foreground, fmt, a, b);
 }
 
@@ -609,65 +593,6 @@ real_query_recursive (FileOpContext * ctx, enum OperationMode mode, const char *
 
 /* --------------------------------------------------------------------------------------------- */
 
-#ifdef WITH_BACKGROUND
-static FileProgressStatus
-do_file_error (const char *str)
-{
-    union
-    {
-        void *p;
-          FileProgressStatus (*f) (enum OperationMode, const char *);
-    } pntr;
-    pntr.f = real_do_file_error;
-
-    if (mc_global.we_are_background)
-        return parent_call (pntr.p, NULL, 1, strlen (str), str);
-    else
-        return real_do_file_error (Foreground, str);
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-static FileProgressStatus
-query_recursive (FileOpContext * ctx, const char *s)
-{
-    union
-    {
-        void *p;
-          FileProgressStatus (*f) (FileOpContext *, enum OperationMode, const char *);
-    } pntr;
-    pntr.f = real_query_recursive;
-
-    if (mc_global.we_are_background)
-        return parent_call (pntr.p, ctx, 1, strlen (s), s);
-    else
-        return real_query_recursive (ctx, Foreground, s);
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-static FileProgressStatus
-query_replace (FileOpContext * ctx, const char *destname, struct stat *_s_stat,
-               struct stat *_d_stat)
-{
-    union
-    {
-        void *p;
-          FileProgressStatus (*f) (FileOpContext *, enum OperationMode, const char *,
-                                   struct stat *, struct stat *);
-    } pntr;
-    pntr.f = file_progress_real_query_replace;
-
-    if (mc_global.we_are_background)
-        return parent_call (pntr.p, ctx, 3, strlen (destname), destname,
-                            sizeof (struct stat), _s_stat, sizeof (struct stat), _d_stat);
-    else
-        return file_progress_real_query_replace (ctx, Foreground, destname, _s_stat, _d_stat);
-}
-
-#else
-/* --------------------------------------------------------------------------------------------- */
-
 static FileProgressStatus
 do_file_error (const char *str)
 {
@@ -690,8 +615,6 @@ query_replace (FileOpContext * ctx, const char *destname, struct stat *_s_stat,
 {
     return file_progress_real_query_replace (ctx, Foreground, destname, _s_stat, _d_stat);
 }
-
-#endif /* !WITH_BACKGROUND */
 
 /* --------------------------------------------------------------------------------------------- */
 /** Report error with two files */
@@ -1305,23 +1228,6 @@ panel_operate_generate_prompt (const WPanel * panel, FileOperation operation,
 
     return g_strdup (format_string);
 }
-
-/* --------------------------------------------------------------------------------------------- */
-
-#ifdef WITH_BACKGROUND
-static int
-end_bg_process (FileOpContext * ctx, enum OperationMode mode)
-{
-    int pid = ctx->pid;
-
-    (void) mode;
-    ctx->pid = 0;
-
-    unregister_task_with_pid (pid);
-    /*     file_op_context_destroy(ctx); */
-    return 1;
-}
-#endif
 /* }}} */
 
 /* --------------------------------------------------------------------------------------------- */
@@ -2631,27 +2537,6 @@ panel_operate (void *source_panel, FileOperation operation, gboolean force_singl
             file_op_context_create_ui (ctx, TRUE, dialog_type);
     }
 
-#ifdef WITH_BACKGROUND
-    /* Did the user select to do a background operation? */
-    if (do_bg)
-    {
-        int v;
-
-        v = do_background (ctx, g_strconcat (op_names[operation], ": ", panel->cwd, (char *) NULL));
-        if (v == -1)
-            message (D_ERROR, MSG_ERROR, _("Sorry, I could not put the job in background"));
-
-        /* If we are the parent */
-        if (v == 1)
-        {
-            mc_setctl (panel->cwd, VFS_SETCTL_FORGET, NULL);
-            mc_setctl (dest, VFS_SETCTL_FORGET, NULL);
-            /*          file_op_context_destroy (ctx); */
-            return FALSE;
-        }
-    }
-#endif /* WITH_BACKGROUND */
-
     /* Initialize things */
     /* We do not want to trash cache every time file is
        created/touched. However, this will make our cache contain
@@ -2882,21 +2767,6 @@ panel_operate (void *source_panel, FileOperation operation, gboolean force_singl
     g_free (dest);
     g_free (ctx->dest_mask);
     ctx->dest_mask = NULL;
-
-#ifdef WITH_BACKGROUND
-    /* Let our parent know we are saying bye bye */
-    if (mc_global.we_are_background)
-    {
-        int cur_pid = getpid ();
-        /* Send pid to parent with child context, it is fork and
-           don't modify real parent ctx */
-        ctx->pid = cur_pid;
-        parent_call ((void *) end_bg_process, ctx, 0);
-
-        vfs_shut ();
-        _exit (0);
-    }
-#endif /* WITH_BACKGROUND */
 
     file_op_total_context_destroy (tctx);
   ret_fast:

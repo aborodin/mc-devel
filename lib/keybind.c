@@ -152,9 +152,6 @@ static name_keymap_t command_names[] = {
     {"ExternalPanelize", CK_ExternalPanelize},
     {"Filter", CK_Filter},
     {"PanelInfo", CK_PanelInfo},
-#ifdef WITH_BACKGROUND
-    {"Jobs", CK_Jobs},
-#endif
     {"OptionsLayout", CK_OptionsLayout},
     {"Link", CK_Link},
     {"PanelListingChange", CK_PanelListingChange},

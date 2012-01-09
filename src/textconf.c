@@ -63,10 +63,6 @@ static const char *const features[] = {
 #endif
 #endif /* !HAVE_SUBSHELL_SUPPORT */
 
-#ifdef WITH_BACKGROUND
-    N_("With support for background operations\n"),
-#endif
-
 #ifdef HAVE_LIBGPM
     N_("With mouse support on xterm and Linux console\n"),
 #else
