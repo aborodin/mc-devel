@@ -49,7 +49,6 @@
 #include "lib/event.h"
 
 #include "src/consaver/cons.saver.h"
-#include "src/viewer/mcviewer.h"        /* The view widget */
 #include "src/setup.h"
 #ifdef HAVE_SUBSHELL_SUPPORT
 #include "src/main.h"                   /* do_load_prompt() */
@@ -900,17 +899,6 @@ set_display_type (int num, panel_view_mode_t type)
 
     case view_tree:
         new_widget = (Widget *) tree_new (y, x, lines, cols, TRUE);
-        break;
-
-    case view_quick:
-        new_widget = (Widget *) mcview_new (y, x, lines, cols, TRUE);
-        the_other_panel = (WPanel *) panels[the_other].widget;
-        if (the_other_panel != NULL)
-            file_name = the_other_panel->dir.list[the_other_panel->selected].fname;
-        else
-            file_name = "";
-
-        mcview_load ((struct mcview_struct *) new_widget, 0, file_name, 0);
         break;
     }
 

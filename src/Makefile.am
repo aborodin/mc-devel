@@ -1,4 +1,4 @@
-SUBDIRS = filemanager man2hlp viewer
+SUBDIRS = filemanager man2hlp
 
 AM_CPPFLAGS = \
 	-DLOCALEDIR=\""$(localedir)"\" \
@@ -17,7 +17,6 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 bin_PROGRAMS = mc
 
 mc_LDADD = \
-	viewer/libmcviewer.la \
 	filemanager/libmcfilemanager.la \
 	$(top_builddir)/lib/libmc.la
 
@@ -45,17 +44,3 @@ if CHARSET
 endif
 
 EXTRA_DIST = $(SRC_maintainer) $(SRC_charset)
-
-# end of automated testing
-
-install-exec-hook:
-	$(MAKE) install_mcview
-
-#
-# Make relative symlinks, but do the right thing if LN_S is `ln' or `cp'.
-#
-install_mcview:
-	cd $(DESTDIR)$(bindir)/$(binprefix) && rm -f mcview && $(LN_S) mc mcview
-
-uninstall-hook:
-	rm -f $(DESTDIR)$(bindir)/$(binprefix)/mcview

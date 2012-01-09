@@ -182,7 +182,6 @@ create_panel_menu (void)
     GList *entries = NULL;
 
     entries = g_list_prepend (entries, menu_entry_create (_("File listin&g"), CK_PanelListing));
-    entries = g_list_prepend (entries, menu_entry_create (_("&Quick view"), CK_PanelQuickView));
     entries = g_list_prepend (entries, menu_entry_create (_("&Info"), CK_PanelInfo));
     entries = g_list_prepend (entries, menu_entry_create (_("&Tree"), CK_PanelTree));
     entries = g_list_prepend (entries, menu_separator_create ());
@@ -1157,12 +1156,6 @@ midnight_execute_cmd (Widget * sender, unsigned long command)
         break;
     case CK_HotList:
         hotlist_cmd ();
-        break;
-    case CK_PanelQuickView:
-        if (sender == (Widget *) the_menubar)
-            quick_view_cmd ();  /* menu */
-        else
-            quick_cmd_no_menu ();       /* shortcut or buttonabr */
         break;
     case CK_QuitQuiet:
         quiet_quit_cmd ();

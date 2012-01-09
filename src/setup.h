@@ -13,9 +13,6 @@
 
 /*** typedefs(not structures) and defined constants **********************************************/
 
-/* TAB length for editor and viewer */
-#define DEFAULT_TAB_SPACING 8
-
 /*** enums ***************************************************************************************/
 
 typedef enum
@@ -74,7 +71,6 @@ extern int select_flags;
 extern int setup_copymove_persistent_attr;
 extern int classic_progressbar;
 extern int easy_patterns;
-extern int option_tab_spacing;
 extern int auto_save_setup;
 extern int only_leading_plus_minus;
 extern int cd_symlinks;

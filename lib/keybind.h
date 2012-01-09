@@ -17,14 +17,8 @@
 #define KEYMAP_SECTION_LISTBOX "listbox"
 #define KEYMAP_SECTION_TREE "tree"
 #define KEYMAP_SECTION_HELP "help"
-#define KEYMAP_SECTION_EDITOR "editor"
-#define KEYMAP_SECTION_EDITOR_EXT "editor:xmap"
-#define KEYMAP_SECTION_VIEWER "viewer"
-#define KEYMAP_SECTION_VIEWER_HEX "viewer:hex"
 
 #define KEYMAP_SHORTCUT_LENGTH 32       /* FIXME: is 32 bytes enough for shortcut? */
-
-#define CK_PipeBlock(i)  (10000+(i))
 
 /*** enums ***************************************************************************************/
 
@@ -77,12 +71,14 @@ enum
     CK_SearchStop,
     CK_Help,
     CK_Edit,
+    CK_EditNew,
     CK_Shell,
     CK_SelectCodepage,
     CK_History,
     CK_HistoryNext,
     CK_HistoryPrev,
     CK_Complete,
+    CK_Save,
     CK_SaveAs,
     CK_Goto,
     CK_Reread,
@@ -96,6 +92,8 @@ enum
     CK_ScreenPrev,
     CK_FilePrev,
     CK_FileNext,
+    CK_DeleteToHome,
+    CK_DeleteToEnd,
     CK_DeleteToWordBegin,
     CK_DeleteToWordEnd,
     CK_ShowNumbers,
@@ -147,7 +145,6 @@ enum
     CK_PanelListing,
     CK_ListMode,
     CK_CdQuick,
-    CK_PanelQuickView,
     CK_VfsList,
     CK_SaveSetup,
     CK_LinkSymbolic,
@@ -204,102 +201,6 @@ enum
 
     /* tree */
     CK_Forget = 450,
-
-    /* editor */
-    /* cursor movements */
-    CK_Tab = 500,
-    CK_Undo,
-    CK_ScrollUp,
-    CK_ScrollDown,
-    CK_Return,
-    CK_ParagraphUp,
-    CK_ParagraphDown,
-    /* file commands */
-    CK_Save,
-    CK_EditFile,
-    CK_EditNew,
-    CK_InsertFile,
-    CK_EditSyntaxFile,
-    /* block commands */
-    CK_BlockSave,
-    CK_BlockShiftLeft,
-    CK_BlockShiftRight,
-    CK_DeleteLine,
-    CK_DeleteToHome,
-    CK_DeleteToEnd,
-    /* bookmarks */
-    CK_BookmarkFlush,
-    CK_BookmarkNext,
-    CK_BookmarkPrev,
-    /* mark commands */
-    CK_MarkColumn,
-    CK_MarkWord,
-    CK_MarkLine,
-    CK_MarkAll,
-    CK_Unmark,
-    CK_MarkPageUp,
-    CK_MarkPageDown,
-    CK_MarkToFileBegin,
-    CK_MarkToFileEnd,
-    CK_MarkToPageBegin,
-    CK_MarkToPageEnd,
-    CK_MarkScrollUp,
-    CK_MarkScrollDown,
-    CK_MarkParagraphUp,
-    CK_MarkParagraphDown,
-    /* column mark commands */
-    CK_MarkColumnPageUp,
-    CK_MarkColumnPageDown,
-    CK_MarkColumnLeft,
-    CK_MarkColumnRight,
-    CK_MarkColumnUp,
-    CK_MarkColumnDown,
-    CK_MarkColumnScrollUp,
-    CK_MarkColumnScrollDown,
-    CK_MarkColumnParagraphUp,
-    CK_MarkColumnParagraphDown,
-    /* misc commands */
-    CK_InsertOverwrite,
-    CK_ParagraphFormat,
-    CK_MatchBracket,
-    CK_OptionsSaveMode,
-    CK_About,
-    CK_ShowMargin,
-    CK_ShowTabTws,
-    CK_SyntaxOnOff,
-    CK_SyntaxChoose,
-    CK_InsertLiteral,
-    CK_ExternalCommand,
-    CK_Date,
-    CK_Mail,
-
-    /* viewer */
-    CK_WrapMode = 600,
-    CK_MagicMode,
-    CK_NroffMode,
-    CK_HexMode,
-    CK_HexEditMode,
-    CK_BookmarkGoto,
-    CK_Ruler,
-    CK_SearchForward,
-    CK_SearchBackward,
-    CK_SearchForwardContinue,
-    CK_SearchBackwardContinue,
-
-    /* diff viewer */
-    CK_ShowSymbols = 700,
-    CK_SplitFull,
-    CK_SplitEqual,
-    CK_SplitMore,
-    CK_SplitLess,
-    CK_Tab2,
-    CK_Tab3,
-    CK_Tab4,
-    CK_Tab8,
-    CK_HunkNext,
-    CK_HunkPrev,
-    CK_EditOther,
-    CK_Merge
 };
 
 /*** structures declarations (and typedefs of structures)*****************************************/

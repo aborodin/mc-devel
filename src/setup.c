@@ -66,8 +66,6 @@
 #include "selcodepage.h"
 #endif
 
-#include "src/viewer/mcviewer.h"        /* For the externs */
-
 #include "setup.h"
 
 /*** global variables ****************************************************************************/
@@ -108,9 +106,6 @@ panel_view_mode_t startup_left_mode;
 panel_view_mode_t startup_right_mode;
 
 int setup_copymove_persistent_attr = 1;
-
-/* Tab size */
-int option_tab_spacing = DEFAULT_TAB_SPACING;
 
 /* Ugly hack to allow panel_save_setup to work as a place holder for */
 /* default panel values */
@@ -195,7 +190,6 @@ static const struct
     panel_view_mode_t opt_type;
 } panel_types [] = {
     { "listing",   view_listing },
-    { "quickview", view_quick },
     { "info",      view_info },
     { "tree",      view_tree },
     { NULL,        view_listing }
@@ -247,16 +241,13 @@ static const struct
 #endif /* !HAVE_CHARSET */
     { "use_8th_bit_as_meta", &use_8th_bit_as_meta },
     { "confirm_view_dir", &confirm_view_dir },
-    { "mouse_move_pages_viewer", &mcview_mouse_move_pages },
     { "mouse_close_dialog", &mouse_close_dialog},
     { "fast_refresh", &fast_refresh },
     { "drop_menus", &drop_menus },
-    { "wrap_mode",  &mcview_global_wrap_mode},
     { "old_esc_mode", &old_esc_mode },
     { "old_esc_mode_timeout", &old_esc_mode_timeout },
     { "cd_symlinks", &mc_global.vfs.cd_symlinks },
     { "show_all_if_ambiguous", &mc_global.widget.show_all_if_ambiguous },
-    { "max_dirt_limit", &mcview_max_dirt_limit },
     { "use_file_to_guess_type", &use_file_to_check_type },
     { "alternate_plus_minus", &mc_global.tty.alternate_plus_minus },
     { "only_leading_plus_minus", &only_leading_plus_minus },
@@ -265,25 +256,12 @@ static const struct
     { "num_history_items_recorded", &num_history_items_recorded },
     { "file_op_compute_totals", &file_op_compute_totals },
     { "classic_progressbar", &classic_progressbar},
-    /* option_tab_spacing is used in internal viewer */
-    { "editor_tab_spacing", &option_tab_spacing },
     { "nice_rotating_dash", &nice_rotating_dash },
     { "horizontal_split",   &horizontal_split },
-    { "mcview_remember_file_position", &mcview_remember_file_position },
     { "auto_fill_mkdir_name", &auto_fill_mkdir_name },
     { "copymove_persistent_attr", &setup_copymove_persistent_attr },
     { "select_flags", &select_flags },
     { NULL, NULL }
-};
-
-static const struct
-{
-    const char *opt_name;
-    char **opt_addr;
-    const char *opt_defval;
-} str_options[] = {
-    { "mcview_eof", &mcview_show_eof, "" },
-    {  NULL, NULL, NULL }
 };
 
 static const struct
@@ -810,19 +788,10 @@ load_setup (void)
             mc_config_get_int (mc_main_config, CONFIG_APP_SECTION, int_options[i].opt_name,
                                *int_options[i].opt_addr);
 
-    if (option_tab_spacing <= 0)
-        option_tab_spacing = DEFAULT_TAB_SPACING;
-
     /* overwrite old_esc_mode_timeout */
     kt = getenv ("KEYBOARD_KEY_TIMEOUT_US");
     if ((kt != NULL) && (kt[0] != '\0'))
         old_esc_mode_timeout = atoi (kt);
-
-    /* Load string options */
-    for (i = 0; str_options[i].opt_name != NULL; i++)
-        *str_options[i].opt_addr =
-            mc_config_get_string (mc_main_config, CONFIG_APP_SECTION, str_options[i].opt_name,
-                                  str_options[i].opt_defval);
 
     load_layout ();
     panels_load_options ();
@@ -965,9 +934,6 @@ done_setup (void)
     g_free (user_recent_timeformat);
     g_free (user_old_timeformat);
 
-    for (i = 0; str_options[i].opt_name != NULL; i++)
-        g_free (*str_options[i].opt_addr);
-
     done_hotlist ();
     done_panelize ();
     /*    directory_history_free (); */
@@ -989,11 +955,6 @@ save_config (void)
     for (i = 0; int_options[i].opt_name != NULL; i++)
         mc_config_set_int (mc_main_config, CONFIG_APP_SECTION, int_options[i].opt_name,
                            *int_options[i].opt_addr);
-
-    /* Save string options */
-    for (i = 0; str_options[i].opt_name != NULL; i++)
-        mc_config_set_string (mc_main_config, CONFIG_APP_SECTION, str_options[i].opt_name,
-                              *str_options[i].opt_addr);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -1082,11 +1043,6 @@ load_keymap_defs (gboolean load_from_file)
         help_keymap = g_array_new (TRUE, FALSE, sizeof (global_keymap_t));
         load_keymap_from_section (KEYMAP_SECTION_HELP, help_keymap, mc_global_keymap);
 
-        viewer_keymap = g_array_new (TRUE, FALSE, sizeof (global_keymap_t));
-        load_keymap_from_section (KEYMAP_SECTION_VIEWER, viewer_keymap, mc_global_keymap);
-        viewer_hex_keymap = g_array_new (TRUE, FALSE, sizeof (global_keymap_t));
-        load_keymap_from_section (KEYMAP_SECTION_VIEWER_HEX, viewer_hex_keymap, mc_global_keymap);
-
         mc_config_deinit (mc_global_keymap);
     }
 
@@ -1098,8 +1054,6 @@ load_keymap_defs (gboolean load_from_file)
     listbox_map = (global_keymap_t *) listbox_keymap->data;
     tree_map = (global_keymap_t *) tree_keymap->data;
     help_map = (global_keymap_t *) help_keymap->data;
-    viewer_map = (global_keymap_t *) viewer_keymap->data;
-    viewer_hex_map = (global_keymap_t *) viewer_hex_keymap->data;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -1123,10 +1077,6 @@ free_keymap_defs (void)
         g_array_free (tree_keymap, TRUE);
     if (help_keymap != NULL)
         g_array_free (help_keymap, TRUE);
-    if (viewer_keymap != NULL)
-        g_array_free (viewer_keymap, TRUE);
-    if (viewer_hex_keymap != NULL)
-        g_array_free (viewer_hex_keymap, TRUE);
 }
 
 /* --------------------------------------------------------------------------------------------- */

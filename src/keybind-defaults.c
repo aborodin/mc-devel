@@ -42,17 +42,12 @@ GArray *input_keymap = NULL;
 GArray *listbox_keymap = NULL;
 GArray *tree_keymap = NULL;
 GArray *help_keymap = NULL;
-GArray *viewer_keymap = NULL;
-GArray *viewer_hex_keymap = NULL;
 
 const global_keymap_t *main_map = NULL;
 const global_keymap_t *main_x_map = NULL;
 const global_keymap_t *panel_map = NULL;
 const global_keymap_t *tree_map = NULL;
 const global_keymap_t *help_map = NULL;
-
-const global_keymap_t *viewer_map = NULL;
-const global_keymap_t *viewer_hex_map = NULL;
 
 /*** file scope macro definitions ****************************************************************/
 
@@ -134,7 +129,6 @@ static const global_keymap_ini_t default_main_x_keymap[] = {
     {"LinkSymbolicRelative", "v"},
     {"LinkSymbolicEdit", "ctrl-s"},
     {"PanelInfo", "i"},
-    {"PanelQuickView", "q"},
     {"HotListAdd", "h"},
     {"ExternalPanelize", "!"},
     {NULL, NULL}
@@ -294,81 +288,6 @@ static const global_keymap_ini_t default_help_keymap[] = {
     {NULL, NULL}
 };
 
-/* viewer */
-static const global_keymap_ini_t default_viewer_keymap[] = {
-    {"Help", "f1"},
-    {"WrapMode", "f2"},
-    {"Quit", "f3; f10; q; esc"},
-    {"HexMode", "f4"},
-    {"Goto", "f5"},
-    {"Search", "f7"},
-    {"SearchContinue", "f17; n"},
-    {"MagicMode", "f8"},
-    {"NroffMode", "f9"},
-    {"Home", "ctrl-a"},
-    {"End", "ctrl-e"},
-    {"Left", "h; left"},
-    {"Right", "l; right"},
-    {"LeftQuick", "ctrl-left"},
-    {"RightQuick", "ctrl-right"},
-    {"Up", "k; y; insert; up; ctrl-p"},
-    {"Down", "j; e; delete; down; enter; ctrl-n"},
-    {"PageDown", "f; space; pgdn; ctrl-v"},
-    {"PageUp", "b; pgup; alt-v; backspace"},
-    {"HalfPageDown", "d"},
-    {"HalfPageUp", "u"},
-    {"Top", "home; ctrl-home; ctrl-pgup; a1; alt-lt; g"},
-    {"Bottom", "end; ctrl-end; ctrl-pgdn; c1; alt-gt; shift-g"},
-    {"BookmarkGoto", "m"},
-    {"Bookmark", "r"},
-    {"FileNext", "ctrl-f"},
-    {"FilePrev", "ctrl-b"},
-#ifdef HAVE_CHARSET
-    {"SelectCodepage", "alt-e"},
-#endif
-    {"Shell", "ctrl-o"},
-    {"Ruler", "alt-r"},
-    {"SearchForward", "slash"},
-    {"SearchBackward", "question"},
-    {"SearchForwardContinue", "ctrl-s"},
-    {"SearchBackwardContinue", "ctrl-r"},
-    {NULL, NULL}
-};
-
-/* hex viewer */
-static const global_keymap_ini_t default_viewer_hex_keymap[] = {
-    {"Help", "f1"},
-    {"HexEditMode", "f2"},
-    {"Quit", "f3; f10; q; esc"},
-    {"HexMode", "f4"},
-    {"Goto", "f5"},
-    {"Save", "f6"},
-    {"Search", "f7"},
-    {"SearchContinue", "f17; n"},
-    {"MagicMode", "f8"},
-    {"NroffMode", "f9"},
-    {"ToggleNavigation", "tab"},
-    {"Home", "ctrl-a; home"},
-    {"End", "ctrl-e; end"},
-    {"Left", "b; left"},
-    {"Right", "f; right"},
-    {"Up", "k; y; up"},
-    {"Down", "j; delete; down"},
-    {"PageDown", "pgdn; ctrl-v"},
-    {"PageUp", "pgup; alt-v"},
-    {"Top", "ctrl-home; ctrl-pgup; a1; alt-lt; g"},
-    {"Bottom", "ctrl-end; ctrl-pgdn; c1; alt-gt; shift-g"},
-#ifdef HAVE_CHARSET
-    {"SelectCodepage", "alt-e"},
-#endif
-    {"Shell", "ctrl-o"},
-    {"SearchForward", "slash"},
-    {"SearchBackward", "question"},
-    {"SearchForwardContinue", "ctrl-s"},
-    {"SearchBackwardContinue", "ctrl-r"},
-    {NULL, NULL}
-};
-
 /*** file scope macro definitions ****************************************************************/
 
 /*** file scope type declarations ****************************************************************/
@@ -407,8 +326,6 @@ create_default_keymap (void)
     create_default_keymap_section (keymap, KEYMAP_SECTION_LISTBOX, default_listbox_keymap);
     create_default_keymap_section (keymap, KEYMAP_SECTION_TREE, default_tree_keymap);
     create_default_keymap_section (keymap, KEYMAP_SECTION_HELP, default_help_keymap);
-    create_default_keymap_section (keymap, KEYMAP_SECTION_VIEWER, default_viewer_keymap);
-    create_default_keymap_section (keymap, KEYMAP_SECTION_VIEWER_HEX, default_viewer_hex_keymap);
 
     return keymap;
 }

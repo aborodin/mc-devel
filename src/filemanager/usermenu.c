@@ -43,8 +43,6 @@
 #include "lib/widget.h"
 #include "lib/fileloc.h"
 
-#include "src/viewer/mcviewer.h"        /* for default_* externs */
-
 #include "src/execute.h"
 #include "src/setup.h"
 #include "src/history.h"
@@ -515,7 +513,6 @@ execute_menu_command (const char *commands, gboolean show_prompt)
     chmod (file_name, S_IRWXU);
     if (run_view)
     {
-        mcview_viewer (file_name, NULL, 0);
         dialog_switch_process_pending ();
     }
     else
@@ -608,22 +605,18 @@ check_format_view (const char *p)
             {
                 if (!strncmp (q, "ascii", 5))
                 {
-                    mcview_default_hex_mode = 0;
                     q += 4;
                 }
                 else if (!strncmp (q, "hex", 3))
                 {
-                    mcview_default_hex_mode = 1;
                     q += 2;
                 }
                 else if (!strncmp (q, "nroff", 5))
                 {
-                    mcview_default_nroff_flag = 1;
                     q += 4;
                 }
                 else if (!strncmp (q, "unform", 6))
                 {
-                    mcview_default_nroff_flag = 0;
                     q += 5;
                 }
             }

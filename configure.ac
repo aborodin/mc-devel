@@ -483,7 +483,6 @@ misc/mc.ext
 src/Makefile
 src/consaver/Makefile
 src/man2hlp/Makefile
-src/viewer/Makefile
 src/filemanager/Makefile
 
 lib/Makefile
@@ -501,7 +500,7 @@ lib/widget/Makefile
 
 doc/Makefile
 doc/hints/Makefile
-doc/man/mc.1 doc/man/mcview.1 doc/man/Makefile
+doc/man/mc.1 doc/man/Makefile
 doc/man/es/mc.1 doc/man/es/Makefile
 doc/man/hu/mc.1 doc/man/hu/Makefile
 doc/man/it/mc.1 doc/man/it/Makefile

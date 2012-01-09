@@ -62,7 +62,6 @@
 #include "lib/keybind.h"        /* CK_Down, CK_History */
 #include "lib/event.h"          /* mc_event_raise() */
 
-#include "src/viewer/mcviewer.h"
 #include "src/setup.h"
 #include "src/execute.h"        /* toggle_panels() */
 #include "src/history.h"
@@ -550,71 +549,12 @@ view_file_at_line (const char *filename, int plain_view, int internal, int start
     static const char *viewer = NULL;
     int move_dir = 0;
 
+    (void) internal;
+    (void) start_line;
+
     if (plain_view)
     {
-        int changed_hex_mode = 0;
-        int changed_nroff_flag = 0;
-        int changed_magic_flag = 0;
-
-        mcview_altered_hex_mode = 0;
-        mcview_altered_nroff_flag = 0;
-        mcview_altered_magic_flag = 0;
-        if (mcview_default_hex_mode)
-            changed_hex_mode = 1;
-        if (mcview_default_nroff_flag)
-            changed_nroff_flag = 1;
-        if (mcview_default_magic_flag)
-            changed_magic_flag = 1;
-        mcview_default_hex_mode = 0;
-        mcview_default_nroff_flag = 0;
-        mcview_default_magic_flag = 0;
-
-        switch (mcview_viewer (NULL, filename, start_line))
-        {
-        case MCVIEW_WANT_NEXT:
-            move_dir = 1;
-            break;
-        case MCVIEW_WANT_PREV:
-            move_dir = -1;
-            break;
-        default:
-            move_dir = 0;
-        }
-
-        if (changed_hex_mode && !mcview_altered_hex_mode)
-            mcview_default_hex_mode = 1;
-        if (changed_nroff_flag && !mcview_altered_nroff_flag)
-            mcview_default_nroff_flag = 1;
-        if (changed_magic_flag && !mcview_altered_magic_flag)
-            mcview_default_magic_flag = 1;
-
         dialog_switch_process_pending ();
-    }
-    else if (internal)
-    {
-        char view_entry[BUF_TINY];
-
-        if (start_line != 0)
-            g_snprintf (view_entry, sizeof (view_entry), "View:%d", start_line);
-        else
-            strcpy (view_entry, "View");
-
-        if (regex_command (filename, view_entry, &move_dir) == 0)
-        {
-            switch (mcview_viewer (NULL, filename, start_line))
-            {
-            case MCVIEW_WANT_NEXT:
-                move_dir = 1;
-                break;
-            case MCVIEW_WANT_PREV:
-                move_dir = -1;
-                break;
-            default:
-                move_dir = 0;
-            }
-
-            dialog_switch_process_pending ();
-        }
     }
     else
     {
@@ -705,8 +645,6 @@ view_filtered_cmd (void)
 
     if (command != NULL)
     {
-        mcview_viewer (command, "", 0);
-        g_free (command);
         dialog_switch_process_pending ();
     }
 }
@@ -1482,19 +1420,6 @@ info_cmd_no_menu (void)
 /* --------------------------------------------------------------------------------------------- */
 
 void
-quick_cmd_no_menu (void)
-{
-    if (get_display_type (0) == view_quick)
-        set_display_type (0, view_listing);
-    else if (get_display_type (1) == view_quick)
-        set_display_type (1, view_listing);
-    else
-        set_display_type (current_panel == left_panel ? 1 : 0, view_quick);
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-void
 listing_cmd (void)
 {
     switch_to_listing (MENU_PANEL_IDX);
@@ -1537,16 +1462,6 @@ void
 info_cmd (void)
 {
     set_display_type (MENU_PANEL_IDX, view_info);
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-void
-quick_view_cmd (void)
-{
-    if ((WPanel *) get_panel_widget (MENU_PANEL_IDX) == current_panel)
-        change_panel ();
-    set_display_type (MENU_PANEL_IDX, view_quick);
 }
 
 /* --------------------------------------------------------------------------------------------- */

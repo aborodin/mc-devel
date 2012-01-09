@@ -75,7 +75,6 @@ static name_keymap_t command_names[] = {
     {"ChangeOwnAdvanced", CK_ChangeOwnAdvanced},
     {"Remove", CK_Remove},
     {"BackSpace", CK_BackSpace},
-    {"Undo", CK_Undo},
     {"Redo", CK_Redo},
     {"Clear", CK_Clear},
     {"Menu", CK_Menu},
@@ -97,7 +96,6 @@ static name_keymap_t command_names[] = {
     {"HistoryNext", CK_HistoryNext},
     {"HistoryPrev", CK_HistoryPrev},
     {"Complete", CK_Complete},
-    {"Save", CK_Save},
     {"SaveAs", CK_SaveAs},
     {"Goto", CK_Goto},
     {"Reread", CK_Reread},
@@ -111,6 +109,8 @@ static name_keymap_t command_names[] = {
     {"ScreenPrev", CK_ScreenPrev},
     {"FileNext", CK_FileNext},
     {"FilePrev", CK_FilePrev},
+    {"DeleteToHome", CK_DeleteToHome},
+    {"DeleteToEnd", CK_DeleteToEnd},
     {"DeleteToWordBegin", CK_DeleteToWordBegin},
     {"DeleteToWordEnd", CK_DeleteToWordEnd},
     {"Cut", CK_Cut},
@@ -161,7 +161,6 @@ static name_keymap_t command_names[] = {
 #endif
     {"OptionsPanel", CK_OptionsPanel},
     {"CdQuick", CK_CdQuick},
-    {"PanelQuickView", CK_PanelQuickView},
     {"LinkSymbolicRelative", CK_LinkSymbolicRelative},
     {"VfsList", CK_VfsList},
     {"SaveSetup", CK_SaveSetup},
@@ -216,19 +215,6 @@ static name_keymap_t command_names[] = {
 
     /* tree */
     {"Forget", CK_Forget},
-
-    /* viewer */
-    {"WrapMode", CK_WrapMode},
-    {"HexEditMode", CK_HexEditMode},
-    {"HexMode", CK_HexMode},
-    {"MagicMode", CK_MagicMode},
-    {"NroffMode", CK_NroffMode},
-    {"BookmarkGoto", CK_BookmarkGoto},
-    {"Ruler", CK_Ruler},
-    {"SearchForward", CK_SearchForward},
-    {"SearchBackward", CK_SearchBackward},
-    {"SearchForwardContinue", CK_SearchForwardContinue},
-    {"SearchBackwardContinue", CK_SearchBackwardContinue},
 
     {NULL, CK_IgnoreKey}
 };

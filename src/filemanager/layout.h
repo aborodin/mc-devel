@@ -15,8 +15,7 @@ typedef enum
     view_listing = 0,           /* Directory listing */
     view_info = 1,              /* Information panel */
     view_tree = 2,              /* Tree view */
-    view_quick = 3,             /* Quick view */
-    view_nothing = 4,           /* Undefined */
+    view_nothing = 3,           /* Undefined */
 } panel_view_mode_t;
 
 /*** enums ***************************************************************************************/

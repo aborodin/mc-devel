@@ -54,7 +54,6 @@
 #include "src/main.h"           /* do_cd */
 
 #include "src/consaver/cons.saver.h"
-#include "src/viewer/mcviewer.h"
 
 #ifdef HAVE_CHARSET
 #include "src/selcodepage.h"    /* do_set_codepage */
@@ -100,8 +99,6 @@ exec_extension (const char *filename, const char *lc_data, int *move_dir, int st
     int parameter_found = 0;
     char lc_prompt[80];
     int run_view = 0;
-    int def_hex_mode = mcview_default_hex_mode, changed_hex_mode = 0;
-    int def_nroff_flag = mcview_default_nroff_flag, changed_nroff_flag = 0;
     int written_nonspace = 0;
     int is_cd = 0;
     char buffer[1024];
@@ -303,44 +300,6 @@ exec_extension (const char *filename, const char *lc_data, int *move_dir, int st
 
     if (run_view)
     {
-        mcview_ret_t ret;
-
-        mcview_altered_hex_mode = 0;
-        mcview_altered_nroff_flag = 0;
-        if (def_hex_mode != mcview_default_hex_mode)
-            changed_hex_mode = 1;
-        if (def_nroff_flag != mcview_default_nroff_flag)
-            changed_nroff_flag = 1;
-
-        /* If we've written whitespace only, then just load filename
-         * into view
-         */
-        if (written_nonspace)
-        {
-            ret = mcview_viewer (cmd, filename, start_line);
-            unlink (file_name);
-        }
-        else
-            ret = mcview_viewer (NULL, filename, start_line);
-
-        if (move_dir != NULL)
-            switch (ret)
-            {
-            case MCVIEW_WANT_NEXT:
-                *move_dir = 1;
-                break;
-            case MCVIEW_WANT_PREV:
-                *move_dir = -1;
-                break;
-            default:
-                *move_dir = 0;
-            }
-
-        if (changed_hex_mode && !mcview_altered_hex_mode)
-            mcview_default_hex_mode = def_hex_mode;
-        if (changed_nroff_flag && !mcview_altered_nroff_flag)
-            mcview_default_nroff_flag = def_nroff_flag;
-
         dialog_switch_process_pending ();
     }
     else if (is_cd)

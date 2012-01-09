@@ -21,17 +21,12 @@ extern GArray *input_keymap;
 extern GArray *listbox_keymap;
 extern GArray *tree_keymap;
 extern GArray *help_keymap;
-extern GArray *viewer_keymap;
-extern GArray *viewer_hex_keymap;
 
 extern const global_keymap_t *main_map;
 extern const global_keymap_t *main_x_map;
 extern const global_keymap_t *panel_map;
 extern const global_keymap_t *tree_map;
 extern const global_keymap_t *help_map;
-
-extern const global_keymap_t *viewer_map;
-extern const global_keymap_t *viewer_hex_map;
 
 /*** declarations of public functions ************************************************************/
 
