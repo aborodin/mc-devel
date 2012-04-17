@@ -62,7 +62,6 @@
 
 #include <errno.h>
 #include <ctype.h>
-#include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -152,6 +151,7 @@ statfs (char const *filename, struct fs_info *buf)
 #include "lib/timefmt.h"        /* file_date() */
 #include "lib/util.h"
 #include "lib/widget.h"
+#include "lib/timer.h"
 
 #include "src/setup.h"          /* verbose, safe_overwrite */
 
@@ -972,8 +972,8 @@ file_progress_show_total (file_op_total_context_t * tctx, file_op_context_t * ct
         struct timeval tv_current;
         char buffer4[BUF_TINY];
 
-        gettimeofday (&tv_current, NULL);
-        file_frmt_time (buffer2, tv_current.tv_sec - tctx->transfer_start.tv_sec);
+        tv_current = mc_timer_elapsed (mc_global.timer);
+        file_frmt_time (buffer2, (tv_current - tctx->transfer_start)/(1.0 * G_USEC_PER_SEC));
 
         if (ctx->progress_totals_computed)
         {
