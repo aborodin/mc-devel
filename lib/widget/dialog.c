@@ -84,6 +84,8 @@ typedef struct
 
 /*** file scope variables ************************************************************************/
 
+static GSList *event_queue = NULL;
+
 /* --------------------------------------------------------------------------------------------- */
 /*** file scope functions ************************************************************************/
 /* --------------------------------------------------------------------------------------------- */
@@ -514,7 +516,7 @@ frontend_dlg_run (WDialog * h)
 
     while (widget_get_state (wh, WST_ACTIVE))
     {
-        int d_key;
+        GSList *qevent = event_queue;
 
         if (mc_global.tty.winch_flag != 0)
             dialog_change_screen_size ();
@@ -536,9 +538,22 @@ frontend_dlg_run (WDialog * h)
 
         /* Clear interrupt flag */
         tty_got_interrupt ();
-        d_key = tty_get_event (&event, h->mouse_status == MOU_REPEAT, TRUE);
 
-        dlg_process_event (h, d_key, &event);
+        if (qevent == NULL || QUEUE_EVENT (qevent->data)->receiver != h)
+        {
+            int d_key;
+
+            d_key = tty_get_event (&event, h->mouse_status == MOU_REPEAT, TRUE);
+            dlg_process_event (h, d_key, &event);
+        }
+        else
+        {
+            queue_event_t *qev = QUEUE_EVENT (qevent->data);
+
+            event_queue = g_slist_delete_link (event_queue, qevent);
+            mc_event_raise (h->event_group, qev->command, qev);
+            queue_event_deinit (qev);
+        }
 
         if (widget_get_state (wh, WST_CLOSED))
             send_message (h, NULL, MSG_VALIDATE, 0, NULL);
@@ -1149,6 +1164,14 @@ dlg_init (WDialog * h)
     widget_set_state (WIDGET (h->current->data), WST_FOCUSED, TRUE);
 
     h->ret_value = 0;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+void
+dlg_put_queue_event (queue_event_t * event)
+{
+    event_queue = g_slist_append (event_queue, event);
 }
 
 /* --------------------------------------------------------------------------------------------- */
