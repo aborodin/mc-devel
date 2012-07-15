@@ -811,6 +811,8 @@ mcview_dialog_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm,
             dlg_put_queue_event (ev);
             view->filename_vpath = NULL;
         }
+        else if (mc_global.mc_run_mode != MC_RUN_FULL)
+            mc_global.midnight_shutdown = TRUE;
 
         run_editor = FALSE;
         return MSG_HANDLED;

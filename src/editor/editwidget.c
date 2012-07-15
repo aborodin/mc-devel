@@ -860,6 +860,8 @@ edit_dialog_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm, v
                 }
             }
         }
+        else if (mc_global.mc_run_mode != MC_RUN_FULL)
+            mc_global.midnight_shutdown = TRUE;
 
         run_viewer = FALSE;
         edit_dlg_deinit ();

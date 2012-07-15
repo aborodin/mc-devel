@@ -1017,6 +1017,8 @@ mc_maybe_editor_or_viewer (void)
 #ifdef USE_INTERNAL_EDIT
     case MC_RUN_EDITOR:
         ret = edit_files ((GList *) mc_run_param0);
+        if (!mc_global.midnight_shutdown)
+            dlg_run (midnight_dlg);
         break;
 #endif /* USE_INTERNAL_EDIT */
     case MC_RUN_VIEWER:
@@ -1028,6 +1030,8 @@ mc_maybe_editor_or_viewer (void)
 
             ret = view_file (vpath, FALSE, TRUE);
             vfs_path_free (vpath);
+            if (!mc_global.midnight_shutdown)
+                dlg_run (midnight_dlg);
             break;
         }
 #ifdef USE_DIFF_VIEW
@@ -1549,6 +1553,28 @@ midnight_unsubscribe (WDialog * h)
 /* --------------------------------------------------------------------------------------------- */
 
 static cb_ret_t
+midnight_dummy_callback (Widget * w, Widget * sender, dlg_msg_t msg, int parm, void *data)
+{
+    (void) sender;
+
+    switch (msg)
+    {
+    case MSG_INIT:
+        midnight_subscribe (DIALOG (w));
+        break;
+    case MSG_END:
+        midnight_unsubscribe (DIALOG (w));
+        break;
+    default:
+        break;
+    }
+
+    return MSG_HANDLED;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+static cb_ret_t
 midnight_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm, void *data)
 {
     long command;
@@ -1879,17 +1905,18 @@ do_nc (void)
     edit_stack_init ();
 #endif
 
-    midnight_dlg = dlg_create (FALSE, 0, 0, 1, 1, WPOS_FULLSCREEN, FALSE, dialog_colors,
-                               midnight_callback, NULL, "[main]", NULL);
-
-    /* Check if we were invoked as an editor or file viewer */
     if (mc_global.mc_run_mode != MC_RUN_FULL)
     {
+        midnight_dlg = dlg_create (FALSE, 0, 0, 1, 1, WPOS_FULLSCREEN, FALSE, dialog_colors,
+                                   midnight_dummy_callback, NULL, "[main]", NULL);
         setup_dummy_mc ();
         ret = mc_maybe_editor_or_viewer ();
     }
     else
     {
+        midnight_dlg = dlg_create (FALSE, 0, 0, 1, 1, WPOS_FULLSCREEN, FALSE, dialog_colors,
+                                   midnight_callback, NULL, "[main]", NULL);
+
         /* We only need the first idle event to show user menu after start */
         widget_idle (WIDGET (midnight_dlg), TRUE);
 

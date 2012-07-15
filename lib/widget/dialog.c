@@ -545,10 +545,15 @@ frontend_dlg_run (WDialog * h)
 
         if (qevent == NULL || QUEUE_EVENT (qevent->data)->receiver != h)
         {
-            int d_key;
+            if (mc_global.midnight_shutdown)
+                dlg_stop (h);
+            else
+            {
+                int d_key;
 
-            d_key = tty_get_event (&event, h->mouse_status == MOU_REPEAT, TRUE);
-            dlg_process_event (h, d_key, &event);
+                d_key = tty_get_event (&event, h->mouse_status == MOU_REPEAT, TRUE);
+                dlg_process_event (h, d_key, &event);
+            }
         }
         else
         {
