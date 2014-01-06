@@ -923,7 +923,7 @@ edit_do_search (WEdit * edit)
     if (edit->search == NULL)
         edit->search_start = edit->buffer.curs1;
 
-    edit_push_undo_action (edit, KEY_PRESS + edit->start_display);
+    edit_push_undo_action (&edit->undo_stack, KEY_PRESS + edit->start_display);
 
     if (search_create_bookmark)
     {
@@ -1643,7 +1643,7 @@ edit_save_as_cmd (WEdit * edit)
         return FALSE;
 
     exp_vpath = edit_get_save_file_as (edit);
-    edit_push_undo_action (edit, KEY_PRESS + edit->start_display);
+    edit_push_undo_action (&edit->undo_stack, KEY_PRESS + edit->start_display);
 
     if (exp_vpath != NULL)
     {
@@ -1833,7 +1833,7 @@ edit_store_macro_cmd (WEdit * edit)
     if (macros_config == NULL)
         return FALSE;
 
-    edit_push_undo_action (edit, KEY_PRESS + edit->start_display);
+    edit_push_undo_action (&edit->undo_stack, KEY_PRESS + edit->start_display);
 
     marcros_string = g_string_sized_new (250);
     macros = g_array_new (TRUE, FALSE, sizeof (macro_action_t));
@@ -1905,7 +1905,7 @@ edit_repeat_macro_cmd (WEdit * edit)
 
     g_free (f);
 
-    edit_push_undo_action (edit, KEY_PRESS + edit->start_display);
+    edit_push_undo_action (&edit->undo_stack, KEY_PRESS + edit->start_display);
     edit->force |= REDRAW_PAGE;
 
     for (j = 0; j < count_repeat; j++)
@@ -2483,7 +2483,7 @@ edit_replace_cmd (WEdit * edit, int again)
         disp1 = edit_replace_cmd__conv_to_display (saved1 ? saved1 : (char *) "");
         disp2 = edit_replace_cmd__conv_to_display (saved2 ? saved2 : (char *) "");
 
-        edit_push_undo_action (edit, KEY_PRESS + edit->start_display);
+        edit_push_undo_action (&edit->undo_stack, KEY_PRESS + edit->start_display);
 
         editcmd_dialog_replace_show (edit, disp1, disp2, &input1, &input2);
 
@@ -3011,7 +3011,7 @@ edit_save_block_cmd (WEdit * edit)
         input_expand_dialog (_("Save block"), _("Enter file name:"),
                              MC_HISTORY_EDIT_SAVE_BLOCK, tmp, INPUT_COMPLETE_FILENAMES);
     g_free (tmp);
-    edit_push_undo_action (edit, KEY_PRESS + edit->start_display);
+    edit_push_undo_action (&edit->undo_stack, KEY_PRESS + edit->start_display);
 
     if (exp != NULL && *exp != '\0')
     {
@@ -3044,7 +3044,7 @@ edit_insert_file_cmd (WEdit * edit)
                                MC_HISTORY_EDIT_INSERT_FILE, tmp, INPUT_COMPLETE_FILENAMES);
     g_free (tmp);
 
-    edit_push_undo_action (edit, KEY_PRESS + edit->start_display);
+    edit_push_undo_action (&edit->undo_stack, KEY_PRESS + edit->start_display);
 
     if (exp != NULL && *exp != '\0')
     {
