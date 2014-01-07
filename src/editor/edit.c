@@ -1097,6 +1097,29 @@ edit_do_undo (WEdit * edit)
 /* --------------------------------------------------------------------------------------------- */
 
 static void
+edit_group_undo (WEdit * edit)
+{
+    long ac = KEY_PRESS;
+    long cur_ac = KEY_PRESS;
+
+    while (ac != STACK_BOTTOM && ac == cur_ac)
+    {
+        cur_ac = edit_get_prev_undo_action (&edit->undo_stack);
+        edit_do_undo (edit);
+
+        /* exit from cycle if option_group_undo is not set,
+         * and make single UNDO operation
+         */
+        if (!option_group_undo)
+            break;
+
+        ac = edit_get_prev_undo_action (&edit->undo_stack);
+    }
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+static void
 edit_do_redo (WEdit * edit)
 {
     long ac;
@@ -1178,23 +1201,23 @@ edit_do_redo (WEdit * edit)
 /* --------------------------------------------------------------------------------------------- */
 
 static void
-edit_group_undo (WEdit * edit)
+edit_group_redo (WEdit * edit)
 {
     long ac = KEY_PRESS;
     long cur_ac = KEY_PRESS;
 
     while (ac != STACK_BOTTOM && ac == cur_ac)
     {
-        cur_ac = edit_get_prev_undo_action (&edit->undo_stack);
-        edit_do_undo (edit);
+        cur_ac = edit_get_prev_redo_action (&edit->redo_stack);
+        edit_do_redo (edit);
 
         /* exit from cycle if option_group_undo is not set,
-         * and make single UNDO operation
+         * and make single REDO operation
          */
         if (!option_group_undo)
             break;
 
-        ac = edit_get_prev_undo_action (&edit->undo_stack);
+        ac = edit_get_prev_redo_action (&edit->redo_stack);
     }
 }
 
@@ -2972,7 +2995,7 @@ edit_execute_cmd (WEdit * edit, unsigned long command, int char_for_insertion)
     if (command == CK_Redo)
     {
         edit->redo_stack.reset = FALSE;
-        edit_do_redo (edit);
+        edit_group_redo (edit);
         edit->found_len = 0;
         edit->prev_col = edit_get_col (edit);
         edit->search_start = edit->buffer.curs1;
