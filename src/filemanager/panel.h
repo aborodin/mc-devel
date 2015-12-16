@@ -160,6 +160,9 @@ void panel_re_sort (WPanel *panel);
 void panel_change_encoding (WPanel *panel);
 vfs_path_t *remove_encoding_from_path (const vfs_path_t *vpath);
 
+void panel_fields_init (void);
+gboolean panel_fields_register (const panel_field_t *field);
+
 void update_panels (panel_update_flags_t flags, const char *current_file);
 int set_panel_formats (WPanel *p);
 

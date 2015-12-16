@@ -78,6 +78,10 @@
 
 #include "panel.h"
 
+#ifdef ENABLE_LUA
+#include "src/lua/modules/fields.h"  // mc_lua_set_current_field()
+#endif
+
 /*** global variables ****************************************************************************/
 
 /* The hook list for the select file function */
@@ -87,16 +91,13 @@ mc_fhl_t *mc_filehighlight = NULL;
 
 /*** file scope macro definitions ****************************************************************/
 
-typedef enum
-{
-    FATTR_NORMAL = 0,
-    FATTR_CURRENT,
-    FATTR_MARKED,
-    FATTR_MARKED_CURRENT,
-    FATTR_STATUS
-} file_attr_t;
+#define panel_fields         ((panel_field_t *) panel_fields__array->data)
 
-#define DEFAULT_USER_FORMAT "half type name | size | perm"
+#define BUILTIN_FIELDS_COUNT (G_N_ELEMENTS (panel_fields_initializers) - 1)
+#define MAX_USER_FIELDS      100
+#define MAX_FIELDS           (BUILTIN_FIELDS_COUNT + MAX_USER_FIELDS)
+
+#define DEFAULT_USER_FORMAT  "half type name | size | perm"
 
 /* select/unselect dialog results */
 #define SELECT_RESET ((mc_search_t *) (-1))
@@ -108,6 +109,15 @@ typedef enum
 #define MOUSE_AFTER_LAST_FILE (-3)
 
 /*** file scope type declarations ****************************************************************/
+
+typedef enum
+{
+    FATTR_NORMAL = 0,
+    FATTR_CURRENT,
+    FATTR_MARKED,
+    FATTR_MARKED_CURRENT,
+    FATTR_STATUS
+} file_attr_t;
 
 typedef enum
 {
@@ -163,7 +173,7 @@ static const char *string_dot (file_entry_t *fe, int len);
 
 /*** file scope variables ************************************************************************/
 
-static panel_field_t panel_fields[] = {
+static panel_field_t panel_fields_initializers[] = {
     { "unsorted", 12, TRUE, J_LEFT_FIT,
       // TRANSLATORS: one single character to represent 'unsorted' sort mode
       // TRANSLATORS: no need to translate 'sort', it's just a context prefix
@@ -220,6 +230,15 @@ static panel_field_t panel_fields[] = {
     { "dot", 1, FALSE, J_RIGHT, "", " ", FALSE, FALSE, string_dot, NULL },
     { NULL, 0, FALSE, J_RIGHT, NULL, NULL, FALSE, FALSE, NULL, NULL },
 };
+
+/*
+ * To allow users to register fields (via scripts), we store the fields not
+ * in a static C array but in a GArray.
+ *
+ * We conveniently #define 'panel_fields' to make the rest of the code work
+ * as if nothing has changed.
+ */
+static GArray *panel_fields__array = NULL;
 
 static char *panel_sort_up_char = NULL;
 static char *panel_sort_down_char = NULL;
@@ -701,6 +720,10 @@ format_file (WPanel *panel, int file_index, int width, file_attr_t attr, gboolea
             int len, perm = 0;
             const char *prepared_text;
             int name_offset = 0;
+
+#ifdef ENABLE_LUA
+            mc_lua_set_current_field (panel, fi->id);
+#endif
 
             if (fe != NULL)
                 txt = fi->string_fn (fe, fi->field_len);
@@ -3403,6 +3426,10 @@ panel_do_cd_int (WPanel *panel, const vfs_path_t *new_dir_vpath, enum cd_enum cd
     // Reload current panel
     panel_clean_dir (panel);
 
+#ifdef ENABLE_LUA
+    mc_lua_set_current_field (panel, panel->sort_field->id);
+#endif
+
     if (!dir_list_load (&panel->dir, panel->cwd_vpath, panel->sort_field->sort_routine,
                         &panel->sort_info, &panel->filter))
         message (D_ERROR, MSG_ERROR, _ ("Cannot read directory contents"));
@@ -4615,6 +4642,10 @@ panel_sized_with_dir_new (const char *panel_name, const WRect *r, const vfs_path
         panel->cwd_vpath = vfs_path_clone (vfs_get_raw_current_dir ());
     }
 
+#ifdef ENABLE_LUA
+    mc_lua_set_current_field (panel, panel->sort_field->id);
+#endif
+
     // Load the default format
     if (!dir_list_load (&panel->dir, panel->cwd_vpath, panel->sort_field->sort_routine,
                         &panel->sort_info, &panel->filter))
@@ -4644,6 +4675,61 @@ panel_sized_with_dir_new (const char *panel_name, const WRect *r, const vfs_path
 /* --------------------------------------------------------------------------------------------- */
 
 void
+panel_fields_init (void)
+{
+    // We allow calling this function again later to clear all user-registered fields.
+
+    if (panel_fields__array == NULL)
+        panel_fields__array =
+            g_array_sized_new (TRUE, TRUE, sizeof (panel_field_t), MAX_FIELDS + 1);
+
+    // @FIXME: Since we're not g_free()ing the fields' title/id/hotkey, there's memory leak here.
+    g_array_set_size (panel_fields__array, 0);
+    g_array_append_vals (panel_fields__array, panel_fields_initializers, BUILTIN_FIELDS_COUNT);
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/**
+ * Allow for registering fields at runtime.
+ */
+gboolean
+panel_fields_register (const panel_field_t *field)
+{
+    panel_field_t *found;
+
+    found = (panel_field_t *) panel_get_field_by_id (field->id);
+    if (found != NULL)
+    {
+        // Override an existing field.
+        // @FIXME: See note in panel_fields_init() about memory leak.
+        *found = *field;
+    }
+    else
+    {
+        // A new field.
+        if (panel_fields__array->len < MAX_FIELDS)
+            g_array_append_val (panel_fields__array, *field);
+        else
+        {
+            /*
+             * We don't let the array grow. If it grows (that is, reallocated),
+             * the panel->sort_field pointer will become invalid and we'll crash.
+             * That's the reason we pre-allocate MAX_FIELDS in panel_fields_init().
+             * See also the notes in fields.lua.
+             *
+             * We'll remove this limitation once we tackle panel->sort_field. @FIXME.
+             */
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+void
 panel_reload (WPanel *panel)
 {
     struct stat current_stat;
@@ -4668,6 +4754,10 @@ panel_reload (WPanel *panel)
     panel->cwd_vpath = cwd_vpath;
     memset (&(panel->dir_stat), 0, sizeof (panel->dir_stat));
     show_dir (panel);
+
+#ifdef ENABLE_LUA
+    mc_lua_set_current_field (panel, panel->sort_field->id);
+#endif
 
     if (!dir_list_reload (&panel->dir, panel->cwd_vpath, panel->sort_field->sort_routine,
                           &panel->sort_info, &panel->filter))
@@ -4979,6 +5069,11 @@ panel_re_sort (WPanel *panel)
 
     filename = g_strndup (fe->fname->str, fe->fname->len);
     unselect_item (panel);
+
+#ifdef ENABLE_LUA
+    mc_lua_set_current_field (panel, panel->sort_field->id);
+#endif
+
     dir_list_sort (&panel->dir, panel->sort_field->sort_routine, &panel->sort_info);
     panel->current = -1;
 

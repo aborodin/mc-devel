@@ -316,6 +316,8 @@ main (int argc, char *argv[])
 
     tmp_vpath = vfs_path_from_str (tmpdir);
 
+    panel_fields_init ();
+
     /* do this after vfs initialization and vfs working directory setup
        due to mc_setctl() and mcedit_arg_vpath_new() calls in mc_setup_by_args() */
     if (!mc_setup_by_args (argc, argv, &mcerror))

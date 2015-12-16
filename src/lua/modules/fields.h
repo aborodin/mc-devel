@@ -1,5 +1,10 @@
-#ifndef MC__LUA_TTY_H
-#define MC__LUA_TTY_H
+#ifndef MC__LUA_FIELDS_H
+#define MC__LUA_FIELDS_H
+
+/*
+ * Since we're referring to WPanel here, you'll have to #include this file after
+ * src/filemanager/panel.h.
+ */
 
 /*** typedefs(not structures) and defined constants **********************************************/
 
@@ -11,9 +16,7 @@
 
 /*** declarations of public functions ************************************************************/
 
-long luaTTY_check_keycode (lua_State *L, int name_index, gboolean push_name_short);
-int /* align_crt_t */ luaTTY_check_align (lua_State *L, int idx);
-void luaTTY_assert_ui_is_ready (lua_State *L);
+void mc_lua_set_current_field (WPanel *panel, const char *field_id);
 
 /*** inline functions ****************************************************************************/
 
