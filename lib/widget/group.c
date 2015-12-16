@@ -38,6 +38,7 @@
 #include "lib/tty/key.h"        /* ALT() */
 
 #include "lib/widget.h"
+#include "lib/scripting.h"      /* scripting_trigger_widget_event() */
 
 /*** global variables ****************************************************************************/
 
@@ -497,6 +498,9 @@ group_draw (WGroup * g)
 
         for (p = g->widgets; p != NULL; p = g_list_next (p))
             widget_draw (WIDGET (p->data));
+
+        /* Can be used to add decoration, like drop-shadow. */
+        scripting_trigger_widget_event ("Group::draw", wg);
 
         widget_update_cursor (wg);
     }

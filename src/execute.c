@@ -44,6 +44,7 @@
 #include "lib/util.h"
 #include "lib/strutil.h"        /* str_replace_all_substrings() */
 #include "lib/widget.h"
+#include "lib/scripting.h"      /* scripting_trigger_event() */
 
 #include "filemanager/filemanager.h"
 #include "filemanager/layout.h" /* use_dash() */
@@ -93,6 +94,7 @@ edition_post_exec (void)
     enable_bracketed_paste ();
     if (mc_global.tty.alternate_plus_minus)
         application_keypad_mode ();
+    scripting_trigger_event ("ui::restored");
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -542,6 +544,7 @@ toggle_subshell (void)
     channels_up ();
     if (mc_global.tty.alternate_plus_minus)
         application_keypad_mode ();
+    scripting_trigger_event ("ui::restored");
 
     /* HACK:
      * Save sigwinch flag that will be reset in mc_refresh() called via update_panels().

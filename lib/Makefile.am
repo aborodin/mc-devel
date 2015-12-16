@@ -48,7 +48,8 @@ libmc_la_SOURCES = \
 	serialize.c serialize.h \
 	shell.c shell.h \
 	stat-size.h \
-	timefmt.c timefmt.h
+	timefmt.c timefmt.h \
+	scripting.c scripting.h
 
 if USE_MAINTAINER_MODE
 libmc_la_SOURCES += logging.c logging.h
