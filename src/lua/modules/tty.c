@@ -65,6 +65,7 @@ static int l_skin_style (lua_State *L);
 static int l_is_color (lua_State *L);
 static int l_is_hicolor (lua_State *L);
 static int l_is_truecolor (lua_State *L);
+static int l_destruct_style (lua_State *L);
 static int l_text_width (lua_State *L);
 static int l_text_cols (lua_State *L);
 static int l_text_align (lua_State *L);
@@ -91,6 +92,7 @@ static const struct luaL_Reg ttylib[] = {
     { "is_color", l_is_color },
     { "is_hicolor", l_is_hicolor },
     { "is_truecolor", l_is_truecolor },
+    { "destruct_style", l_destruct_style },
     { "text_width", l_text_width },
     { "text_cols", l_text_cols },
     { "text_align", l_text_align },
@@ -726,6 +728,84 @@ l_is_truecolor (lua_State *L)
         is_truecolor = tty_use_truecolors (NULL);
 
     lua_pushboolean (L, is_truecolor);
+
+    return 1;
+}
+/* --------------------------------------------------------------------------------------------- */
+
+/**
+ * Destructures a style.
+ *
+ * Does the opposite of @{tty.style}. Given a style, returns a table with
+ * the fields **fg**, **bg**, **attr** (and their numeric counterparts).
+ *
+ * You'll not normally use this function. It can be used to implement
+ * exotic features like converting an @{ui.Editbox} syntax-highlighted
+ * contents into HTML, or creating "screen shots".
+ *
+ *    ui.Editbox.bind('C-y', function(edt)
+ *      devel.view(tty.destruct_style(
+ *        edt:get_style_at(edt.cursor_offs)
+ *      ))
+ *    end)
+ *
+ * @function destruct_style
+ * @args (style)
+ */
+static int
+l_destruct_style (lua_State * L)
+{
+    int pair;
+    tty_color_lib_pair_t *st;
+
+    pair = luaL_checkint (L, 1);
+    st = tty_color_lib_pair_number_to_struct (pair);
+
+    if (st == NULL)
+        lua_pushnil (L);
+    else
+    {
+        lua_newtable (L);
+
+        lua_pushinteger (L, st->fg);
+        lua_setfield (L, -2, "ifg");
+        lua_pushstring (L, tty_color_get_name_by_index (st->fg));
+        lua_setfield (L, -2, "fg");
+
+        lua_pushinteger (L, st->bg);
+        lua_setfield (L, -2, "ibg");
+        lua_pushstring (L, tty_color_get_name_by_index (st->bg));
+        lua_setfield (L, -2, "bg");
+
+        lua_pushinteger (L, st->attr);
+        lua_setfield (L, -2, "iattr");
+
+        lua_newtable (L);
+        {
+            if ((st->attr & A_BOLD) == A_BOLD)
+                luaMC_setflag (L, -1, "bold", TRUE);
+            if ((st->attr & A_UNDERLINE) == A_UNDERLINE)
+                luaMC_setflag (L, -1, "underline", TRUE);
+            if ((st->attr & A_REVERSE) == A_REVERSE)
+                luaMC_setflag (L, -1, "reverse", TRUE);
+            if ((st->attr & A_BLINK) == A_BLINK)
+                luaMC_setflag (L, -1, "blink", TRUE);
+#ifdef A_ITALIC
+            if ((st->attr & A_ITALIC) == A_ITALIC)
+                luaMC_setflag (L, -1, "italic", TRUE);
+#endif
+        }
+        lua_setfield (L, -2, "attr");
+
+        if (st->is_temp)
+        {
+            /* If you ever memoize this function on the Lua side, make sure
+               not to cache is_temp entries: these styles, used for syntax
+               highlighting, are disposed of when the editor exists, and their
+               indexes are reused. */
+            luaMC_setflag (L, -1, "is_temp", TRUE);
+        }
+    }
 
     return 1;
 }
