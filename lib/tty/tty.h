@@ -129,6 +129,8 @@ extern void tty_draw_box (int y, int x, int rows, int cols, gboolean single);
 extern void tty_draw_box_shadow (int y, int x, int rows, int cols, int shadow_color);
 extern void tty_fill_region (int y, int x, int rows, int cols, unsigned char ch);
 
+extern gboolean tty_read_screen (int y, int x, char **str, int *color);
+
 extern int tty_resize (int fd);
 extern void tty_refresh (void);
 extern void tty_change_screen_size (void);
