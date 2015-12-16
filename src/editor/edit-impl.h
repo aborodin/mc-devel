@@ -211,6 +211,7 @@ void edit_update_screen (WEdit * edit);
 void edit_save_size (WEdit * edit);
 gboolean edit_handle_move_resize (WEdit * edit, long command);
 void edit_toggle_fullscreen (WEdit * edit);
+off_t edit_find_line (WEdit * edit, long line);
 void edit_move_to_line (WEdit * e, long line);
 void edit_move_display (WEdit * e, long line);
 void edit_word_wrap (WEdit * edit);
@@ -254,6 +255,16 @@ void format_paragraph (WEdit * edit, gboolean force);
 void edit_execute_cmd (WEdit * edit, long command, int char_for_insertion);
 
 int editcmd_dialog_raw_key_query (const char *heading, const char *query, gboolean cancel);
+
+/**
+ * @FIXME:
+ *
+ * edit_init() neglects to set w->callback (and w->mouse), so code wishing to
+ * instantiate a WEdit has to do it itself. We expose the callback for such code.
+ *
+ * (Currently, this is only used by src/lua/modules/ui-editbox.c:edit_constructor().)
+ */
+cb_ret_t edit_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm, void *data);
 
 /*** inline functions ****************************************************************************/
 

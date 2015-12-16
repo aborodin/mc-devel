@@ -48,6 +48,7 @@
 #include "lib/strutil.h"        /* utf string functions */
 #include "lib/util.h"           /* is_printable() */
 #include "lib/widget.h"
+#include "lib/scripting.h"      /* scripting_trigger_widget_event() */
 #ifdef HAVE_CHARSET
 #include "lib/charsets.h"
 #endif
@@ -1112,6 +1113,7 @@ void
 edit_render_keypress (WEdit * edit)
 {
     edit_render (edit, 0, 0, 0, 0, 0);
+    scripting_trigger_widget_event ("Editbox::draw", WIDGET (edit));
 }
 
 /* --------------------------------------------------------------------------------------------- */

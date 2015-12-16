@@ -55,6 +55,7 @@
 #include "lib/timefmt.h"        /* time formatting */
 #include "lib/lock.h"
 #include "lib/widget.h"
+#include "lib/scripting.h"      /* scripting_trigger_widget_event() */
 
 #ifdef HAVE_CHARSET
 #include "lib/charsets.h"       /* get_codepage_id */
@@ -700,61 +701,7 @@ is_blank (const edit_buffer_t * buf, off_t offset)
 }
 
 /* --------------------------------------------------------------------------------------------- */
-/** returns the offset of line i */
 
-static off_t
-edit_find_line (WEdit * edit, long line)
-{
-    long i;
-    long j = 0;
-    long m = 2000000000;        /* what is the magic number? */
-
-    if (!edit->caches_valid)
-    {
-        memset (edit->line_numbers, 0, sizeof (edit->line_numbers));
-        memset (edit->line_offsets, 0, sizeof (edit->line_offsets));
-        /* three offsets that we *know* are line 0 at 0 and these two: */
-        edit->line_numbers[1] = edit->buffer.curs_line;
-        edit->line_offsets[1] = edit_buffer_get_current_bol (&edit->buffer);
-        edit->line_numbers[2] = edit->buffer.lines;
-        edit->line_offsets[2] = edit_buffer_get_bol (&edit->buffer, edit->buffer.size);
-        edit->caches_valid = TRUE;
-    }
-    if (line >= edit->buffer.lines)
-        return edit->line_offsets[2];
-    if (line <= 0)
-        return 0;
-    /* find the closest known point */
-    for (i = 0; i < N_LINE_CACHES; i++)
-    {
-        long n;
-
-        n = labs (edit->line_numbers[i] - line);
-        if (n < m)
-        {
-            m = n;
-            j = i;
-        }
-    }
-    if (m == 0)
-        return edit->line_offsets[j];   /* know the offset exactly */
-    if (m == 1 && j >= 3)
-        i = j;                  /* one line different - caller might be looping, so stay in this cache */
-    else
-        i = 3 + (rand () % (N_LINE_CACHES - 3));
-    if (line > edit->line_numbers[j])
-        edit->line_offsets[i] =
-            edit_buffer_get_forward_offset (&edit->buffer, edit->line_offsets[j],
-                                            line - edit->line_numbers[j], 0);
-    else
-        edit->line_offsets[i] =
-            edit_buffer_get_backward_offset (&edit->buffer, edit->line_offsets[j],
-                                             edit->line_numbers[j] - line);
-    edit->line_numbers[i] = line;
-    return edit->line_offsets[i];
-}
-
-/* --------------------------------------------------------------------------------------------- */
 /** moves up until a blank line is reached, or until just
    before a non-blank line is reached */
 
@@ -2150,7 +2097,7 @@ edit_init (WEdit * edit, const WRect * r, const edit_arg_t * arg)
         to_free = TRUE;
 
         w = WIDGET (edit);
-        widget_init (w, r, NULL, NULL, NULL);
+        widget_init (w, r, NULL, NULL, "Editbox");
         w->options |= WOP_SELECTABLE | WOP_TOP_SELECT | WOP_WANT_CURSOR;
         w->keymap = editor_map;
         w->ext_keymap = editor_x_map;
@@ -2225,6 +2172,10 @@ edit_init (WEdit * edit, const WRect * r, const edit_arg_t * arg)
     }
 
     edit_load_macro_cmd (edit);
+
+    /* Alternatively we can put this in MSG_INIT, but then it won't get
+     * triggered for editboxes that aren't inserted into dialogs. */
+    scripting_trigger_widget_event ("Editbox::load", WIDGET (edit));
 
     return edit;
 }
@@ -3074,6 +3025,61 @@ gboolean
 edit_line_is_blank (WEdit * edit, long line)
 {
     return is_blank (&edit->buffer, edit_find_line (edit, line));
+}
+
+/* --------------------------------------------------------------------------------------------- */
+/** returns the offset of line i */
+
+off_t
+edit_find_line (WEdit * edit, long line)
+{
+    long i;
+    long j = 0;
+    long m = 2000000000;        /* what is the magic number? */
+
+    if (!edit->caches_valid)
+    {
+        memset (edit->line_numbers, 0, sizeof (edit->line_numbers));
+        memset (edit->line_offsets, 0, sizeof (edit->line_offsets));
+        /* three offsets that we *know* are line 0 at 0 and these two: */
+        edit->line_numbers[1] = edit->buffer.curs_line;
+        edit->line_offsets[1] = edit_buffer_get_current_bol (&edit->buffer);
+        edit->line_numbers[2] = edit->buffer.lines;
+        edit->line_offsets[2] = edit_buffer_get_bol (&edit->buffer, edit->buffer.size);
+        edit->caches_valid = TRUE;
+    }
+    if (line >= edit->buffer.lines)
+        return edit->line_offsets[2];
+    if (line <= 0)
+        return 0;
+    /* find the closest known point */
+    for (i = 0; i < N_LINE_CACHES; i++)
+    {
+        long n;
+
+        n = labs (edit->line_numbers[i] - line);
+        if (n < m)
+        {
+            m = n;
+            j = i;
+        }
+    }
+    if (m == 0)
+        return edit->line_offsets[j];   /* know the offset exactly */
+    if (m == 1 && j >= 3)
+        i = j;                  /* one line different - caller might be looping, so stay in this cache */
+    else
+        i = 3 + (rand () % (N_LINE_CACHES - 3));
+    if (line > edit->line_numbers[j])
+        edit->line_offsets[i] =
+            edit_buffer_get_forward_offset (&edit->buffer, edit->line_offsets[j],
+                                            line - edit->line_numbers[j], 0);
+    else
+        edit->line_offsets[i] =
+            edit_buffer_get_backward_offset (&edit->buffer, edit->line_offsets[j],
+                                             edit->line_numbers[j] - line);
+    edit->line_numbers[i] = line;
+    return edit->line_offsets[i];
 }
 
 /* --------------------------------------------------------------------------------------------- */
