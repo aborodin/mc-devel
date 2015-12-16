@@ -938,76 +938,6 @@ edit_dialog_bg_callback (Widget *w, Widget *sender, widget_msg_t msg, int parm, 
 
 /* --------------------------------------------------------------------------------------------- */
 
-static cb_ret_t
-edit_callback (Widget *w, Widget *sender, widget_msg_t msg, int parm, void *data)
-{
-    WEdit *e = EDIT (w);
-
-    switch (msg)
-    {
-    case MSG_FOCUS:
-        edit_set_buttonbar (e, buttonbar_find (DIALOG (w->owner)));
-        return MSG_HANDLED;
-
-    case MSG_DRAW:
-        e->force |= REDRAW_COMPLETELY;
-        edit_update_screen (e);
-        return MSG_HANDLED;
-
-    case MSG_KEY:
-    {
-        int cmd, ch;
-        cb_ret_t ret = MSG_NOT_HANDLED;
-
-        // The user may override the access-keys for the menu bar.
-        if (macro_index == -1 && !bracketed_pasting_in_progress && edit_execute_macro (e, parm))
-        {
-            edit_update_screen (e);
-            ret = MSG_HANDLED;
-        }
-        else if (edit_translate_key (e, parm, &cmd, &ch))
-        {
-            edit_execute_key_command (e, cmd, ch);
-            edit_update_screen (e);
-            ret = MSG_HANDLED;
-        }
-
-        return ret;
-    }
-
-    case MSG_ACTION:
-        // command from menubar or buttonbar
-        edit_execute_key_command (e, parm, -1);
-        edit_update_screen (e);
-        return MSG_HANDLED;
-
-    case MSG_CURSOR:
-    {
-        int y, x;
-
-        y = (e->fullscreen != 0 ? 0 : 1) + EDIT_TEXT_VERTICAL_OFFSET + e->curs_row;
-        x = (e->fullscreen != 0 ? 0 : 1) + EDIT_TEXT_HORIZONTAL_OFFSET
-            + edit_options.line_state_width + e->curs_col + e->start_col + e->over_col;
-
-        widget_gotoyx (w, y, x);
-        return MSG_HANDLED;
-    }
-
-    case MSG_IDLE:
-        edit_update_screen (e);
-        return MSG_HANDLED;
-
-    case MSG_DESTROY:
-        edit_clean (e);
-        return MSG_HANDLED;
-
-    default:
-        return widget_default_callback (w, sender, msg, parm, data);
-    }
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
 /**
  * Handle move/resize mouse events.
  */
@@ -1280,6 +1210,76 @@ edit_files (const GList *files)
         widget_destroy (wd);
 
     return ok;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+cb_ret_t
+edit_callback (Widget *w, Widget *sender, widget_msg_t msg, int parm, void *data)
+{
+    WEdit *e = EDIT (w);
+
+    switch (msg)
+    {
+    case MSG_FOCUS:
+        edit_set_buttonbar (e, buttonbar_find (DIALOG (w->owner)));
+        return MSG_HANDLED;
+
+    case MSG_DRAW:
+        e->force |= REDRAW_COMPLETELY;
+        edit_update_screen (e);
+        return MSG_HANDLED;
+
+    case MSG_KEY:
+    {
+        int cmd, ch;
+        cb_ret_t ret = MSG_NOT_HANDLED;
+
+        // The user may override the access-keys for the menu bar.
+        if (macro_index == -1 && !bracketed_pasting_in_progress && edit_execute_macro (e, parm))
+        {
+            edit_update_screen (e);
+            ret = MSG_HANDLED;
+        }
+        else if (edit_translate_key (e, parm, &cmd, &ch))
+        {
+            edit_execute_key_command (e, cmd, ch);
+            edit_update_screen (e);
+            ret = MSG_HANDLED;
+        }
+
+        return ret;
+    }
+
+    case MSG_ACTION:
+        // command from menubar or buttonbar
+        edit_execute_key_command (e, parm, -1);
+        edit_update_screen (e);
+        return MSG_HANDLED;
+
+    case MSG_CURSOR:
+    {
+        int y, x;
+
+        y = (e->fullscreen != 0 ? 0 : 1) + EDIT_TEXT_VERTICAL_OFFSET + e->curs_row;
+        x = (e->fullscreen != 0 ? 0 : 1) + EDIT_TEXT_HORIZONTAL_OFFSET
+            + edit_options.line_state_width + e->curs_col + e->start_col + e->over_col;
+
+        widget_gotoyx (w, y, x);
+        return MSG_HANDLED;
+    }
+
+    case MSG_IDLE:
+        edit_update_screen (e);
+        return MSG_HANDLED;
+
+    case MSG_DESTROY:
+        edit_clean (e);
+        return MSG_HANDLED;
+
+    default:
+        return widget_default_callback (w, sender, msg, parm, data);
+    }
 }
 
 /* --------------------------------------------------------------------------------------------- */
