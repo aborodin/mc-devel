@@ -34,6 +34,13 @@
  *
  * [/info]
  *
+ * [tip short]
+ *
+ * See also the higher-level @{~mod:mc#operations|file operations} in the
+ * @{mc} module.
+ *
+ * [/tip]
+ *
  * @module fs
  */
 
