@@ -30,6 +30,9 @@ int luaopen_ui_custom (lua_State * L);
 int luaopen_utils_bit32 (lua_State * L);
 int luaopen_utils_text (lua_State * L);
 int luaopen_utils_text_transport (lua_State * L);
+#ifdef ENABLE_VFS_LUAFS
+int luaopen_luafs_gc (lua_State * L);
+#endif
 
 /*** inline functions ****************************************************************************/
 

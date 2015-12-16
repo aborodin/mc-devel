@@ -216,6 +216,11 @@ luaFS_push_vpath__without_cloning (lua_State * L, vfs_path_t * vpath)
  * - user, password, host, port: The components of paths like
  *   `ftp://joe:password@hostname.net:8192/`.
  *
+ * Note: At the time of this writing, a filesystem implemented
+ * @{~filesystems|in Lua} doesn't get its pathnames analyzed for
+ * user/password/host/port. The reason is a deficiency in MC (explained in
+ * the @{git:fs-vpath.c|source}).
+ *
  * @field path
  */
 
@@ -394,6 +399,9 @@ l_vpath_is_local (lua_State * L)
  *
  * If there's only a single path element, it is not removed: a copy of the
  * original vpath is returned.
+ *
+ * See example in the default implementation of a filesystem's
+ * @{luafs.is_same_session|is_same_session}.
  *
  * @method parent
  */

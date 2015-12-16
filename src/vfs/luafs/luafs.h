@@ -1,12 +1,10 @@
 /**
  * \file
- * \brief Header: Virtual File System: garbage collection code
+ * \brief Header: Lua FS
  */
 
-#ifndef MC__VFS_GC_H
-#define MC__VFS_GC_H
-
-#include "vfs.h"
+#ifndef MC__VFS_LUAFS_H
+#define MC__VFS_LUAFS_H
 
 /*** typedefs(not structures) and defined constants **********************************************/
 
@@ -14,23 +12,12 @@
 
 /*** structures declarations (and typedefs of structures)*****************************************/
 
-struct vfs_stamping
-{
-    struct vfs_class *v;
-    vfsid id;
-    gint64 time;
-};
-
 /*** global variables defined in .c file *********************************************************/
 
 /*** declarations of public functions ************************************************************/
 
-gboolean vfs_stamp (struct vfs_class *vclass, vfsid id);
-void vfs_rmstamp (struct vfs_class *vclass, vfsid id);
-void vfs_stamp_create (struct vfs_class *vclass, vfsid id);
-void vfs_gc_done (void);
-
-GSList *debug__vfs_get_stamps (void);
+void vfs_init_luafs (void);
 
 /*** inline functions ****************************************************************************/
-#endif /* MC_VFS_GC_H */
+
+#endif /* MC__VFS_LUAFS_H */

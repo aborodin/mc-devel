@@ -83,6 +83,9 @@ static const char *const vfs_supported[] = {
 #ifdef ENABLE_VFS_SHELL
     "shell",
 #endif
+#ifdef ENABLE_VFS_LUAFS
+    "luafs",
+#endif
     NULL
 };
 #endif /* ENABLE_VFS */

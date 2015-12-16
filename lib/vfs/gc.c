@@ -93,13 +93,6 @@ int vfs_timeout = 60;           /* VFS timeout in seconds */
 
 /*** file scope type declarations ****************************************************************/
 
-struct vfs_stamping
-{
-    struct vfs_class *v;
-    vfsid id;
-    gint64 time;
-};
-
 /*** forward declarations (file scope functions) *************************************************/
 
 /*** file scope variables ************************************************************************/
@@ -330,6 +323,17 @@ void
 vfs_gc_done (void)
 {
     vfs_expire (TRUE);
+}
+
+/* --------------------------------------------------------------------------------------------- */
+/**
+ * Used for debugging only. Lets you see all the stamps.
+ */
+
+GSList *
+debug__vfs_get_stamps (void)
+{
+    return stamps;
 }
 
 /* --------------------------------------------------------------------------------------------- */
