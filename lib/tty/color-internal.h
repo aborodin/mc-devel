@@ -57,6 +57,8 @@ void tty_color_deinit_lib (void);
 
 void tty_color_try_alloc_lib_pair (tty_color_lib_pair_t * mc_color_pair);
 
+tty_color_pair_t *tty_color_pair_number_to_struct (int);
+
 /*** inline functions ****************************************************************************/
 
 #endif /* MC__COLOR_INTERNAL_H */

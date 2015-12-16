@@ -95,6 +95,7 @@ static int l_edit_get_markers (lua_State * L);
 static int l_edit_get_fullscreen (lua_State * L);
 static int l_edit_set_fullscreen (lua_State * L);
 static int l_edit_load (lua_State * L);
+static int l_edit_get_style_at (lua_State * L);
 static int l_edit_to_tty (lua_State * L);
 static int l_edit_is_utf8 (lua_State * L);
 
@@ -145,6 +146,7 @@ static const struct luaL_Reg ui_edit_lib[] =
     { "get_fullscreen", l_edit_get_fullscreen },
     { "set_fullscreen", l_edit_set_fullscreen },
     { "load", l_edit_load },
+    { "get_style_at", l_edit_get_style_at },
     { "to_tty", l_edit_to_tty },
     { "is_utf8", l_edit_is_utf8 },
     { NULL, NULL }
@@ -1266,6 +1268,29 @@ l_edit_set_syntax (lua_State * L)
     edit_update_view (edit);
 
     return 0;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/**
+ * Returns the @{~mod:tty#styles|style} at a certain position.
+ *
+ * See usage example at @{tty.destruct_style}.
+ *
+ * @function get_style_at
+ * @param pos Position in buffer (1-based; byte-oriented).
+ */
+static int
+l_edit_get_style_at (lua_State * L)
+{
+    WEdit *edit;
+    off_t pos;
+
+    edit = LUA_TO_EDITBOX (L, 1);
+    pos = luaL_checki (L, 2);
+
+    lua_pushinteger (L, edit_get_syntax_color (edit, pos - 1));
+    return 1;
 }
 
 /* --------------------------------------------------------------------------------------------- */
