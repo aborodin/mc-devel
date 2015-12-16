@@ -47,6 +47,7 @@
 #include "lib/skin.h"
 #include "lib/mcconfig.h"  // Load/save user formats
 #include "lib/strutil.h"
+#include "lib/scripting.h"  // scripting_trigger_event()
 
 #include "lib/vfs/vfs.h"
 #ifdef ENABLE_VFS_FTP
@@ -153,6 +154,7 @@ skin_apply (const gchar *skin_override)
 
     mc_skin_deinit ();
     mc_skin_init (skin_override, &mcerror);
+    scripting_trigger_event ("ui::skin-change");
     mc_fhl_free (&mc_filehighlight);
     mc_filehighlight = mc_fhl_new (TRUE);
     panel_deinit ();

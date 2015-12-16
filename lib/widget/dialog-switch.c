@@ -36,6 +36,7 @@
 #include "lib/tty/tty.h"  // LINES, COLS
 #include "lib/widget.h"
 #include "lib/event.h"
+#include "lib/scripting.h"  // scripting_trigger_widget_event()
 
 /*** global variables ****************************************************************************/
 
@@ -111,6 +112,7 @@ dialog_switch_goto (GList *dlg)
             {
                 // switch to panels
                 widget_set_state (WIDGET (filemanager), WST_ACTIVE, TRUE);
+                scripting_trigger_widget_event ("Dialog::activate", WIDGET (filemanager));
                 do_refresh ();
             }
         }
@@ -173,7 +175,10 @@ dialog_switch_remove (WDialog *h)
 
     // resume forced the current screen
     if (mc_current != NULL)
+    {
         widget_set_state (WIDGET (mc_current->data), WST_ACTIVE, TRUE);
+        scripting_trigger_widget_event ("Dialog::activate", WIDGET (mc_current->data));
+    }
 }
 
 /* --------------------------------------------------------------------------------------------- */

@@ -49,6 +49,7 @@ libmc_la_SOURCES = \
 	global.c global.h \
 	keybind.c keybind.h \
 	lock.c lock.h \
+	scripting.c scripting.h \
 	serialize.c serialize.h \
 	shell.c shell.h \
 	stat-size.h \
