@@ -1478,6 +1478,48 @@ exec_edit_syntax_dialog (const GPtrArray *names, const char *current_syntax)
 }
 
 /* --------------------------------------------------------------------------------------------- */
+/*
+ * Adding a keyword to an already-loaded syntax.
+ *
+ * This feature is used by user scripts (currently Lua) for various
+ * creative purposes.
+ *
+ * While it's our policy at this stage not to add features to MC's core
+ * just for the benefit of scripting, it was felt that this feature can
+ * contribute much to explaining the need for scripting and therefore here
+ * we find it worthy to break our policy.
+ */
+
+static gboolean
+edit_add_syntax_keyword__to_rule (context_rule_t *rule, const char *kwd_str, const char *left,
+                                  const char *right, gboolean line_start, int color)
+{
+    syntax_keyword_t *k;
+
+    k = g_new0 (syntax_keyword_t, 1);
+    k->keyword = g_string_new (kwd_str);
+    k->whole_word_chars_left = g_strdup (left);
+    k->whole_word_chars_right = g_strdup (right);
+    k->line_start = line_start;
+    k->color = color;
+
+    g_ptr_array_add (rule->keyword, k);
+
+    {
+        // A rule keeps a record of all the letters starting its keywords.
+        GString *first_chars;
+
+        first_chars = g_string_new (rule->keyword_first_chars);
+        g_string_append_c (first_chars, k->keyword->str[0]);
+        g_assert (first_chars->len == rule->keyword->len);  // sanity check
+        g_free (rule->keyword_first_chars);
+        rule->keyword_first_chars = g_string_free (first_chars, FALSE);
+    }
+
+    return TRUE;
+}
+
+/* --------------------------------------------------------------------------------------------- */
 /*** public functions ****************************************************************************/
 /* --------------------------------------------------------------------------------------------- */
 
@@ -1494,6 +1536,47 @@ edit_get_syntax_color (WEdit *edit, off_t byte_index)
     }
 
     return EDITOR_NORMAL_COLOR;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+gboolean
+edit_add_syntax_keyword (WEdit *edit, syntax_range_type_t range, const char *kwd_str,
+                         const char *left, const char *right, gboolean line_start, int color)
+{
+    g_assert (kwd_str != NULL);
+
+    if (edit->rules == NULL)
+        return FALSE;
+
+    if (range == RANGE_TYPE_DEFAULT)
+    {
+        // Note: if edit->rules is non NULL, it's guaranteed that edit->rules->len != 0.
+        edit_add_syntax_keyword__to_rule (CONTEXT_RULE (g_ptr_array_index (edit->rules, 0)),
+                                          kwd_str, left, right, line_start, color);
+    }
+    else
+    {
+        size_t i;
+
+        for (i = 0; i < edit->rules->len; i++)
+        {
+            context_rule_t *rule;
+            gboolean match;
+
+            rule = CONTEXT_RULE (g_ptr_array_index (edit->rules, i));
+
+            match = range == RANGE_TYPE_ANY
+                || range == (rule->spelling ? RANGE_TYPE_SPELLCHECK : RANGE_TYPE_NOT_SPELLCHECK);
+
+            if (match)
+                edit_add_syntax_keyword__to_rule (rule, kwd_str, left, right, line_start, color);
+        }
+    }
+
+    edit_get_rule (edit, -1);
+
+    return TRUE;
 }
 
 /* --------------------------------------------------------------------------------------------- */
