@@ -12,6 +12,7 @@
 /*** declarations of public functions ************************************************************/
 
 int luaopen_conf (lua_State * L);
+int luaopen_fields (lua_State * L);
 int luaopen_fs (lua_State * L);
 int luaopen_fs_dir (lua_State * L);
 int luaopen_fs_filedes (lua_State * L);

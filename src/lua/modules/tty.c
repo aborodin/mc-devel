@@ -879,23 +879,6 @@ l_text_cols (lua_State * L)
 
 /* --------------------------------------------------------------------------------------------- */
 
-static int                      /* align_crt_t */
-luaTTY_check_align (lua_State * L, int idx)
-{
-    static const char *const just_names[] = {
-        "left", "right", "center", "center or left",
-        "left~", "right~", "center~", "center or left~", NULL
-    };
-    static const align_crt_t just_values[] = {
-        J_LEFT, J_RIGHT, J_CENTER, J_CENTER_LEFT,
-        J_LEFT_FIT, J_RIGHT_FIT, J_CENTER_FIT, J_CENTER_LEFT_FIT
-    };
-
-    return luaMC_checkoption (L, idx, NULL, just_names, just_values);
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
 /**
  * Aligns ("justifies") a string.
  *
@@ -1308,6 +1291,23 @@ luaTTY_check_keycode (lua_State * L, int name_index, gboolean push_name_short)
     }
 
     return keycode;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+int                             /* align_crt_t */
+luaTTY_check_align (lua_State * L, int idx)
+{
+    static const char *const just_names[] = {
+        "left", "right", "center", "center or left",
+        "left~", "right~", "center~", "center or left~", NULL
+    };
+    static const align_crt_t just_values[] = {
+        J_LEFT, J_RIGHT, J_CENTER, J_CENTER_LEFT,
+        J_LEFT_FIT, J_RIGHT_FIT, J_CENTER_FIT, J_CENTER_LEFT_FIT
+    };
+
+    return luaMC_checkoption (L, idx, NULL, just_names, just_values);
 }
 
 /* --------------------------------------------------------------------------------------------- */
