@@ -43,6 +43,9 @@ void mc_lua_load (void);
 void mc_lua_before_vfs_shutdown (void);
 void mc_lua_shutdown (void);
 
+void mc_lua_request_restart (void);
+gboolean mc_lua_is_restarting (void);
+
 /* ------------------------------- Runtime -------------------------------- */
 gboolean mc_lua_eat_key (int keycode);
 void mc_lua_trigger_event (const char *event_name);

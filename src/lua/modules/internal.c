@@ -41,6 +41,7 @@
 
 #include "lib/global.h"
 #include "lib/lua/capi.h"
+#include "lib/lua/plumbing.h"   /* mc_lua_request_restart() */
 #include "lib/lua/utilx.h"
 
 #include "../modules.h"
@@ -56,6 +57,8 @@
 static int l_register_system_callback (lua_State * L);
 static int l_enable_table_gc (lua_State * L);
 static int l_sleep (lua_State * L);
+static int l_request_lua_restart (lua_State * L);
+static int l_is_restarting (lua_State * L);
 
 /*** file scope variables ************************************************************************/
 
@@ -65,6 +68,8 @@ static const struct luaL_Reg internal_lib[] =
     { "register_system_callback", l_register_system_callback },
     { "enable_table_gc", l_enable_table_gc },
     { "_sleep", l_sleep },
+    { "request_lua_restart", l_request_lua_restart },
+    { "is_restarting", l_is_restarting },
     { NULL, NULL }
 };
 /* *INDENT-ON* */
@@ -133,6 +138,30 @@ l_enable_table_gc (lua_State * L)
 /* --------------------------------------------------------------------------------------------- */
 
 /**
+ * Requests that the Lua engine be restarted.
+ *
+ * This should be called from a key handler (i.e., @{keymap.bind}) because
+ * the C side checks for the request right after a key press was handled.
+ *
+ * Typically it's installed in @{git:core/_bootstrap.lua} thus:
+ *
+ *    keymap.bind('C-x l', function()
+ *      require('internal').request_lua_restart()
+ *    end)
+ *
+ * @function request_lua_restart
+ */
+static int
+l_request_lua_restart (lua_State * L)
+{
+    (void) L;
+    mc_lua_request_restart ();
+    return 0;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/**
  * Sleeps for a certain time (milliseconds).
  *
  * Note: End-users: don't use this function. You'll never have to. It stops
@@ -151,6 +180,24 @@ l_sleep (lua_State * L)
     msec = luaL_checki (L, 1);
     usleep (msec * 1000);
     return 0;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/**
+ * Whether Lua is being restarted.
+ *
+ * Returns **true** in the time period between the events
+ * @{~mod:globals*core::before-restart} and
+ * @{~mod:globals*core::after-restart}.
+ *
+ * @function is_restarting
+ */
+static int
+l_is_restarting (lua_State * L)
+{
+    lua_pushboolean (L, mc_lua_is_restarting ());
+    return 1;
 }
 
 /* --------------------------------------------------------------------------------------------- */
