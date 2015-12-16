@@ -502,10 +502,7 @@ edit_draw_this_line (WEdit *edit, off_t b, long row, long start_col, long end_co
     if (row > w->rect.lines - 1 - EDIT_TEXT_VERTICAL_OFFSET - 2 * (edit->fullscreen != 0 ? 0 : 1))
         return;
 
-    if (book_mark_query_color (edit, edit->start_line + row, EDITOR_BOOKMARK_COLOR))
-        book_mark = EDITOR_BOOKMARK_COLOR;
-    else if (book_mark_query_color (edit, edit->start_line + row, EDITOR_BOOKMARK_FOUND_COLOR))
-        book_mark = EDITOR_BOOKMARK_FOUND_COLOR;
+    book_mark = book_mark_get_topmost_color (edit, edit->start_line + row);
 
     if (book_mark != 0)
         abn_style = book_mark << 16;
