@@ -15,6 +15,7 @@
 
 /*** declarations of public functions ************************************************************/
 
+void do_external_panelize (const char *command);
 void external_panelize_cmd (void);
 void external_panelize_load (void);
 void external_panelize_save (void);

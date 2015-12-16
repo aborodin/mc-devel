@@ -52,6 +52,7 @@
 #include "lib/widget.h"
 #include "lib/charsets.h"  // get_codepage_id ()
 #include "lib/event.h"
+#include "lib/scripting.h"  // scripting_trigger_widget_event()
 
 #include "src/setup.h"  // For loading/saving panel options
 #include "src/execute.h"
@@ -3369,6 +3370,8 @@ panel_do_cd_int (WPanel *panel, const vfs_path_t *new_dir_vpath, enum cd_enum cd
 {
     vfs_path_t *olddir_vpath;
 
+    scripting_trigger_widget_event ("Panel::before-chdir", WIDGET (panel));
+
     // Convert *new_path to a suitable pathname, handle ~user
     if (cd_type == cd_parse_command)
     {
@@ -3408,6 +3411,7 @@ panel_do_cd_int (WPanel *panel, const vfs_path_t *new_dir_vpath, enum cd_enum cd
         panel_set_current (panel, -1);
 
     panel_set_current_by_name (panel, get_parent_dir_name (panel->cwd_vpath, olddir_vpath));
+    scripting_trigger_widget_event ("Panel::load", WIDGET (panel));
 
     load_hint (FALSE);
     panel->dirty = TRUE;
@@ -3786,6 +3790,7 @@ panel_callback (Widget *w, Widget *sender, widget_msg_t msg, int parm, void *dat
         mini_info_separator (panel);
         display_mini_info (panel);
         panel->dirty = FALSE;
+        scripting_trigger_widget_event ("Panel::draw", WIDGET (panel));
         return MSG_HANDLED;
 
     case MSG_FOCUS:
@@ -3808,6 +3813,7 @@ panel_callback (Widget *w, Widget *sender, widget_msg_t msg, int parm, void *dat
         update_xterm_title_path ();
         update_terminal_cwd ();
         select_item (panel);
+        scripting_trigger_widget_event ("Panel::activate", WIDGET (panel));
 
         bb = buttonbar_find (h);
         midnight_set_buttonbar (bb);
@@ -3819,6 +3825,7 @@ panel_callback (Widget *w, Widget *sender, widget_msg_t msg, int parm, void *dat
         // Janne: look at this for the multiple panel options
         stop_search (panel);
         unselect_item (panel);
+        scripting_trigger_widget_event ("Panel::deactivate", WIDGET (panel));
         return MSG_HANDLED;
 
     case MSG_KEY:
@@ -4179,6 +4186,7 @@ update_one_panel_widget (WPanel *panel, panel_update_flags_t flags, const char *
     {
         panel->is_panelized = FALSE;
         mc_setctl (panel->cwd_vpath, VFS_SETCTL_FLUSH, NULL);
+        scripting_trigger_widget_event ("Panel::flush", WIDGET (panel));
         memset (&(panel->dir_stat), 0, sizeof (panel->dir_stat));
     }
 
@@ -4496,7 +4504,7 @@ panel_sized_empty_new (const char *panel_name, const WRect *r)
 
     panel = g_new0 (WPanel, 1);
     w = WIDGET (panel);
-    widget_init (w, r, panel_callback, panel_mouse_callback, NULL);
+    widget_init (w, r, panel_callback, panel_mouse_callback, "Panel");
     w->options |= WOP_SELECTABLE | WOP_TOP_SELECT;
     w->keymap = panel_map;
 
@@ -4615,6 +4623,8 @@ panel_sized_with_dir_new (const char *panel_name, const WRect *r, const vfs_path
     if (panel->dir.len == 0)
         panel_set_current (panel, -1);
 
+    scripting_trigger_widget_event ("Panel::load", WIDGET (panel));
+
     // Restore old right path
     if (curdir != NULL)
     {
@@ -4662,6 +4672,8 @@ panel_reload (WPanel *panel)
     if (!dir_list_reload (&panel->dir, panel->cwd_vpath, panel->sort_field->sort_routine,
                           &panel->sort_info, &panel->filter))
         message (D_ERROR, MSG_ERROR, _ ("Cannot read directory contents"));
+
+    scripting_trigger_widget_event ("Panel::load", WIDGET (panel));
 
     panel->dirty = TRUE;
 
@@ -4787,6 +4799,7 @@ select_item (WPanel *panel)
     panel->dirty = TRUE;
 
     execute_hooks (select_file_hook);
+    scripting_trigger_widget_event ("Panel::select-file", WIDGET (panel));
 }
 
 /* --------------------------------------------------------------------------------------------- */

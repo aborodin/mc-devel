@@ -50,7 +50,8 @@
 #include "lib/vfs/vfs.h"  // vfs_get_cwd ()
 #include "lib/strutil.h"
 #include "lib/widget.h"
-#include "lib/util.h"  // mc_time_elapsed()
+#include "lib/util.h"       // mc_time_elapsed()
+#include "lib/scripting.h"  // scripting_trigger_widget_event()
 
 #include "src/consaver/cons.saver.h"
 #include "src/viewer/mcviewer.h"  // The view widget
@@ -901,6 +902,8 @@ setup_panels (void)
         widget_set_state (mw, WST_ACTIVE, TRUE);
         widget_draw (mw);
     }
+
+    scripting_trigger_widget_event ("Dialog::layout", mw);
 }
 
 /* --------------------------------------------------------------------------------------------- */

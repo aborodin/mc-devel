@@ -41,7 +41,8 @@
 #include "lib/mcconfig.h"  // Load/save directories panelize
 #include "lib/strutil.h"
 #include "lib/widget.h"
-#include "lib/util.h"  // mc_pipe_t
+#include "lib/util.h"       // mc_pipe_t
+#include "lib/scripting.h"  // scripting_trigger_widget_event()
 
 #include "src/history.h"
 #include "src/util.h"  // file_error_message()
@@ -292,8 +293,11 @@ remove_from_panelize (panelize_entry_t *entry)
 }
 
 /* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
-static void
+/* lua/modules/ui-panel.c wants this */
+void
 do_external_panelize (const char *command)
 {
     dir_list *list = &current_panel->dir;
@@ -426,10 +430,10 @@ do_external_panelize (const char *command)
     panel_set_current_by_name (current_panel, NULL);
     panel_re_sort (current_panel);
     rotate_dash (FALSE);
+
+    scripting_trigger_widget_event ("Panel::panelize", WIDGET (current_panel));
 }
 
-/* --------------------------------------------------------------------------------------------- */
-/*** public functions ****************************************************************************/
 /* --------------------------------------------------------------------------------------------- */
 
 void
