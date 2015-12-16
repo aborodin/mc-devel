@@ -55,7 +55,8 @@
 #include "lib/timefmt.h"  // time formatting
 #include "lib/lock.h"
 #include "lib/widget.h"
-#include "lib/charsets.h"  // get_codepage_id
+#include "lib/charsets.h"   // get_codepage_id
+#include "lib/scripting.h"  // scripting_trigger_widget_event()
 
 #include "src/usermenu.h"  // user_menu_cmd()
 
@@ -2104,7 +2105,7 @@ edit_init (WEdit *edit, const WRect *r, const edit_arg_t *arg)
         to_free = TRUE;
 
         w = WIDGET (edit);
-        widget_init (w, r, NULL, NULL, NULL);
+        widget_init (w, r, NULL, NULL, "Editbox");
         w->options |= WOP_SELECTABLE | WOP_TOP_SELECT | WOP_WANT_CURSOR;
         w->keymap = editor_map;
         w->ext_keymap = editor_x_map;
@@ -2180,6 +2181,10 @@ edit_init (WEdit *edit, const WRect *r, const edit_arg_t *arg)
     }
 
     edit_load_macro_cmd (edit);
+
+    /* Alternatively we can put this in MSG_INIT, but then it won't get
+     * triggered for editboxes that aren't inserted into dialogs. */
+    scripting_trigger_widget_event ("Editbox::load", WIDGET (edit));
 
     return edit;
 }

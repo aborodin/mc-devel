@@ -161,6 +161,14 @@ struct WEdit
 
 /*** declarations of public functions ************************************************************/
 
+/**
+ * @FIXME:
+ *
+ * edit_init() neglects to set w->callback (and w->mouse), so code wishing to
+ * instantiate a WEdit has to do it itself. We expose the callback for such code.
+ *
+ * (Currently, this is only used by src/lua/modules/ui-editbox.c:edit_constructor().)
+ */
 cb_ret_t edit_callback (Widget *w, Widget *sender, widget_msg_t msg, int parm, void *data);
 
 /*** inline functions ****************************************************************************/

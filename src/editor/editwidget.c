@@ -52,6 +52,7 @@
 #include "lib/mcconfig.h"
 #include "lib/event.h"  // mc_event_raise()
 #include "lib/charsets.h"
+#include "lib/scripting.h"  // scripting_trigger_widget_event()
 
 #include "src/keymap.h"           // keybind_lookup_keymap_command()
 #include "src/setup.h"            // home_dir
@@ -773,6 +774,7 @@ edit_dialog_callback (Widget *w, Widget *sender, widget_msg_t msg, int parm, voi
     case MSG_RESIZE:
         dlg_default_callback (w, NULL, MSG_RESIZE, 0, NULL);
         menubar_arrange (menubar_find (h));
+        scripting_trigger_widget_event ("Dialog::layout", w);
         return MSG_HANDLED;
 
     case MSG_ACTION:
@@ -1203,6 +1205,8 @@ edit_files (const GList *files)
         ok = ok || f_ok;
     }
 
+    scripting_trigger_widget_event ("Dialog::layout", WIDGET (edit_dlg));
+
     if (ok)
         dlg_run (edit_dlg);
 
@@ -1214,6 +1218,7 @@ edit_files (const GList *files)
 
 /* --------------------------------------------------------------------------------------------- */
 
+/* @FIXME: See comment in editwidget.h as to why this is non-static. */
 cb_ret_t
 edit_callback (Widget *w, Widget *sender, widget_msg_t msg, int parm, void *data)
 {
@@ -1276,6 +1281,14 @@ edit_callback (Widget *w, Widget *sender, widget_msg_t msg, int parm, void *data
     case MSG_DESTROY:
         edit_clean (e);
         return MSG_HANDLED;
+
+    case MSG_BEFORE_DESTROY:
+        /* Note: We shouldn't put this at MSG_DESTROY. At MSG_DESTROY the Lua
+         * wrapper has been invalidated already and the event would then re-create
+         * a new Lua wrapper, causing the one seen at <<unload>> to be different
+         * than the one seen at <<load>>. */
+        scripting_trigger_widget_event ("Editbox::unload", w);
+        MC_FALLTHROUGH;
 
     default:
         return widget_default_callback (w, sender, msg, parm, data);
@@ -1532,6 +1545,8 @@ edit_toggle_fullscreen (WEdit *edit)
         edit->force |= REDRAW_PAGE;
         edit_update_screen (edit);
     }
+
+    scripting_trigger_widget_event ("Dialog::layout", WIDGET (WIDGET (edit)->owner));
 }
 
 /* --------------------------------------------------------------------------------------------- */

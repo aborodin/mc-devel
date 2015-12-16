@@ -49,6 +49,7 @@
 #include "lib/util.h"     // is_printable()
 #include "lib/widget.h"
 #include "lib/charsets.h"
+#include "lib/scripting.h"  // scripting_trigger_widget_event()
 
 #include "edit-impl.h"
 #include "editwidget.h"
@@ -1085,6 +1086,7 @@ void
 edit_render_keypress (WEdit *edit)
 {
     edit_render (edit, 0, 0, 0, 0, 0);
+    scripting_trigger_widget_event ("Editbox::draw", WIDGET (edit));
 }
 
 /* --------------------------------------------------------------------------------------------- */
