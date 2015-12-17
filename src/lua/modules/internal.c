@@ -36,6 +36,9 @@
 
 #include <config.h>
 
+#include <sys/types.h>
+#include <unistd.h>             /* usleep() */
+
 #include "lib/global.h"
 #include "lib/lua/capi.h"
 #include "lib/lua/utilx.h"
@@ -52,6 +55,7 @@
 
 static int l_register_system_callback (lua_State * L);
 static int l_enable_table_gc (lua_State * L);
+static int l_sleep (lua_State * L);
 
 /*** file scope variables ************************************************************************/
 
@@ -60,6 +64,7 @@ static const struct luaL_Reg internal_lib[] =
 {
     { "register_system_callback", l_register_system_callback },
     { "enable_table_gc", l_enable_table_gc },
+    { "_sleep", l_sleep },
     { NULL, NULL }
 };
 /* *INDENT-ON* */
@@ -123,6 +128,27 @@ l_enable_table_gc (lua_State * L)
     /* Convenience: return the table itself. */
     lua_settop (L, 1);          /* In case the user provided (needless) extra args. */
     return 1;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/**
+ * Sleeps for a certain time (milliseconds).
+ *
+ * Note: End-users: don't use this function. You'll never have to. It stops
+ * the whole application. Use @{timer|timers} instead.
+ *
+ * It may be used to simulate long tasks during testing.
+ *
+ * @function _sleep
+ * @args (msec)
+ */
+static int
+l_sleep (lua_State * L)
+{
+    useconds_t msec = luaL_checki (L, 1);
+    usleep (msec * 1000);
+    return 0;
 }
 
 /* --------------------------------------------------------------------------------------------- */
