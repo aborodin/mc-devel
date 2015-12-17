@@ -114,7 +114,9 @@ As a quick reference, here’s a snippet that uses some common features:
 #include "lib/lua/utilx.h"
 
 #include "../modules.h"
-#include "tty.h"  // luaTTY_check_keycode()
+#include "ui-custom.h"  // is_custom()
+#include "ui-canvas.h"  // luaUI_new_canvas()
+#include "tty.h"        // luaTTY_check_keycode()
 
 /*** global variables ****************************************************************************/
 
@@ -186,6 +188,7 @@ static int l_widget_send_message (lua_State *L);
 static int l_widget_is_alive (lua_State *L);
 static int l_widget_redraw (lua_State *L);
 static int l_widget_focus (lua_State *L);
+static int l_widget_get_canvas (lua_State *L);
 static int l_widget_get_pos_flags (lua_State *L);
 static int l_widget_set_pos_flags (lua_State *L);
 static int l_widget_destroy (lua_State *L);
@@ -312,6 +315,7 @@ static const struct luaL_Reg ui_widget_methods_lib[] = {
     { "is_alive", l_widget_is_alive },
     { "redraw", l_widget_redraw },
     { "focus", l_widget_focus },
+    { "get_canvas", l_widget_get_canvas },
     { "get_pos_flags", l_widget_get_pos_flags },
     { "set_pos_flags", l_widget_set_pos_flags },
     { "_destroy", l_widget_destroy },
@@ -951,6 +955,10 @@ l_widget_is_alive (lua_State *L)
  * an @{ui.Input|input} box or the value of a @{ui.Gauge|gauge}, you don't
  * need to call :redraw() afterwards.
  *
+ * A notable case where you *do* have to call :redraw() yourself is after you
+ * change the state of a @{ui.Custom} widget. Only you know what affects the
+ * display of your custom widget, so only you can decide when to redraw it.
+ *
  * For further information on the mechanism of updating the screen, see
  * @{~mod:tty#Drawing}.
  *
@@ -1004,6 +1012,40 @@ l_widget_focus (lua_State *L)
     // Position the cursor at the focused element.
     widget_update_cursor (WIDGET (w->owner));
     return 0;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/**
+ * Returns a @{ui.Canvas|canvas object} encompassing the widget's area.
+ *
+ * This lets you draw inside the widget. You'd normally use this
+ * method with a @{ui.Custom} widget only.
+ *
+ * @method widget:get_canvas
+ */
+static int
+l_widget_get_canvas (lua_State *L)
+{
+    Widget *w;
+
+    w = luaUI_check_widget (L, 1);
+
+    // We cache the canvas in _canvas.
+
+    luaMC_rawgetfield (L, 1, "_canvas");
+
+    if (lua_isnil (L, -1))
+    {
+        luaUI_new_canvas (L);
+
+        // store it:
+        lua_pushvalue (L, -1);
+        luaMC_rawsetfield (L, 1, "_canvas");
+    }
+
+    luaUI_set_canvas_dimensions (L, -1, &w->rect);
+    return 1;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -2424,6 +2466,8 @@ init_child (void *data, void *user_data)
  * Lets you respond to a key before any of the child widgets sees it. Return
  * `true` from this handler to signal that you've consumed the key.
  *
+ * See examples at @{ui.Custom:on_key}, which is used similarly.
+ *
  * @param self The dialog
  * @param keycode A number
  *
@@ -2439,6 +2483,8 @@ init_child (void *data, void *user_data)
  * Lets you respond to a key **after** the child widgets had a chance to
  * respond to it. Return `true` from this handler to signal that you've
  * consumed the key.
+ *
+ * See examples at @{ui.Custom:on_key}, which is used similarly.
  *
  * Note: It happens that the system doesn't really care what you return from
  * this specific handler. But for "forward-compatibility" it won't hurt that
@@ -2564,6 +2610,26 @@ init_child (void *data, void *user_data)
  *     dlg:run()
  *
  * @method dialog:on_resize
+ * @args (self)
+ * @callback
+ */
+
+/* --------------------------------------------------------------------------------------------- */
+
+/**
+ * Frame drawing handler.
+ *
+ * Called to draw the background and frame of the dialog.
+ *
+ * You should return **true** from this handler to signal that you've done the
+ * job or else the default frame will then be drawn, overwriting yours.
+ *
+ * Note: You wouldn't normally be interested in this handler. It is only useful
+ * for special applications (e.g., for drawing a @{git:mcscript.lua|wallpaper};
+ * although this is alternatively possible by adding a @{ui.Custom} to the
+ * dialog).
+ *
+ * @method dialog:on_draw
  * @args (self)
  * @callback
  */
@@ -2709,6 +2775,11 @@ ui_dialog_callback (Widget *w, Widget *sender, widget_msg_t msg, int parm, void 
 
         return MSG_HANDLED;
     }
+
+    case MSG_DRAW:
+        if (call_widget_method (w, "on_draw", 0, NULL) == MSG_HANDLED)
+            return MSG_HANDLED;
+        MC_FALLTHROUGH;
 
     default:
         return dlg_default_callback (w, sender, msg, parm, data);
@@ -3022,10 +3093,11 @@ l_dialog_run (lua_State *L)
 
 #if 0
         if (!widget_get_state (w, WST_DISABLED)
-            && (widget_get_options (w, WOP_WANT_CURSOR) || widget_get_options (w, WOP_WANT_HOTKEY)))
+            && (widget_get_options (w, WOP_WANT_CURSOR) || widget_get_options (w, WOP_WANT_HOTKEY))
+            && !is_custom (w))
 #else
         if (widget_get_options (w, WOP_SELECTABLE) && !widget_get_state (w, WST_DISABLED)
-            && widget_set_state (w, WST_FOCUSED, TRUE) == MSG_HANDLED)
+            && !is_custom (w) && widget_set_state (w, WST_FOCUSED, TRUE) == MSG_HANDLED)
 #endif
             break;
 
