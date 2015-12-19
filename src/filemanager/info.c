@@ -372,7 +372,7 @@ info_new (const WRect *r)
 
     info = g_new (struct WInfo, 1);
     w = WIDGET (info);
-    widget_init (w, r, info_callback, NULL);
+    widget_init (w, r, info_callback, NULL, NULL);
 
     return info;
 }

@@ -38,7 +38,7 @@
 #include "lib/util.h"   // MC_PTR_FREE
 
 #ifdef ENABLE_LUA
-#include "lib/lua/plumbing.h"  // mc_lua_eat_key()
+#include "lib/lua/plumbing.h"  // mc_lua_eat_key(), mc_lua_notify_on_widget_destruction()
 #endif
 
 #include "lib/widget.h"
@@ -260,6 +260,9 @@ dlg_default_destroy (Widget *w)
     // if some widgets have history, save all histories at one moment here
     history_save (h, NULL);
     group_default_callback (w, NULL, MSG_BEFORE_DESTROY, 0, NULL);
+#ifdef ENABLE_LUA
+    mc_lua_notify_on_widget_destruction (w);
+#endif
     group_default_callback (w, NULL, MSG_DESTROY, 0, NULL);
     send_message (w, NULL, MSG_DESTROY, 0, NULL);
     mc_event_group_del (h->event_group);
@@ -336,7 +339,7 @@ dlg_create (gboolean modal, int y1, int x1, int lines, int cols, widget_pos_flag
     g = GROUP (new_d);
     widget_adjust_position (pos_flags, &r);
     group_init (g, &r, callback != NULL ? callback : dlg_default_callback,
-                mouse_callback != NULL ? mouse_callback : dlg_default_mouse_callback);
+                mouse_callback != NULL ? mouse_callback : dlg_default_mouse_callback, "Dialog");
 
     w->pos_flags = pos_flags;
     w->options |= WOP_SELECTABLE | WOP_TOP_SELECT;
@@ -445,6 +448,7 @@ dlg_process_event (WDialog *h, int key, Gpm_Event *event)
 
 /* --------------------------------------------------------------------------------------------- */
 
+/* lua/modules/ui.c wants this */
 cb_ret_t
 dlg_execute_cmd (WDialog *h, long command)
 {

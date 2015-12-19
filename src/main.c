@@ -500,6 +500,10 @@ main (int argc, char *argv[])
     (void) mc_rmdir (tmp_vpath);
     vfs_path_free (tmp_vpath, TRUE);
 
+#ifdef ENABLE_LUA
+    mc_lua_before_vfs_shutdown ();
+#endif
+
     // Virtual File System shutdown
     vfs_shut ();
 
