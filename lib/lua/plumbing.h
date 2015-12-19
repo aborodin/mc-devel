@@ -15,6 +15,13 @@
 
 /*** enums ***************************************************************************************/
 
+typedef enum
+{
+    MC_LUA_SCRIPT_RESULT_CONTINUE,
+    MC_LUA_SCRIPT_RESULT_FINISH,
+    MC_LUA_SCRIPT_RESULT_ERROR
+} mc_lua_script_result_t;
+
 /*** structures declarations (and typedefs of structures)*****************************************/
 
 /*** global variables defined in .c file *********************************************************/
@@ -38,7 +45,7 @@ void mc_lua_trigger_event (const char *event_name);
 gboolean mc_lua_ui_is_ready (void);
 
 /* --------------------------- mcscript-related --------------------------- */
-gboolean mc_lua_run_script (const char *filename);
+mc_lua_script_result_t mc_lua_run_script (const char *filename);
 void mc_lua_create_argv (const char *script_path, int argc, char **argv, int offs);
 
 /*** inline functions ****************************************************************************/
