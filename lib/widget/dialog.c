@@ -328,6 +328,7 @@ dlg_default_destroy (Widget *w)
 
     // if some widgets have history, save all histories at one moment here
     history_save (h, NULL);
+    group_default_callback (w, NULL, MSG_BEFORE_DESTROY, 0, NULL);
     group_default_callback (w, NULL, MSG_DESTROY, 0, NULL);
     send_message (w, NULL, MSG_DESTROY, 0, NULL);
     mc_event_group_del (h->event_group);
