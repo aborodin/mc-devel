@@ -160,6 +160,24 @@ struct Widget
         int last_buttons_down;
     } mouse;
 
+    /*
+     * To be able to convert a Widget to a scriptable object, we have to
+     * know its type (aka "class"). This member serves this purpose.
+     *
+     * We currently use a string, for simplicity (for the benefit of
+     * reviewers).
+     *
+     * In the future we'll probably change this to a numeric ID. How to do
+     * this "properly" is explained in 'TODO.long'. We'll also change its
+     * name to 'class_id' because it's useful also outside the realm of
+     * scripting.
+     *
+     * (Using strings has a flaw: we have to settle on the names used in one
+     * scripting engine (Lua). Somebody designing, say, a Python support may
+     * want to name his classes differently.)
+     */
+    const char *scripting_class_name;
+
     void (*make_global) (Widget * w, const WRect * delta);
     void (*make_local) (Widget * w, const WRect * delta);
 
@@ -205,7 +223,7 @@ char *hotkey_get_text (const hotkey_t hotkey);
 
 /* widget initialization */
 void widget_init (Widget * w, const WRect * r, widget_cb_fn callback,
-                  widget_mouse_cb_fn mouse_callback);
+                  widget_mouse_cb_fn mouse_callback, const char *lua_class_name);
 /* Default callback for widgets */
 cb_ret_t widget_default_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm,
                                   void *data);

@@ -203,7 +203,7 @@ mcview_new (const WRect * r, gboolean is_panel)
     view = g_new0 (WView, 1);
     w = WIDGET (view);
 
-    widget_init (w, r, mcview_callback, mcview_mouse_callback);
+    widget_init (w, r, mcview_callback, mcview_mouse_callback, NULL);
     w->options |= WOP_SELECTABLE | WOP_TOP_SELECT;
     w->keymap = viewer_map;
 

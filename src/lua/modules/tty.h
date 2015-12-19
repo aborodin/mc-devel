@@ -11,6 +11,7 @@
 
 /*** declarations of public functions ************************************************************/
 
+long luaTTY_check_keycode (lua_State * L, int name_index, gboolean push_name_short);
 void luaTTY_assert_ui_is_ready (lua_State * L);
 
 /*** inline functions ****************************************************************************/

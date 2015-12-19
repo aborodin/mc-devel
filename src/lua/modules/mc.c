@@ -55,6 +55,13 @@
 #include "src/diffviewer/ydiff.h"       /* dview_diff_cmd() */
 #endif
 
+/* The following are needed for l_current_widget() */
+
+#include "lib/lua/ui-impl.h"    /* luaUI_push_widget() */
+#include "lib/widget.h"         /* filemanager */
+#include "src/filemanager/layout.h"     /* command_prompt */
+#include "src/filemanager/command.h"    /* cmdline */
+
 /* The following are needed for l_expand_format() */
 
 #ifdef USE_INTERNAL_EDIT
@@ -81,6 +88,7 @@ static int l_expand_format (lua_State * L);
 static int l_name_quote (lua_State * L);
 static int l_is_background (lua_State * L);
 static int l_is_standalone (lua_State * L);
+static int l_current_widget (lua_State * L);
 
 /*** file scope variables ************************************************************************/
 
@@ -98,6 +106,7 @@ static const struct luaL_Reg mclib[] =
     { "name_quote", l_name_quote },
     { "is_background", l_is_background },
     { "is_standalone", l_is_standalone },
+    { "_current_widget", l_current_widget },
     { NULL, NULL }
 };
 /* *INDENT-ON* */
@@ -511,7 +520,7 @@ l_expand_format (lua_State * L)
     assert_not_standalone (L);
 
     template = lua_tostring (L, 1);
-    w = NULL;                   /* @todo */
+    w = lua_isnoneornil (L, 2) ? NULL : luaUI_check_widget_ex (L, 2, FALSE, "Editbox");
     dont_quote = lua_toboolean (L, 3) != 0;
 
     luaMC_pushstring_and_free (L, expand_format__string (template, w, !dont_quote));
@@ -616,9 +625,53 @@ l_is_standalone (lua_State * L)
 }
 
 /* --------------------------------------------------------------------------------------------- */
+
+/**
+ * This function is exposed to Lua as "mc._current_widget".
+ *
+ * The UI module exposes it as "ui.current_widget". See there for its
+ * documentation.
+ *
+ * We don't put this code in the UI module because it deals with MC-specific
+ * idiosyncrasies: 'filemanager' and 'command_prompt', whereas we want to keep
+ * the UI module as MC-independent as possible.
+ */
+static int
+l_current_widget (lua_State * L)
+{
+    const char *widget_type;
+
+    Widget *w = NULL;
+
+    widget_type = lua_tostring (L, 1);
+
+    if (top_dlg != NULL)
+    {
+        WDialog *dlg = DIALOG (top_dlg->data);
+
+        w = (GROUP (dlg)->current != NULL) ? WIDGET (GROUP (dlg)->current->data) : NULL;
+
+        if (w && w->scripting_class_name == NULL)
+            w = NULL;           /* We only care about widgets representable in Lua. */
+
+        if (widget_type != NULL)
+        {
+            if (w && !STREQ (widget_type, w->scripting_class_name))
+                w = NULL;
+
+            if (!w && dlg == filemanager && command_prompt && STREQ (widget_type, "Input"))
+                w = WIDGET (cmdline);
+        }
+    }
+
+    luaUI_push_widget (L, w, TRUE);
+
+    return 1;
+}
+
+/* --------------------------------------------------------------------------------------------- */
 /*** public functions ****************************************************************************/
 /* --------------------------------------------------------------------------------------------- */
-
 int
 luaopen_mc (lua_State * L)
 {

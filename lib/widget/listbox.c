@@ -559,7 +559,7 @@ listbox_new (int y, int x, int height, int width, gboolean deletable, lcback_fn 
     l = g_new (WListbox, 1);
     w = WIDGET (l);
     r.lines = height > 0 ? height : 1;
-    widget_init (w, &r, listbox_callback, listbox_mouse_callback);
+    widget_init (w, &r, listbox_callback, listbox_mouse_callback, "Listbox");
     w->options |= WOP_SELECTABLE | WOP_WANT_HOTKEY;
     w->keymap = listbox_map;
 

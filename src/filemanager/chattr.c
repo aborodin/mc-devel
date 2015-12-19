@@ -370,7 +370,7 @@ fileattrtext_new (int y, int x, const char *filename, unsigned long attr)
     r.cols = MAX (width, (int) check_attr_num);
 
     fat = g_new (WFileAttrText, 1);
-    widget_init (WIDGET (fat), &r, fileattrtext_callback, NULL);
+    widget_init (WIDGET (fat), &r, fileattrtext_callback, NULL, NULL);
 
     fat->filename = g_strdup (filename);
     fat->filename_width = width;
@@ -889,7 +889,7 @@ chattrboxes_new (const WRect * r)
     cb = g_new0 (WChattrBoxes, 1);
     w = WIDGET (cb);
     cbg = GROUP (cb);
-    group_init (cbg, r, chattrboxes_callback, chattrboxes_mouse_callback);
+    group_init (cbg, r, chattrboxes_callback, chattrboxes_mouse_callback, NULL);
     w->options |= WOP_SELECTABLE | WOP_WANT_CURSOR;
     w->mouse_handler = chattrboxes_handle_mouse_event;
     w->keymap = chattr_map;

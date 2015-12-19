@@ -1060,7 +1060,7 @@ mousedispatch_new (const WRect * r)
     Widget *w;
 
     w = g_new0 (Widget, 1);
-    widget_init (w, r, md_callback, help_mouse_callback);
+    widget_init (w, r, md_callback, help_mouse_callback, NULL);
     w->options |= WOP_SELECTABLE | WOP_WANT_CURSOR;
 
     return w;

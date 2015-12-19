@@ -965,7 +965,7 @@ menubar_new (GList * menu)
 
     menubar = g_new0 (WMenuBar, 1);
     w = WIDGET (menubar);
-    widget_init (w, &r, menubar_callback, menubar_mouse_callback);
+    widget_init (w, &r, menubar_callback, menubar_mouse_callback, NULL);
     w->pos_flags = WPOS_KEEP_HORZ | WPOS_KEEP_TOP;
     w->options |= WOP_TOP_SELECT;
     w->keymap = menu_map;

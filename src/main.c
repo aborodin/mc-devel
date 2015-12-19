@@ -527,6 +527,10 @@ main (int argc, char *argv[])
 
     keymap_free ();
 
+#ifdef ENABLE_LUA
+    mc_lua_before_vfs_shutdown ();
+#endif
+
     /* Virtual File System shutdown */
     vfs_shut ();
 

@@ -219,42 +219,6 @@ lookup_emacs_key (const char *name, char **label)
 /* --------------------------------------------------------------------------------------------- */
 
 /**
- * Converts a keyname (the element at index 'name_index') to a keycode.
- *
- * If 'push_name_short' is TRUE, also pushes onto the stack the canonical
- * short name of the key. Otherwise, the stack isn't modified in any way.
- */
-static long
-luaTTY_check_keycode (lua_State * L, int name_index, gboolean push_name_short)
-{
-    const char *name;
-    long keycode;
-    char *name_short;
-
-    /* If it's already a number, we return immediately. Note that in this
-     * case, since we don't call lookup_emacs_key(), we don't know the short
-     * name, so we make sure the user hasn't asked for it. */
-    if (lua_type (L, name_index) == LUA_TNUMBER && !push_name_short)
-        return luaL_checki (L, name_index);
-
-    name = luaL_checkstring (L, name_index);
-
-    keycode = lookup_emacs_key (name, push_name_short ? &name_short : NULL);
-    if (keycode == 0)
-        return luaL_error (L, _("Invalid key name '%s'"), name);
-
-    if (push_name_short)
-    {
-        lua_pushstring (L, name_short);
-        g_free (name_short);
-    }
-
-    return keycode;
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-/**
  * Converts a keyname to a keycode.
  *
  * Throws an exception if the keyname is invalid.
@@ -548,7 +512,7 @@ luaTTY_assert_ui_is_ready_ex (lua_State * L, gboolean push_only, const char *fun
             E_ ("You can not use %s() yet, because the UI has not been initialized.");
         const char *msg_with_solution =
             E_ ("You can not use %s() yet, because the UI has not been initialized.\n"
-                "One way to solve this problem is to call ui_open() before calling this function.");
+                "One way to solve this problem is to call ui.open() before calling this function.");
 
         const char *msg =
             (mc_global.mc_run_mode == MC_RUN_SCRIPT) ? msg_with_solution : msg_without_solution;
@@ -822,6 +786,11 @@ l_text_align (lua_State * L)
  * @function is_ui_ready
  */
 
+/*
+ * Note: it's in the 'tty' module, not in 'ui', because doing ui.is_ready()
+ * would autoload the UI module, something that isn't necessary in non-UI
+ * apps.
+ */
 static int
 l_is_ui_ready (lua_State * L)
 {
@@ -1002,6 +971,42 @@ luaopen_tty (lua_State * L)
 {
     luaL_newlib (L, ttylib);
     return 1;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/**
+ * Converts a keyname (the element at index 'name_index') to a keycode.
+ *
+ * If 'push_name_short' is TRUE, also pushes onto the stack the canonical
+ * short name of the key. Otherwise, the stack isn't modified in any way.
+ */
+long
+luaTTY_check_keycode (lua_State * L, int name_index, gboolean push_name_short)
+{
+    const char *name;
+    long keycode;
+    char *name_short;
+
+    /* If it's already a number, we return immediately. Note that in this
+     * case, since we don't call lookup_emacs_key(), we don't know the short
+     * name, so we make sure the user hasn't asked for it. */
+    if (lua_type (L, name_index) == LUA_TNUMBER && !push_name_short)
+        return luaL_checki (L, name_index);
+
+    name = luaL_checkstring (L, name_index);
+
+    keycode = lookup_emacs_key (name, push_name_short ? &name_short : NULL);
+    if (keycode == 0)
+        return luaL_error (L, _("Invalid key name '%s'"), name);
+
+    if (push_name_short)
+    {
+        lua_pushstring (L, name_short);
+        g_free (name_short);
+    }
+
+    return keycode;
 }
 
 /* --------------------------------------------------------------------------------------------- */

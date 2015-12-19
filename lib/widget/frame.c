@@ -103,7 +103,7 @@ frame_new (int y, int x, int lines, int cols, const char *title, gboolean single
 
     f = g_new (WFrame, 1);
     w = WIDGET (f);
-    widget_init (w, &r, frame_callback, NULL);
+    widget_init (w, &r, frame_callback, NULL, NULL);
 
     f->single = single;
     f->compact = compact;

@@ -1290,7 +1290,7 @@ tree_new (const WRect * r, gboolean is_panel)
     tree = g_new (WTree, 1);
 
     w = WIDGET (tree);
-    widget_init (w, r, tree_callback, tree_mouse_callback);
+    widget_init (w, r, tree_callback, tree_mouse_callback, NULL);
     w->options |= WOP_SELECTABLE | WOP_TOP_SELECT;
     w->keymap = tree_map;
 

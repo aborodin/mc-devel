@@ -39,7 +39,7 @@ struct WGroup
 /*** declarations of public functions ************************************************************/
 
 void group_init (WGroup * g, const WRect * r, widget_cb_fn callback,
-                 widget_mouse_cb_fn mouse_callback);
+                 widget_mouse_cb_fn mouse_callback, const char *lua_class_name);
 /* Default callback for groups */
 cb_ret_t group_default_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm,
                                  void *data);

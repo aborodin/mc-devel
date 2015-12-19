@@ -2150,7 +2150,7 @@ edit_init (WEdit * edit, const WRect * r, const edit_arg_t * arg)
         to_free = TRUE;
 
         w = WIDGET (edit);
-        widget_init (w, r, NULL, NULL);
+        widget_init (w, r, NULL, NULL, NULL);
         w->options |= WOP_SELECTABLE | WOP_TOP_SELECT | WOP_WANT_CURSOR;
         w->keymap = editor_map;
         w->ext_keymap = editor_x_map;

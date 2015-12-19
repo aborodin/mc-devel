@@ -46,7 +46,7 @@
 #include "lib/mcconfig.h"       /* num_history_items_recorded */
 
 #ifdef ENABLE_LUA
-#include "lib/lua/plumbing.h"   /* mc_lua_eat_key() */
+#include "lib/lua/plumbing.h"   /* mc_lua_eat_key(), mc_lua_notify_on_widget_destruction() */
 #endif
 
 #include "lib/widget.h"
@@ -132,75 +132,6 @@ dlg_help (const WDialog * h)
     ev_help_t event_data = { NULL, h->help_ctx };
 
     mc_event_raise (MCEVENT_GROUP_CORE, "help", &event_data);
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-static cb_ret_t
-dlg_execute_cmd (WDialog * h, long command)
-{
-    WGroup *g = GROUP (h);
-    cb_ret_t ret = MSG_HANDLED;
-
-    if (send_message (h, NULL, MSG_ACTION, command, NULL) == MSG_HANDLED)
-        return MSG_HANDLED;
-
-    switch (command)
-    {
-    case CK_Ok:
-        h->ret_value = B_ENTER;
-        dlg_close (h);
-        break;
-    case CK_Cancel:
-        h->ret_value = B_CANCEL;
-        dlg_close (h);
-        break;
-
-    case CK_Up:
-    case CK_Left:
-        group_select_prev_widget (g);
-        break;
-    case CK_Down:
-    case CK_Right:
-        group_select_next_widget (g);
-        break;
-
-    case CK_Help:
-        dlg_help (h);
-        break;
-
-    case CK_Suspend:
-        mc_event_raise (MCEVENT_GROUP_CORE, "suspend", NULL);
-        refresh_cmd ();
-        break;
-    case CK_Refresh:
-        refresh_cmd ();
-        break;
-
-    case CK_ScreenList:
-        if (!widget_get_state (WIDGET (h), WST_MODAL))
-            dialog_switch_list ();
-        else
-            ret = MSG_NOT_HANDLED;
-        break;
-    case CK_ScreenNext:
-        if (!widget_get_state (WIDGET (h), WST_MODAL))
-            dialog_switch_next ();
-        else
-            ret = MSG_NOT_HANDLED;
-        break;
-    case CK_ScreenPrev:
-        if (!widget_get_state (WIDGET (h), WST_MODAL))
-            dialog_switch_prev ();
-        else
-            ret = MSG_NOT_HANDLED;
-        break;
-
-    default:
-        ret = MSG_NOT_HANDLED;
-    }
-
-    return ret;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -344,6 +275,9 @@ dlg_default_destroy (Widget * w)
     /* if some widgets have history, save all histories at one moment here */
     dlg_save_history (h);
     group_default_callback (w, NULL, MSG_BEFORE_DESTROY, 0, NULL);
+#ifdef ENABLE_LUA
+    mc_lua_notify_on_widget_destruction (w);
+#endif
     group_default_callback (w, NULL, MSG_DESTROY, 0, NULL);
     send_message (w, NULL, MSG_DESTROY, 0, NULL);
     mc_event_group_del (h->event_group);
@@ -420,7 +354,7 @@ dlg_create (gboolean modal, int y1, int x1, int lines, int cols, widget_pos_flag
     g = GROUP (new_d);
     widget_adjust_position (pos_flags, &r);
     group_init (g, &r, callback != NULL ? callback : dlg_default_callback,
-                mouse_callback != NULL ? mouse_callback : dlg_default_mouse_callback);
+                mouse_callback != NULL ? mouse_callback : dlg_default_mouse_callback, "Dialog");
 
     w->pos_flags = pos_flags;
     w->options |= WOP_SELECTABLE | WOP_TOP_SELECT;
@@ -587,6 +521,75 @@ dlg_run (WDialog * h)
 
 /* --------------------------------------------------------------------------------------------- */
 
+/* lua/modules/ui.c wants this */
+cb_ret_t
+dlg_execute_cmd (WDialog * h, long command)
+{
+    WGroup *g = GROUP (h);
+    cb_ret_t ret = MSG_HANDLED;
+
+    if (send_message (h, NULL, MSG_ACTION, command, NULL) == MSG_HANDLED)
+        return MSG_HANDLED;
+
+    switch (command)
+    {
+    case CK_Ok:
+        h->ret_value = B_ENTER;
+        dlg_close (h);
+        break;
+    case CK_Cancel:
+        h->ret_value = B_CANCEL;
+        dlg_close (h);
+        break;
+
+    case CK_Up:
+    case CK_Left:
+        group_select_prev_widget (g);
+        break;
+    case CK_Down:
+    case CK_Right:
+        group_select_next_widget (g);
+        break;
+
+    case CK_Help:
+        dlg_help (h);
+        break;
+
+    case CK_Suspend:
+        mc_event_raise (MCEVENT_GROUP_CORE, "suspend", NULL);
+        refresh_cmd ();
+        break;
+    case CK_Refresh:
+        refresh_cmd ();
+        break;
+
+    case CK_ScreenList:
+        if (!widget_get_state (WIDGET (h), WST_MODAL))
+            dialog_switch_list ();
+        else
+            ret = MSG_NOT_HANDLED;
+        break;
+    case CK_ScreenNext:
+        if (!widget_get_state (WIDGET (h), WST_MODAL))
+            dialog_switch_next ();
+        else
+            ret = MSG_NOT_HANDLED;
+        break;
+    case CK_ScreenPrev:
+        if (!widget_get_state (WIDGET (h), WST_MODAL))
+            dialog_switch_prev ();
+        else
+            ret = MSG_NOT_HANDLED;
+        break;
+
+    default:
+        ret = MSG_NOT_HANDLED;
+    }
+
+    return ret;
+}
+
+/* --------------------------------------------------------------------------------------------- */
 /**
   * Write history to the ${XDG_DATA_HOME}/mc/history file
   */

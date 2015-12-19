@@ -249,7 +249,7 @@ buttonbar_new (void)
 
     bb = g_new0 (WButtonBar, 1);
     w = WIDGET (bb);
-    widget_init (w, &r, buttonbar_callback, buttonbar_mouse_callback);
+    widget_init (w, &r, buttonbar_callback, buttonbar_mouse_callback, NULL);
 
     w->pos_flags = WPOS_KEEP_HORZ | WPOS_KEEP_BOTTOM;
     w->options |= WOP_WANT_HOTKEY;

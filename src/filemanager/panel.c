@@ -4482,7 +4482,7 @@ panel_sized_empty_new (const char *panel_name, const WRect * r)
 
     panel = g_new0 (WPanel, 1);
     w = WIDGET (panel);
-    widget_init (w, r, panel_callback, panel_mouse_callback);
+    widget_init (w, r, panel_callback, panel_mouse_callback, NULL);
     w->options |= WOP_SELECTABLE | WOP_TOP_SELECT;
     w->keymap = panel_map;
 

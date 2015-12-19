@@ -43,6 +43,9 @@
 #include "lib/tty/color.h"
 #include "lib/skin.h"
 #include "lib/strutil.h"
+#ifdef ENABLE_LUA
+#include "lib/lua/plumbing.h"   /* mc_lua_notify_on_widget_destruction() */
+#endif
 #include "lib/widget.h"
 
 /*** global variables ****************************************************************************/
@@ -307,7 +310,8 @@ hotkey_get_text (const hotkey_t hotkey)
 /* --------------------------------------------------------------------------------------------- */
 
 void
-widget_init (Widget * w, const WRect * r, widget_cb_fn callback, widget_mouse_cb_fn mouse_callback)
+widget_init (Widget * w, const WRect * r, widget_cb_fn callback, widget_mouse_cb_fn mouse_callback,
+             const char *scripting_class_name)
 {
     w->id = widget_set_id ();
     w->rect = *r;
@@ -325,6 +329,7 @@ widget_init (Widget * w, const WRect * r, widget_cb_fn callback, widget_mouse_cb
     w->mouse.capture = FALSE;
     w->mouse.last_msg = MSG_MOUSE_NONE;
     w->mouse.last_buttons_down = 0;
+    w->scripting_class_name = scripting_class_name;
 
     w->options = WOP_DEFAULT;
     w->state = WST_CONSTRUCT | WST_VISIBLE;
@@ -358,7 +363,6 @@ widget_default_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm
     case MSG_ENABLE:
     case MSG_DISABLE:
     case MSG_DRAW:
-    case MSG_BEFORE_DESTROY:
     case MSG_DESTROY:
     case MSG_CURSOR:
     case MSG_IDLE:
@@ -366,6 +370,12 @@ widget_default_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm
 
     case MSG_RESIZE:
         return widget_default_resize (w, CONST_RECT (data));
+
+    case MSG_BEFORE_DESTROY:
+#ifdef ENABLE_LUA
+        mc_lua_notify_on_widget_destruction (w);
+#endif
+        return MSG_HANDLED;
 
     default:
         return MSG_NOT_HANDLED;
@@ -594,7 +604,7 @@ widget_replace (Widget * old_w, Widget * new_w)
     new_w->id = old_w->id;
     holder->data = new_w;
 
-    send_message (old_w, NULL, BEFORE_MSG_DESTROY, 0, NULL);
+    send_message (old_w, NULL, MSG_BEFORE_DESTROY, 0, NULL);
     send_message (old_w, NULL, MSG_DESTROY, 0, NULL);
 
     send_message (new_w, NULL, MSG_INIT, 0, NULL);

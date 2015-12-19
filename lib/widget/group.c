@@ -606,11 +606,13 @@ group_handle_hotkey (WGroup * g, int key)
  */
 
 void
-group_init (WGroup * g, const WRect * r, widget_cb_fn callback, widget_mouse_cb_fn mouse_callback)
+group_init (WGroup * g, const WRect * r, widget_cb_fn callback, widget_mouse_cb_fn mouse_callback,
+            const char *lua_class_name)
 {
     Widget *w = WIDGET (g);
 
-    widget_init (w, r, callback != NULL ? callback : group_default_callback, mouse_callback);
+    widget_init (w, r, callback != NULL ? callback : group_default_callback, mouse_callback,
+                 lua_class_name);
 
     w->mouse_handler = group_handle_mouse_event;
 
