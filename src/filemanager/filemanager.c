@@ -64,6 +64,9 @@
 #include "lib/fileloc.h"        /* MC_FILEPOS_FILE */
 #include "lib/keybind.h"
 #include "lib/event.h"
+#ifdef ENABLE_LUA
+#include "lib/lua/plumbing.h"   /* mc_lua_run_script() */
+#endif
 
 #include "tree.h"
 #include "boxes.h"              /* sort_box(), tree_box() */
@@ -979,6 +982,11 @@ mc_maybe_editor_or_viewer (void)
         ret = dview_diff_cmd (mc_run_param0, mc_run_param1);
         break;
 #endif /* USE_DIFF_VIEW */
+#ifdef ENABLE_LUA
+    case MC_RUN_SCRIPT:
+        ret = (mc_lua_run_script (NULL) != MC_LUA_SCRIPT_RESULT_ERROR);
+        break;
+#endif /* ENABLE_LUA */
     default:
         ret = FALSE;
     }
