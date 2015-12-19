@@ -78,6 +78,16 @@ group_widget_init (void *data, void *user_data)
 
 /* --------------------------------------------------------------------------------------------- */
 
+static void
+group_widget_before_destroy (void *data, void *user_data)
+{
+    (void) user_data;
+
+    send_message (WIDGET (data), NULL, MSG_BEFORE_DESTROY, 0, NULL);
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
 static GList *
 group_get_next_or_prev_of (GList * list, gboolean next)
 {
@@ -644,6 +654,10 @@ group_default_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm,
 
     case MSG_RESIZE:
         group_default_resize (g, RECT (data));
+        return MSG_HANDLED;
+
+    case MSG_BEFORE_DESTROY:
+        g_list_foreach (g->widgets, group_widget_before_destroy, NULL);
         return MSG_HANDLED;
 
     case MSG_DESTROY:

@@ -358,6 +358,7 @@ widget_default_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm
     case MSG_ENABLE:
     case MSG_DISABLE:
     case MSG_DRAW:
+    case MSG_BEFORE_DESTROY:
     case MSG_DESTROY:
     case MSG_CURSOR:
     case MSG_IDLE:
@@ -593,7 +594,9 @@ widget_replace (Widget * old_w, Widget * new_w)
     new_w->id = old_w->id;
     holder->data = new_w;
 
+    send_message (old_w, NULL, BEFORE_MSG_DESTROY, 0, NULL);
     send_message (old_w, NULL, MSG_DESTROY, 0, NULL);
+
     send_message (new_w, NULL, MSG_INIT, 0, NULL);
 
     if (should_focus)
@@ -869,6 +872,7 @@ widget_default_set_state (Widget * w, widget_state_t state, gboolean enable)
 void
 widget_default_destroy (Widget * w)
 {
+    send_message (w, NULL, MSG_BEFORE_DESTROY, 0, NULL);
     send_message (w, NULL, MSG_DESTROY, 0, NULL);
     g_free (w);
 }

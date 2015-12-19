@@ -48,6 +48,7 @@ typedef enum
     MSG_RESIZE,                 /* Screen size has changed */
     MSG_VALIDATE,               /* Dialog is to be closed */
     MSG_END,                    /* Shut down dialog */
+    MSG_BEFORE_DESTROY,         /* Sent before MSG_DESTROY */
     MSG_DESTROY                 /* Sent to widget at destruction time */
 } widget_msg_t;
 
