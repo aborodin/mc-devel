@@ -51,6 +51,9 @@
 #include "lib/global.h"
 
 #include "lib/vfs/vfs.h"
+#ifdef ENABLE_LUA
+#include "lib/lua/timer.h"      /* mc_lua_execute_ready_timeouts(), mc_lua_has_pending_timeouts() */
+#endif
 
 #include "tty.h"
 #include "tty-internal.h"       /* mouse_enabled */
@@ -1931,7 +1934,11 @@ tty_get_event (struct Gpm_Event *event, gboolean redo_event, gboolean block)
     else
         dirty++;
 
+#ifdef ENABLE_LUA
+    mc_lua_execute_ready_timeouts ();
+#else
     vfs_timeout_handler ();
+#endif
 
     /* Ok, we use (event->x < 0) to signal that the event does not contain
        a suitable position for the mouse, so we can't use show_mouse_pointer
@@ -1990,6 +1997,12 @@ tty_get_event (struct Gpm_Event *event, gboolean redo_event, gboolean block)
         }
         else
         {
+#ifdef ENABLE_LUA
+            if (mc_lua_has_pending_timeouts (&time_out))
+                time_addr = &time_out;
+            else
+                time_addr = NULL;
+#else
             int seconds;
 
             seconds = vfs_timeouts ();
@@ -2006,6 +2019,7 @@ tty_get_event (struct Gpm_Event *event, gboolean redo_event, gboolean block)
                 time_out.tv_usec = 0;
                 time_addr = &time_out;
             }
+#endif
         }
 
         if (!block || tty_got_winch ())
@@ -2030,7 +2044,11 @@ tty_get_event (struct Gpm_Event *event, gboolean redo_event, gboolean block)
                 return EV_MOUSE;
             if (!block || tty_got_winch ())
                 return EV_NONE;
+#ifdef ENABLE_LUA
+            mc_lua_execute_ready_timeouts ();
+#else
             vfs_timeout_handler ();
+#endif
         }
         if (flag == -1 && errno == EINTR)
             return EV_NONE;
