@@ -50,7 +50,11 @@
 
 #include "lib/global.h"
 
-#include "lib/vfs/vfs.h"
+#ifdef ENABLE_LUA
+#include "lib/lua/timer.h"  // mc_lua_execute_ready_timeouts(), mc_lua_has_pending_timeouts()
+#else
+#include "lib/vfs/vfs.h"  // vfs_timeouts(), vfs_timeout_handler()
+#endif
 
 #include "tty.h"
 #include "tty-internal.h"  // mouse_enabled
@@ -218,8 +222,6 @@ const key_code_name_t key_name_conv_tab[] = {
 };
 
 /*** file scope macro definitions ****************************************************************/
-
-#define MC_USEC_PER_MSEC 1000
 
 /* The maximum sequence length (32 + null terminator) */
 #define SEQ_BUFFER_LEN 33
@@ -1895,7 +1897,11 @@ tty_get_event (struct Gpm_Event *event, gboolean redo_event, gboolean block)
     else
         dirty++;
 
+#ifdef ENABLE_LUA
+    mc_lua_execute_ready_timeouts ();
+#else
     vfs_timeout_handler ();
+#endif
 
     /* Ok, we use (event->x < 0) to signal that the event does not contain
        a suitable position for the mouse, so we can't use show_mouse_pointer
@@ -1954,6 +1960,18 @@ tty_get_event (struct Gpm_Event *event, gboolean redo_event, gboolean block)
         }
         else
         {
+#ifdef ENABLE_LUA
+            pit_t time_out_ms = 0;
+
+            if (!mc_lua_has_pending_timeouts (&time_out_ms))
+                time_addr = NULL;
+            else
+            {
+                time_out.tv_sec = time_out_ms / MC_MSEC_PER_SEC;
+                time_out.tv_usec = (time_out_ms % MC_MSEC_PER_SEC) * MC_USEC_PER_MSEC;
+                time_addr = &time_out;
+            }
+#else
             int seconds;
 
             seconds = vfs_timeouts ();
@@ -1970,6 +1988,7 @@ tty_get_event (struct Gpm_Event *event, gboolean redo_event, gboolean block)
                 time_out.tv_usec = 0;
                 time_addr = &time_out;
             }
+#endif
         }
 
         if (!block || tty_got_winch ())
@@ -1994,7 +2013,11 @@ tty_get_event (struct Gpm_Event *event, gboolean redo_event, gboolean block)
                 return EV_MOUSE;
             if (!block || tty_got_winch ())
                 return EV_NONE;
+#ifdef ENABLE_LUA
+            mc_lua_execute_ready_timeouts ();
+#else
             vfs_timeout_handler ();
+#endif
         }
         if (flag == -1 && errno == EINTR)
             return EV_NONE;

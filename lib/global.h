@@ -98,6 +98,9 @@
 
 #define DEFAULT_CHARSET "ASCII"
 
+#define MC_USEC_PER_MSEC 1000
+#define MC_MSEC_PER_SEC 1000
+
 /*** enums ***************************************************************************************/
 
 /* run mode and params */

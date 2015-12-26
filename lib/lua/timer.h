@@ -1,5 +1,5 @@
-#ifndef MC__LUA_MODULES_H
-#define MC__LUA_MODULES_H
+#ifndef MC__LUA_TIMER_H
+#define MC__LUA_TIMER_H
 
 /*** typedefs(not structures) and defined constants **********************************************/
 
@@ -7,24 +7,22 @@
 
 /*** structures declarations (and typedefs of structures)*****************************************/
 
+/*
+ * "Point in Time"
+ *
+ * Holds milliseconds since the epoch (being: moment of first call).
+ */
+typedef gint64 pit_t;  // "long long" isn't ANSI C.
+
 /*** global variables defined in .c file *********************************************************/
 
 /*** declarations of public functions ************************************************************/
 
-int luaopen_conf (lua_State *L);
-int luaopen_fs (lua_State *L);
-int luaopen_fs_dir (lua_State *L);
-int luaopen_fs_filedes (lua_State *L);
-int luaopen_fs_statbuf (lua_State *L);
-int luaopen_fs_vpath (lua_State *L);
-int luaopen_internal (lua_State *L);
-int luaopen_locale (lua_State *L);
-int luaopen_mc (lua_State *L);
-int luaopen_prompts (lua_State *L);
-int luaopen_regex (lua_State *L);
-int luaopen_timer (lua_State *L);
-int luaopen_tty (lua_State *L);
-int luaopen_utils_bit32 (lua_State *L);
+pit_t mc_lua_timer_now (void);
+void mc_lua_set_next_timeout (pit_t tm);
+void mc_lua_execute_ready_timeouts (void);
+gboolean mc_lua_has_pending_timeouts (pit_t *time_out);
+void mc_lua_timer_unlock (void);
 
 /*** inline functions ****************************************************************************/
 
