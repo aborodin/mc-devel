@@ -99,7 +99,7 @@ static const struct luaL_Reg fsdirlib[] =
  *      print(file)
  *    end
  *
- * See also @{dir}, @{opendir}.
+ * See also @{dir}, @{glob}, @{opendir}.
  *
  * @function files
  * @args (path)
@@ -126,7 +126,7 @@ l_files (lua_State * L)
  *
  *    local files = fs.dir("/home/mooffie") or {}
  *
- * See also @{files}.
+ * See also @{files}, @{glob}.
  *
  * @function dir
  * @args (path)
@@ -198,7 +198,7 @@ l_dir (lua_State * L)
  *      print(file)
  *    end
  *
- * See also @{files}, @{dir}.
+ * See also @{files}, @{dir}, @{glob}.
  *
  * @function opendir
  * @args (path)
