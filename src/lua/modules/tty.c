@@ -33,6 +33,7 @@
 
 #include "lib/global.h"
 #include "lib/tty/key.h"        /* tty_keyname_to_keycode(), tty_keycode_to_keyname() */
+#include "lib/strutil.h"        /* str_*() */
 #include "lib/lua/capi.h"
 #include "lib/lua/plumbing.h"   /* mc_lua_ui_is_ready() */
 #include "lib/lua/utilx.h"
@@ -53,6 +54,7 @@ static int l_keyname_to_keycode (lua_State * L);
 static int l_keycode_to_keyname (lua_State * L);
 static int l_is_ui_ready (lua_State * L);
 static int l_beep (lua_State * L);
+static int l_is_utf8 (lua_State * L);
 
 /*** file scope variables ************************************************************************/
 
@@ -63,6 +65,7 @@ static const struct luaL_Reg ttylib[] =
     { "keycode_to_keyname", l_keycode_to_keyname },
     { "is_ui_ready", l_is_ui_ready },
     { "beep", l_beep },
+    { "is_utf8", l_is_utf8 },
     { NULL, NULL }
 };
 /* *INDENT-ON* */
@@ -367,6 +370,41 @@ l_beep (lua_State * L)
 
     tty_beep ();
     return 0;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/**
+ * Whether the terminal is UTF-8 encoded.
+ *
+ * @function is_utf8
+ */
+static int
+l_is_utf8 (lua_State * L)
+{
+    /*
+     * We don't use 'mc_global.utf8_display': We want this function to be
+     * available to Lua code running early, before the UI is ready.
+     * 'mc_global.utf8_display' is initialized in load_setup(), which is
+     * called relatively late, after mc_lua_load().
+     *
+     * This is not a critical feature, but it's nice to have.
+     */
+
+    /*
+     * UPDATE: Starting with MC 4.8.12 (commit ad5246c), load_setup() _is_
+     * called early. However, it doesn't seem to set mc_global.utf8_display
+     * to a correct value. It seems that it's check_codeset() that does the
+     * job. But the latter _is_ called late.
+     */
+
+    static int is_utf8 = -1;
+
+    if (is_utf8 == -1)
+        is_utf8 = (str_length ("\xD7\x90") == 1);
+
+    lua_pushboolean (L, is_utf8);
+    return 1;
 }
 
 /**
