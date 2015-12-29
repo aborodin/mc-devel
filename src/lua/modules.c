@@ -50,6 +50,7 @@ static const struct luaL_Reg mods[] =
 {
     { "conf",         luaopen_conf },
     { "c.fs",         luaopen_fs },
+    { NULL,           luaopen_fs_statbuf },
     { NULL,           luaopen_fs_vpath },
     { "internal",     luaopen_internal },
     { "locale",       luaopen_locale },
