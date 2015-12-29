@@ -1,0 +1,322 @@
+/*
+   Low-level file I/O.
+
+   Copyright (C) 2015-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2015
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * Low-level file I/O.
+ *
+ * This module groups functions that do file I/O using *descriptors*.
+ *
+ * Note: End-users eventually won't need to to use this module: we'll
+ * provide a higher-level interface similar to C's FILE.
+ *
+ * @internal
+ * @module fs.filedes
+ */
+
+#include <config.h>
+
+#include "lib/global.h"
+#include "lib/vfs/vfs.h"
+#include "lib/lua/capi.h"
+#include "lib/lua/utilx.h"
+
+#include "../modules.h"
+#include "fs.h"
+
+/*** global variables ****************************************************************************/
+
+/*** file scope macro definitions ****************************************************************/
+
+#define LUAFS_CLOSED_FD -1
+
+/*** file scope type declarations ****************************************************************/
+
+/*** forward declarations (file scope functions) *************************************************/
+
+static int l_open (lua_State *L);
+static int l_read (lua_State *L);
+static int l_write (lua_State *L);
+static int l_close (lua_State *L);
+static int l_lseek (lua_State *L);
+static int l_fstat (lua_State *L);
+
+/*** file scope variables ************************************************************************/
+
+static const luaMC_constReg fsfiledeslib_constants[] = {
+    { "CLOSED_FD", LUAFS_CLOSED_FD },
+    { NULL, 0 },
+};
+
+static const struct luaL_Reg fsfiledeslib[] = {
+    { "open", l_open },    //
+    { "read", l_read },    //
+    { "write", l_write },  //
+    { "close", l_close },  //
+    { "lseek", l_lseek },  //
+    { "fstat", l_fstat },  //
+    { NULL, NULL },        //
+};
+
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
+
+/**
+ * Checks a file descriptor out of the Lua stack. We use a special sentry
+ * value to represent closed files.
+ * @FIXME: We do this because MC's VFS layer has a bug which makes it not
+ * recognize invalid filehandles, and thereby crash. (see vfs_bug_crash.lua
+ * in the 'tests' folder.)
+ */
+static int
+luaFS_check_fd (lua_State *L, int idx)
+{
+    int fd;
+
+    fd = luaL_checkint (L, idx);
+    if (fd == LUAFS_CLOSED_FD)
+        luaL_argerror (
+            L, idx,
+            E_ ("This file descriptor was closed; I cannot carry out further operations on it."));
+
+    return fd;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/**
+ * Opens a file.
+ *
+ * Returns a numeric file descriptor on success, a triad on error.
+ *
+ *    local fd = require("fs.filedes").open(
+ *                 "/path/to/file",
+ *                 utils.bit32.bor(fs.O_WRONLY, fs.O_EXCL),
+ *                 tonumber("777", 8)
+ *               )
+ *
+ * @param path   The path
+ * @param flags  A bit field. A bitwise "or" of `fs.O_RDONLY`, `fs.O_WRONLY`,
+ *   `fs.O_RDWR`, etc. Defaults to `fs.O_RDONLY`.
+ * @param mode   When creating a file, the permissions. Defaults to 0666.
+ *   This will be clipped by the umask.
+ *
+ * @function open
+ * @args (path, [flags], [mode])
+ */
+static int
+l_open (lua_State *L)
+{
+    const vfs_path_t *vpath;
+    int flags;
+    mode_t mode;
+    int fd;
+
+    vpath = luaFS_check_vpath (L, 1);
+    flags = luaL_optint (L, 2, O_RDONLY);
+    mode = luaL_opti (L, 3, 0666);
+
+    fd = mc_open (vpath, flags, mode);
+    if (fd == -1)
+        return luaFS_push_error (L, vpath->str);
+
+    lua_pushinteger (L, fd);
+    return 1;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/**
+ * Closes a file.
+ *
+ * @function close
+ * @args (fd)
+ */
+static int
+l_close (lua_State *L)
+{
+    int fd;
+    int result;
+
+    fd = luaFS_check_fd (L, 1);
+    result = mc_close (fd);
+    return luaFS_push_result (L, result, NULL);
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/**
+ * Writes to a file.
+ *
+ * On success returns the number of bytes written. On error: a triad.
+ *
+ * @param fd The file descriptor.
+ * @param str The string to write.
+ *
+ * @function write
+ * @args (fd, str)
+ */
+static int
+l_write (lua_State *L)
+{
+    int fd;
+    const char *bf;
+    size_t bf_len;
+    ssize_t count;
+
+    fd = luaFS_check_fd (L, 1);
+    bf = luaL_checklstring (L, 2, &bf_len);
+
+    count = mc_write (fd, bf, bf_len);
+    if (count < 0)
+    {
+        /* @FIXME: MC's mc_read()/mc_write()/mc_close() should return
+         * EBADDESC on bad descriptor. */
+        return luaFS_push_error (L, NULL);
+    }
+
+    lua_pushi (L, count);
+    return 1;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/**
+ * Reads from a file.
+ *
+ * On success returns the string read (may be an empty string if no data was
+ * available; e.g., on EOF), or a triad on error.
+ *
+ * @param fd The file descriptor.
+ * @param count The number of bytes to read.
+ *
+ * @function read
+ * @args (fd, count)
+ */
+static int
+l_read (lua_State *L)
+{
+    int fd;
+    ssize_t count;
+    char *bf;
+
+    fd = luaFS_check_fd (L, 1);
+    count = luaL_checki (L, 2);
+
+    bf = g_malloc (count);
+    count = mc_read (fd, bf, count);
+    if (count < 0)
+    {
+        g_free (bf);
+        return luaFS_push_error (L, NULL);
+    }
+
+    /*
+     * What to do on EOF?
+     *
+     *  - luaposix.read() returns an empty string.
+     *  - io.file:read() returns nil.
+     *
+     * We follow the luaposix way.
+     */
+    lua_pushlstring (L, bf, count);
+    g_free (bf);
+    return 1;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/**
+ * Seeks in a file.
+ *
+ * On success returns the new offset (relative to the beginning of the file);
+ * on error a triad.
+ *
+ * @param fd The file descriptor.
+ * @param offset The offset (number).
+ * @param whence One of `fs.SEEK_SET`, `fs.SEEK_CUR`, `fs.SEEK_END`.
+ *   Defaults to `fs.SEEK_SET`.
+ *
+ * @function lseek
+ * @args (fd, offset, [whence])
+ */
+static int
+l_lseek (lua_State *L)
+{
+    int fd;
+    off_t offset;
+    int whence;
+    off_t result;
+
+    fd = luaFS_check_fd (L, 1);
+    offset = luaL_checki (L, 2);
+    whence = luaL_optint (L, 3, SEEK_SET);
+
+    result = mc_lseek (fd, offset, whence);
+    if (result < 0)
+        return luaFS_push_error (L, NULL);
+
+    lua_pushi (L, result);
+    return 1;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/**
+ * Stats a file.
+ *
+ * @param fd The file descriptor.
+ * @param ... Either none, to return a whole @{fs.StatBuf}, or names of
+ *   fields (rationale explained at @{fs.stat}).
+ *
+ * @function fstat
+ * @args (fd[, ...])
+ */
+static int
+l_fstat (lua_State *L)
+{
+    int fd;
+    struct stat sb;
+
+    fd = luaFS_check_fd (L, 1);
+    if (mc_fstat (fd, &sb) == -1)
+        return luaFS_push_error (L, NULL);
+
+    return luaFS_statbuf_extract_fields (L, &sb, 2);
+}
+
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
+
+int
+luaopen_fs_filedes (lua_State *L)
+{
+    luaL_newlib (L, fsfiledeslib);
+    luaMC_register_constants (L, fsfiledeslib_constants);
+    return 1;
+}
+
+/* --------------------------------------------------------------------------------------------- */
