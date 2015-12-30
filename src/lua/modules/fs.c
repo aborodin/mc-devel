@@ -1,11 +1,11 @@
 /*
-   All C modules have to be registered here.
+   Filesystem access.
 
-   Copyright (C) 2016-2023
+   Copyright (C) 2015-2023
    Free Software Foundation, Inc.
 
    Written by:
-   Moffie <mooffie@gmail.com> 2016
+   Moffie <mooffie@gmail.com> 2015
 
    This file is part of the Midnight Commander.
 
@@ -23,35 +23,58 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * Filesystem access.
+ *
+ * This module will contain file manipulation functions (like chmod(),
+ * mkdir(), rename(), stat(), etc.
+ *
+ * @module fs
+ */
+
 #include <config.h>
 
 #include "lib/global.h"
-#include "lib/event.h"  // mc_event_add()
+#include "lib/vfs/vfs.h"
 #include "lib/lua/capi.h"
-#include "lib/lua/plumbing.h"  // MCEVENT_GROUP_LUA
 
-#include "modules.h"
-#include "pre-init.h"
+#include "../modules.h"
+
+#include "fs.h"
 
 /*** global variables ****************************************************************************/
 
 /*** file scope macro definitions ****************************************************************/
 
+#define REGC(name) { #name, name }
+
 /*** file scope type declarations ****************************************************************/
 
 /*** forward declarations (file scope functions) *************************************************/
 
+static int l_vpath_new (lua_State *L);
+
 /*** file scope variables ************************************************************************/
 
-static const struct luaL_Reg mods[] = {
-    { "conf", luaopen_conf },
-    { "fs", luaopen_fs },
-    { NULL, luaopen_fs_vpath },
-    { "internal", luaopen_internal },
-    { "locale", luaopen_locale },
-    { "prompts", luaopen_prompts },
-    { "tty", luaopen_tty },
-    { "utils.bit32", luaopen_utils_bit32 },
+static const luaMC_constReg fslib_constants[] = {
+    /*
+     * Flags for VPath:to_str().
+     *
+     * Note: VPF_NO_CANON and VPF_USE_DEPRECATED_PARSER are used when
+     * converting *from* a string, so we don't need them. (VPF_NO_CANON is
+     * the "relative" argument to fs.VPath().)
+     */
+    REGC (VPF_NONE),
+    REGC (VPF_RECODE),
+    REGC (VPF_STRIP_HOME),
+    REGC (VPF_STRIP_PASSWORD),
+    REGC (VPF_HIDE_CHARSET),
+
+    { NULL, 0 },
+};
+
+static const struct luaL_Reg fslib[] = {
+    { "VPath", l_vpath_new },
     { NULL, NULL },
 };
 
@@ -60,50 +83,40 @@ static const struct luaL_Reg mods[] = {
 /* --------------------------------------------------------------------------------------------- */
 
 /**
- * "Loads" all our C modules.
+ * Constructs a @{~mod:fs.VPath} object.
+ *
+ * If *path* is already a VPath object, it's returned as-is.
+ *
+ * @function VPath
+ * @args (path[, relative])
  */
-static gboolean
-mc_lua_open_c_modules (void)
+static int
+l_vpath_new (lua_State *L)
 {
-    const luaL_Reg *mod;
+    gboolean relative;
 
-    for (mod = mods; mod->func != NULL; mod++)
-        if (mod->name != NULL)
-            luaMC_requiref (Lg, mod->name, mod->func);
-        else
-        {
-            lua_pushcfunction (Lg, mod->func);
-            lua_call (Lg, 0, 0);
-        }
+    relative = lua_toboolean (L, 2) != 0;
 
-    return TRUE;
+    if (relative)
+        (void) luaFS_check_vpath_ex (L, 1, TRUE);
+    else
+        (void) luaFS_check_vpath (L, 1);
+
+    // By now, #1 is a vpath (or an error was raised). We return it.
+    lua_pushvalue (L, 1);
+    return 1;
 }
 
 /* --------------------------------------------------------------------------------------------- */
 /*** public functions ****************************************************************************/
 /* --------------------------------------------------------------------------------------------- */
 
-/**
- * Our Lua integration is split into the 'lib' and the 'src' trees. The
- * modules are here, in the 'src' tree.
- *
- * This poses a problem: since code in 'lib' is not supposed to call code in
- * 'src', there's no way for Lua's initialization routine (in 'lib') to load
- * our modules! The solution: main() calls the following function, which
- * registers itself to trigger when Lua initializes.
- *
- * It wouldn't have worked for main() to call mc_lua_open_c_modules() directly
- * because it (mc_lua_open_c_modules) has to be called also when Lua restarts,
- * a mechanism which main() knows nothing about.
- */
-void
-mc_lua_pre_init (void)
+int
+luaopen_fs (lua_State *L)
 {
-    mc_event_add (MCEVENT_GROUP_LUA, "init", (mc_event_callback_fn) mc_lua_open_c_modules, NULL,
-                  NULL);
-    /* Note: It's OK that mc_lua_open_c_modules() doesn't declare in its
-     * signature all the parameters mc_event_raise() sends it: we have this
-     * scenario when we pass g_free (and others) to g_list_foreach(). */
+    luaL_newlib (L, fslib);
+    luaMC_register_constants (L, fslib_constants);
+    return 1;
 }
 
 /* --------------------------------------------------------------------------------------------- */
