@@ -34,3 +34,39 @@ AC_DEFUN([mc_ENCODING],[
     AC_SUBST(ENCODING_CP866)
     AC_SUBST(ENCODING_ISO8859)
 ])
+
+AC_DEFUN([mc_ENCODING_PRINTF_GROUPING],[
+    gt_GLIBC2
+
+    AC_CACHE_CHECK([whether printf() can print localized thousand separators.],
+        [mc_cv_encoding_printf_grouping],
+        [
+            grouping=no
+
+            dnl Since runtime detection doesn't work when cross-compiling, we first
+            dnl test for the existence of a decent glibc library.
+
+            AS_IF([test x"$GLIBC2" = xyes], [grouping=yes], [
+                AC_MSG_NOTICE([** TRYING RUNTIME DETECTION])
+                AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <stdio.h>
+#include <string.h>
+int main ()
+{
+  /* We merely check that the "'" doesn't break anything. If it
+   * doesn't, we assume we have encoding support. */
+  char buf[100];
+  sprintf (buf, "%'d", 123);
+  return (strcmp (buf, "123") != 0);
+}
+                ]])], [grouping=yes], [:], [:])
+            ])
+
+            mc_cv_encoding_printf_grouping=$grouping
+        ])
+
+    if test x"$mc_cv_encoding_printf_grouping" = xyes; then
+        AC_DEFINE(HAVE_ENCODING_PRINTF_GROUPING, [1], [Define if printf() and family can print localized thousands separators for numbers.])
+    fi
+
+])
