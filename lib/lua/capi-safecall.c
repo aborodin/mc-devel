@@ -34,8 +34,10 @@
 #include <stdio.h>
 
 #include "lib/global.h"
+#include "lib/widget.h"         /* message() */
 
 #include "capi.h"
+#include "plumbing.h"           /* mc_lua_ui_is_ready() */
 #include "utilx.h"              /* E_() */
 
 #include "capi-safecall.h"
@@ -45,6 +47,8 @@
 /*** file scope macro definitions ****************************************************************/
 
 /*** file scope type declarations ****************************************************************/
+
+static const char *first_error = NULL;
 
 /*** forward declarations (file scope functions) *************************************************/
 
@@ -63,12 +67,26 @@ display_error (lua_State * L)
 
     error_message = lua_tostring (L, -1);
     if (error_message != NULL)
-        fprintf (stderr, E_ ("LUA EXCEPTION: %s\n"), error_message);
+    {
+        if (mc_lua_ui_is_ready ())
+            message (D_ERROR, _("Lua error"), "%s", error_message);
+        else
+            fprintf (stderr, E_ ("LUA EXCEPTION: %s\n"), error_message);
+    }
 }
 
 /* --------------------------------------------------------------------------------------------- */
 
 /* -------------------------- Running Lua code ---------------------------- */
+
+static void
+record_first_error (lua_State * L)
+{
+    if (!first_error)
+        first_error = g_strdup (lua_tostring (L, -1));
+}
+
+/* --------------------------------------------------------------------------------------------- */
 
 static void
 handle_error (lua_State * L)
@@ -79,6 +97,7 @@ handle_error (lua_State * L)
         lua_pop (L, 1);
         lua_pushstring (L, E_ ("(error object is not a string)"));
     }
+    record_first_error (L);
     display_error (L);
 
     lua_pop (L, 1);             /* the error */
@@ -146,6 +165,21 @@ luaMC_safe_dofile (lua_State * L, const char *dirname, const char *basename)
     /* An alternative implementation is to have a Lua C function that does
      * `loadfile(#1)()`, push that function, and call it with luaMC_safe_call().
      * As it turns out, the above solution is a bit shorter. */
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/* Errors may occur before the UI is available. In such case they're
+ * written to STDERR and the user may not notice them. So we "replay" them
+ * when we have a nice UI where the user is sure to see them. */
+void
+mc_lua_replay_first_error (void)
+{
+    if (first_error)
+    {
+        lua_pushstring (Lg, first_error);
+        handle_error (Lg);
+    }
 }
 
 /* --------------------------------------------------------------------------------------------- */

@@ -467,6 +467,9 @@ main (int argc, char *argv[])
 
         /* subshell_prompt is NULL here */
         mc_prompt = (geteuid () == 0) ? "# " : "$ ";
+
+        /* Inform whoever wants to know that the UI subsystem is ready. */
+        mc_event_raise (MCEVENT_GROUP_CORE, "ui_is_ready", NULL);
     }
 
     /* Program main loop */
