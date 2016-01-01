@@ -1,5 +1,5 @@
-#ifndef MC__LUA_MODULES_H
-#define MC__LUA_MODULES_H
+#ifndef MC__LUA_TTY_H
+#define MC__LUA_TTY_H
 
 /*** typedefs(not structures) and defined constants **********************************************/
 
@@ -11,11 +11,7 @@
 
 /*** declarations of public functions ************************************************************/
 
-int luaopen_conf (lua_State *L);
-int luaopen_internal (lua_State *L);
-int luaopen_locale (lua_State *L);
-int luaopen_prompts (lua_State *L);
-int luaopen_tty (lua_State *L);
+void luaTTY_assert_ui_is_ready (lua_State *L);
 
 /*** inline functions ****************************************************************************/
 
