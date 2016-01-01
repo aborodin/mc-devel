@@ -55,6 +55,9 @@
 #include "lib/strutil.h"
 #include "lib/util.h"
 #include "lib/vfs/vfs.h"        /* vfs_init(), vfs_shut() */
+#ifdef ENABLE_LUA
+#include "lib/lua/plumbing.h"
+#endif
 
 #include "filemanager/filemanager.h"
 #include "filemanager/treestore.h"      /* tree_store_save */
@@ -81,6 +84,10 @@
 #include "lib/charsets.h"
 #include "selcodepage.h"
 #endif /* HAVE_CHARSET */
+
+#ifdef ENABLE_LUA
+#include "src/lua/pre-init.h"   /* mc_lua_pre_init() */
+#endif
 
 #include "consaver/cons.saver.h"        /* cons_saver_pid */
 
@@ -339,6 +346,13 @@ main (int argc, char *argv[])
         goto startup_exit_falure;
     }
 
+#ifdef ENABLE_LUA
+    mc_lua_pre_init ();
+    mc_lua_init ();
+    /* Run system and user startup scripts: */
+    mc_lua_load ();
+#endif
+
     /* Resolve the other_dir panel option.
      * 1. Must be done after vfs_setup_work_dir().
      * 2. Must be done after mc_setup_by_args() because of mc_run_mode.
@@ -472,6 +486,10 @@ main (int argc, char *argv[])
 
     /* Virtual File System shutdown */
     vfs_shut ();
+
+#ifdef ENABLE_LUA
+    mc_lua_shutdown ();
+#endif
 
     flush_extension_file ();    /* does only free memory */
 
