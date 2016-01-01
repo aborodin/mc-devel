@@ -12,6 +12,7 @@
 /*** declarations of public functions ************************************************************/
 
 int luaopen_conf (lua_State * L);
+int luaopen_internal (lua_State * L);
 int luaopen_locale (lua_State * L);
 
 /*** inline functions ****************************************************************************/
