@@ -1,0 +1,36 @@
+#ifndef MC__LUA_PLUMBING_H
+#define MC__LUA_PLUMBING_H
+
+/*
+ * If a function needs a lua_State argument then it means it doesn't belong here.
+ */
+
+/*** typedefs(not structures) and defined constants **********************************************/
+
+#define MCEVENT_GROUP_LUA "Lua"  // used for mc_event_add(), mc_event_raise().
+
+// Names of environment variables with which user can override directory paths.
+#define MC_LUA_SYSTEM_DIR__ENVAR "MC_LUA_SYSTEM_DIR"
+#define MC_LUA_USER_DIR__ENVAR   "MC_LUA_USER_DIR"
+
+/*** enums ***************************************************************************************/
+
+/*** structures declarations (and typedefs of structures)*****************************************/
+
+/*** global variables defined in .c file *********************************************************/
+
+/*** declarations of public functions ************************************************************/
+
+/* -------------------------- Meta information ---------------------------- */
+const char *mc_lua_engine_name (void);
+const char *mc_lua_system_dir (void);
+const char *mc_lua_user_dir (void);
+
+/* ----------------------------- Start/stop ------------------------------- */
+void mc_lua_init (void);
+void mc_lua_load (void);
+void mc_lua_shutdown (void);
+
+/*** inline functions ****************************************************************************/
+
+#endif

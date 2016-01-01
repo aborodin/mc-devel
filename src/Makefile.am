@@ -12,6 +12,10 @@ if ENABLE_SUBSHELL
 SUBDIRS += subshell
 endif
 
+if USE_LUA
+SUBDIRS += lua
+endif
+
 noinst_LTLIBRARIES = libinternal.la
 
 AM_CPPFLAGS = \
@@ -33,7 +37,7 @@ AM_CPPFLAGS += $(LIBSSH_CFLAGS)
 endif
 endif
 
-AM_CPPFLAGS += -I$(top_srcdir) $(GLIB_CFLAGS)
+AM_CPPFLAGS += -I$(top_srcdir) $(GLIB_CFLAGS) $(LUA_CFLAGS)
 
 bin_PROGRAMS = mc
 
@@ -49,11 +53,15 @@ if ENABLE_SUBSHELL
 SUBSHELLLIB = subshell/libsubshell.la
 endif
 
+if USE_LUA
+LUALIB = lua/libmc-luasrc.la
+endif
+
 libinternal_la_LIBADD = \
 	filemanager/libmcfilemanager.la \
 	vfs/libmc-vfs.la \
 	viewer/libmcviewer.la \
-	$(DIFFLIB) $(EDITLIB) $(SUBSHELLLIB)
+	$(DIFFLIB) $(EDITLIB) $(SUBSHELLLIB) $(LUALIB)
 
 mc_LDADD = \
 	libinternal.la

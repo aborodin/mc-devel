@@ -41,6 +41,11 @@
 #include "lib/util.h"     // mc_get_profile_root()
 #include "lib/tty/tty.h"  // S-Lang or ncurses version
 
+#ifdef ENABLE_LUA
+#include "lib/lua/plumbing.h"
+#include "lib/lua/capi.h"       /* lua_Number, lua_Integer */
+#endif
+
 #include "src/textconf.h"
 
 /*** global variables ****************************************************************************/
@@ -170,6 +175,10 @@ show_version (void)
             LIBSSH2_VERSION_PATCH);
 #endif
 
+#ifdef ENABLE_LUA
+    printf (_("With Lua (%s)\n"), mc_lua_engine_name ());
+#endif
+
     for (i = 0; features[i] != NULL; i++)
         puts (_ (features[i]));
 
@@ -189,6 +198,10 @@ show_version (void)
     TYPE_INFO (size_t);
     TYPE_INFO (off_t);
     TYPE_INFO (uintmax_t);
+#ifdef ENABLE_LUA
+    TYPE_INFO (lua_Number);
+    TYPE_INFO (lua_Integer);
+#endif
 #undef TYPE_INFO
     (void) puts ("");
 }
@@ -223,6 +236,9 @@ show_datadirs_extended (void)
     PRINTF2 ("shell:", LIBEXECDIR, VFS_SHELL_PREFIX PATH_SEP_STR);
 #endif
 #endif
+#ifdef ENABLE_LUA
+    PRINTF_SECTION2 (_("Lua scripts:"), mc_lua_system_dir ());
+#endif
     (void) puts ("");
 
     PRINTF_GROUP (_ ("User data"));
@@ -241,6 +257,13 @@ show_datadirs_extended (void)
     PRINTF ("mcedit external macros:", mc_config_get_data_path (), EDIT_HOME_MACRO_FILE ".*");
 #endif
     PRINTF_SECTION2 (_ ("Cache directory:"), mc_config_get_cache_path ());
+#ifdef ENABLE_LUA
+    PRINTF ("Lua scripts:", mc_lua_user_dir (), "");
+    (void) puts ("");
+    (void) printf (_("(You may override Lua's default script directories with the\n"
+                     "environment variables %s and %s.)\n"), MC_LUA_SYSTEM_DIR__ENVAR,
+                   MC_LUA_USER_DIR__ENVAR);
+#endif
 }
 
 #undef PRINTF
