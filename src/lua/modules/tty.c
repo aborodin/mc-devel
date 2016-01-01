@@ -34,9 +34,12 @@
 #include "lib/global.h"
 #include "lib/tty/key.h"        /* tty_keyname_to_keycode(), tty_keycode_to_keyname() */
 #include "lib/lua/capi.h"
+#include "lib/lua/plumbing.h"   /* mc_lua_ui_is_ready() */
 #include "lib/lua/utilx.h"
 
 #include "../modules.h"
+
+#include "tty.h"
 
 /*** global variables ****************************************************************************/
 
@@ -48,6 +51,7 @@
 
 static int l_keyname_to_keycode (lua_State * L);
 static int l_keycode_to_keyname (lua_State * L);
+static int l_is_ui_ready (lua_State * L);
 static int l_beep (lua_State * L);
 
 /*** file scope variables ************************************************************************/
@@ -57,6 +61,7 @@ static const struct luaL_Reg ttylib[] =
 {
     { "keyname_to_keycode", l_keyname_to_keycode },
     { "keycode_to_keyname", l_keycode_to_keyname },
+    { "is_ui_ready", l_is_ui_ready },
     { "beep", l_beep },
     { NULL, NULL }
 };
@@ -309,6 +314,48 @@ l_keycode_to_keyname (lua_State * L)
  */
 
 /**
+ * Whether the UI is ready.
+ *
+ * It tells us if *curses* has taken control of the terminal. This is when you
+ * can use dialog boxes.
+ *
+ * [info]
+ *
+ * The terminal can be in one of two states:
+ *
+ * - When MC just starts, the terminal is in the so-called
+ *   [cooked](http://en.wikipedia.org/wiki/Cooked_mode) mode. It's the mode
+ *   most Unix command-line utilities work in, where the terminal behaves
+ *   like a line-printer.
+ *
+ *   Indent: This is also the initial state for @{~standalone|standalone mode}.
+ *
+ * - Soon afterwards *curses* (or *slang*) takes control of the terminal.
+ *   The application gets control of the whole area of the screen and
+ *   displays its data in dialog boxes.
+ *
+ * _The second state is when we say "the UI is ready", or "UI mode". The first
+ * state is "non-UI mode"._
+ *
+ * Note: When MC loads your @{~started#first|user scripts} it does this very early,
+ * still in non-UI mode. This is why you can't call functions like `tty.style`
+ * at the top-level of your user scripts.
+ *
+ * [/info]
+ *
+ * @function is_ui_ready
+ */
+
+static int
+l_is_ui_ready (lua_State * L)
+{
+    lua_pushboolean (L, mc_lua_ui_is_ready ());
+    return 1;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/**
  * Sounds a beep.
  *
  * @function beep
@@ -335,6 +382,26 @@ luaopen_tty (lua_State * L)
 {
     luaL_newlib (L, ttylib);
     return 1;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/* ------------------------------ Utilities ------------------------------- */
+
+/**
+ * Several functions necessitates the UI. They call this function to emit
+ * a useful and uniform error message.
+ */
+
+void
+luaTTY_assert_ui_is_ready (lua_State * L)
+{
+    if (!mc_lua_ui_is_ready ())
+    {
+        luaL_error (L,
+                    E_ ("You can not use %s() yet, because the UI has not been initialized."),
+                    luaMC_get_function_name (L, 0, FALSE));
+    }
 }
 
 /* --------------------------------------------------------------------------------------------- */
