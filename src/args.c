@@ -34,6 +34,10 @@
 #include "lib/vfs/vfs.h"
 #include "lib/util.h"           /* x_basename() */
 
+#ifdef ENABLE_LUA
+#include "lib/lua/plumbing.h"   /* mc_lua_create_argv() */
+#endif
+
 #include "src/textconf.h"
 
 #ifdef USE_INTERNAL_EDIT
@@ -78,6 +82,10 @@ static gboolean parse_mc_e_argument (const gchar * option_name, const gchar * va
                                      gpointer data, GError ** mcerror);
 static gboolean parse_mc_v_argument (const gchar * option_name, const gchar * value,
                                      gpointer data, GError ** mcerror);
+#ifdef ENABLE_LUA
+static gboolean parse_mc_script_argument (const gchar * option_name, const gchar * value,
+                                          gpointer data, GError ** mcerror);
+#endif
 
 /*** file scope variables ************************************************************************/
 
@@ -181,6 +189,16 @@ static const GOptionEntry argument_main_table[] = {
      N_("Edit files"),
      N_("<file> ...")
     },
+
+#ifdef ENABLE_LUA
+    {
+     /* handle arguments manually */
+     "script", 'L', G_OPTION_FLAG_IN_MAIN | G_OPTION_FLAG_NO_ARG, G_OPTION_ARG_CALLBACK,
+     (gpointer) parse_mc_script_argument,
+     N_("Run a Lua script"),
+     "<file>"
+    },
+#endif /* ENABLE_LUA */
 
     G_OPTION_ENTRY_NULL
     /* *INDENT-ON* */
@@ -478,6 +496,25 @@ parse_mc_v_argument (const gchar * option_name, const gchar * value, gpointer da
 
 /* --------------------------------------------------------------------------------------------- */
 
+#ifdef ENABLE_LUA
+static gboolean
+parse_mc_script_argument (const gchar * option_name, const gchar * value, gpointer data,
+                          GError ** mcerror)
+{
+    (void) option_name;
+    (void) value;
+    (void) data;
+
+    mc_return_val_if_error (mcerror, FALSE);
+
+    mc_global.mc_run_mode = MC_RUN_SCRIPT;
+
+    return TRUE;
+}
+#endif
+
+/* --------------------------------------------------------------------------------------------- */
+
 #ifdef USE_INTERNAL_EDIT
 /**
  * Get list of filenames (and line numbers) from command line, when mc called as editor
@@ -606,6 +643,13 @@ mc_setup_run_mode (char **argv)
         mc_global.mc_run_mode = MC_RUN_EDITOR;
     }
 #endif
+#ifdef ENABLE_LUA
+    else if (strncmp (base, "mcs", 3) == 0)
+    {
+        /* mcs* is link to mcscript */
+        mc_global.mc_run_mode = MC_RUN_SCRIPT;
+    }
+#endif /* ENABLE_LUA */
 #ifdef USE_DIFF_VIEW
     else if (strncmp (base, "mcd", 3) == 0 || strcmp (base, "diff") == 0)
     {
@@ -781,6 +825,20 @@ mc_setup_by_args (int argc, char **argv, GError ** mcerror)
 
         mc_run_param0 = g_strdup (tmp);
         break;
+
+#ifdef ENABLE_LUA
+    case MC_RUN_SCRIPT:
+        if (tmp == NULL)
+        {
+            mc_propagate_error (mcerror, 0, "%s\n", _("No pathname of a script to run was given."));
+            return FALSE;
+        }
+
+        mc_run_param0 = g_strdup (tmp);
+        /* Arguments start at index 2 (as at index 1 is the script name). */
+        mc_lua_create_argv (mc_run_param0, argc, argv, 2);
+        break;
+#endif /* ENABLE_LUA */
 
 #ifdef USE_DIFF_VIEW
     case MC_RUN_DIFFVIEWER:

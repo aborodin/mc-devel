@@ -225,7 +225,7 @@ include povray.syntax
 file .\*\\.(ebuild|eclass)$ Gentoo\sEbuild
 include ebuild.syntax
 
-file ..\*\\.(?i:lua)$ Lua\sProgram ^#!.\*[\s/]lua
+file ..\*\\.((?i:lua)|mcs)$ Lua\sProgram ^#!.\*[\s/](lua|mcscript)
 include lua.syntax
 
 file ..\*\\.(?i:idl)$ CORBA\sIDL
