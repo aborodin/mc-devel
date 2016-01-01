@@ -45,6 +45,10 @@
 #include "lib/util.h"           /* MC_PTR_FREE */
 #include "lib/mcconfig.h"       /* num_history_items_recorded */
 
+#ifdef ENABLE_LUA
+#include "lib/lua/plumbing.h"   /* mc_lua_eat_key() */
+#endif
+
 #include "lib/widget.h"
 #include "lib/widget/mouse.h"
 
@@ -229,6 +233,11 @@ dlg_key_event (WDialog * h, int d_key)
 
     if (g->current == NULL)
         g->current = g->widgets;
+
+#ifdef ENABLE_LUA
+    if (mc_lua_eat_key (d_key))
+        return;
+#endif
 
     /* TAB used to cycle */
     if (!widget_get_options (w, WOP_WANT_TAB))
