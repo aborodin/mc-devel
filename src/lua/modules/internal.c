@@ -1,5 +1,5 @@
 /*
-   All C modules have to be registered here.
+   The Bureau of Internal Affairs.
 
    Copyright (C) 2016-2023
    Free Software Foundation, Inc.
@@ -23,15 +23,24 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * The Bureau of Internal Affairs.
+ *
+ * This module groups functions that are for the core's internal use.
+ *
+ * Note-short: This module in not intended for end-users.
+ *
+ * @internal
+ * @module internal
+ */
+
 #include <config.h>
 
 #include "lib/global.h"
-#include "lib/event.h"  // mc_event_add()
 #include "lib/lua/capi.h"
-#include "lib/lua/plumbing.h"  // MCEVENT_GROUP_LUA
+#include "lib/lua/utilx.h"
 
-#include "modules.h"
-#include "pre-init.h"
+#include "../modules.h"
 
 /*** global variables ****************************************************************************/
 
@@ -41,12 +50,12 @@
 
 /*** forward declarations (file scope functions) *************************************************/
 
+static int l_register_system_callback (lua_State *L);
+
 /*** file scope variables ************************************************************************/
 
-static const struct luaL_Reg mods[] = {
-    { "conf", luaopen_conf },
-    { "internal", luaopen_internal },
-    { "locale", luaopen_locale },
+static const struct luaL_Reg internal_lib[] = {
+    { "register_system_callback", l_register_system_callback },
     { NULL, NULL },
 };
 
@@ -55,50 +64,52 @@ static const struct luaL_Reg mods[] = {
 /* --------------------------------------------------------------------------------------------- */
 
 /**
- * "Loads" all our C modules.
+ * Registers a Lua function at the C side.
+ *
+ * This is the primary means by which we plug Lua into MC.
+ *
+ * For example, on the Lua side we do:
+ *
+ *    require "internal".register_system_callback("ping", function(...)
+ *      print("ping!", ...)
+ *      return 666
+ *    end)
+ *
+ * ...and on the C side:
+ *
+ *    if (luaMC_get_system_callback (Lg, "ping")) {
+ *      lua_pushstring (Lg, "whatever");
+ *      lua_pushstring (Lg, "you");
+ *      lua_pushstring (Lg, "want");
+ *      if (luaMC_safe_call (Lg, 3, 1)) {
+ *        printf ("I got %d in return\n", lua_tointeger (Lg, -1));
+ *        lua_pop (Lg, 1);
+ *      }
+ *    }
+ *
+ * @function register_system_callback
+ * @args (slot_name, function)
  */
-static gboolean
-mc_lua_open_c_modules (void)
+static int
+l_register_system_callback (lua_State *L)
 {
-    const luaL_Reg *mod;
+    /* This is to guard against typos. E.g., `rsc("whatever", tbl.non_existent)`
+     * would fail. An unintended consequence is that we can't pass 'nil'. */
+    luaL_checktype (L, 2, LUA_TFUNCTION);
 
-    for (mod = mods; mod->func != NULL; mod++)
-        if (mod->name != NULL)
-            luaMC_requiref (Lg, mod->name, mod->func);
-        else
-        {
-            lua_pushcfunction (Lg, mod->func);
-            lua_call (Lg, 0, 0);
-        }
-
-    return TRUE;
+    luaMC_register_system_callback (L, luaL_checkstring (L, 1), 2);
+    return 0;
 }
 
 /* --------------------------------------------------------------------------------------------- */
 /*** public functions ****************************************************************************/
 /* --------------------------------------------------------------------------------------------- */
 
-/**
- * Our Lua integration is split into the 'lib' and the 'src' trees. The
- * modules are here, in the 'src' tree.
- *
- * This poses a problem: since code in 'lib' is not supposed to call code in
- * 'src', there's no way for Lua's initialization routine (in 'lib') to load
- * our modules! The solution: main() calls the following function, which
- * registers itself to trigger when Lua initializes.
- *
- * It wouldn't have worked for main() to call mc_lua_open_c_modules() directly
- * because it (mc_lua_open_c_modules) has to be called also when Lua restarts,
- * a mechanism which main() knows nothing about.
- */
-void
-mc_lua_pre_init (void)
+int
+luaopen_internal (lua_State *L)
 {
-    mc_event_add (MCEVENT_GROUP_LUA, "init", (mc_event_callback_fn) mc_lua_open_c_modules, NULL,
-                  NULL);
-    /* Note: It's OK that mc_lua_open_c_modules() doesn't declare in its
-     * signature all the parameters mc_event_raise() sends it: we have this
-     * scenario when we pass g_free (and others) to g_list_foreach(). */
+    luaL_newlib (L, internal_lib);
+    return 1;
 }
 
 /* --------------------------------------------------------------------------------------------- */
