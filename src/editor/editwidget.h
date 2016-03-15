@@ -135,8 +135,8 @@ struct WEdit
     GArray *serialized_bookmarks;
 
     /* undo and redo stacks */
-    edit_undo_stack_t undo_stack;
-    edit_redo_stack_t redo_stack;
+    edit_action_stack_t undo_stack;
+    edit_action_stack_t redo_stack;
 
     struct stat stat1;          /* Result of mc_fstat() on the file */
     unsigned int skip_detach_prompt:1;  /* Do not prompt whether to detach a file anymore */

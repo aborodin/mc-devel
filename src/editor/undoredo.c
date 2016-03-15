@@ -100,7 +100,7 @@
  */
 
 void
-edit_push_undo_action (WEdit * edit, long c)
+edit_undo_push_action (WEdit * edit, long c)
 {
     unsigned long sp = edit->undo_stack.pointer;
     unsigned long spm1;
@@ -201,7 +201,7 @@ edit_push_undo_action (WEdit * edit, long c)
  */
 
 long
-edit_pop_undo_action (WEdit * edit)
+edit_undo_pop_action (WEdit * edit)
 {
     long c;
     unsigned long sp = edit->undo_stack.pointer;
@@ -236,7 +236,7 @@ edit_pop_undo_action (WEdit * edit)
 /* --------------------------------------------------------------------------------------------- */
 
 long
-edit_get_prev_undo_action (WEdit * edit)
+edit_undo_get_prev_action (WEdit * edit)
 {
     long c;
     unsigned long sp = edit->undo_stack.pointer;
@@ -259,7 +259,7 @@ edit_get_prev_undo_action (WEdit * edit)
 /* --------------------------------------------------------------------------------------------- */
 
 void
-edit_push_redo_action (WEdit * edit, long c)
+edit_redo_push_action (WEdit * edit, long c)
 {
     unsigned long sp = edit->redo_stack.pointer;
     unsigned long spm1;
@@ -346,7 +346,7 @@ edit_push_redo_action (WEdit * edit, long c)
 /* --------------------------------------------------------------------------------------------- */
 
 long
-edit_pop_redo_action (WEdit * edit)
+edit_redo_pop_action (WEdit * edit)
 {
     long c;
     unsigned long sp = edit->redo_stack.pointer;

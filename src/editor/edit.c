@@ -1051,7 +1051,7 @@ edit_do_undo (WEdit * edit)
     edit->undo_stack.disable = TRUE;    /* don't record undo's onto undo stack! */
     edit->over_col = 0;
 
-    while ((ac = edit_pop_undo_action (edit)) < KEY_PRESS)
+    while ((ac = edit_undo_pop_action (edit)) < KEY_PRESS)
     {
         switch ((int) ac)
         {
@@ -1141,7 +1141,7 @@ edit_do_redo (WEdit * edit)
 
     edit->over_col = 0;
 
-    while ((ac = edit_pop_redo_action (edit)) < KEY_PRESS)
+    while ((ac = edit_redo_pop_action (edit)) < KEY_PRESS)
     {
         switch ((int) ac)
         {
@@ -1226,9 +1226,9 @@ edit_group_undo (WEdit * edit)
 
     while (ac != STACK_BOTTOM && ac == cur_ac)
     {
-        cur_ac = edit_get_prev_undo_action (edit);
+        cur_ac = edit_undo_get_prev_action (edit);
         edit_do_undo (edit);
-        ac = edit_get_prev_undo_action (edit);
+        ac = edit_undo_get_prev_action (edit);
         /* exit from cycle if option_group_undo is not set,
          * and make single UNDO operation
          */
@@ -1934,7 +1934,7 @@ edit_insert_file (WEdit * edit, const vfs_path_t * filename_vpath)
             if (!option_persistent_selections && edit->modified)
             {
                 if (!edit->column_highlight)
-                    edit_push_undo_action (edit, COLUMN_OFF);
+                    edit_undo_push_action (edit, COLUMN_OFF);
                 edit->column_highlight = 1;
             }
         }
@@ -1952,7 +1952,7 @@ edit_insert_file (WEdit * edit, const vfs_path_t * filename_vpath)
             {
                 edit_set_markers (edit, edit->buffer.curs1, current, 0, 0);
                 if (edit->column_highlight)
-                    edit_push_undo_action (edit, COLUMN_ON);
+                    edit_undo_push_action (edit, COLUMN_ON);
                 edit->column_highlight = 0;
             }
 
@@ -2223,9 +2223,9 @@ edit_insert (WEdit * edit, int c)
     /* save the reverse command onto the undo stack */
     /* ordinary char and not space */
     if (c > 32)
-        edit_push_undo_action (edit, BACKSPACE);
+        edit_undo_push_action (edit, BACKSPACE);
     else
-        edit_push_undo_action (edit, BACKSPACE_BR);
+        edit_undo_push_action (edit, BACKSPACE_BR);
     /* update markers */
     edit->mark1 += (edit->mark1 > edit->buffer.curs1) ? 1 : 0;
     edit->mark2 += (edit->mark2 > edit->buffer.curs1) ? 1 : 0;
@@ -2258,9 +2258,9 @@ edit_insert_ahead (WEdit * edit, int c)
     }
     /* ordinary char and not space */
     if (c > 32)
-        edit_push_undo_action (edit, DELCHAR);
+        edit_undo_push_action (edit, DELCHAR);
     else
-        edit_push_undo_action (edit, DELCHAR_BR);
+        edit_undo_push_action (edit, DELCHAR_BR);
 
     edit->mark1 += (edit->mark1 >= edit->buffer.curs1) ? 1 : 0;
     edit->mark2 += (edit->mark2 >= edit->buffer.curs1) ? 1 : 0;
@@ -2326,7 +2326,7 @@ edit_delete (WEdit * edit, gboolean byte_delete)
         p = edit_buffer_delete (&edit->buffer);
 
         edit->buffer.size--;
-        edit_push_undo_action (edit, p + 256);
+        edit_undo_push_action (edit, p + 256);
     }
 
     edit_modification (edit);
@@ -2387,7 +2387,7 @@ edit_backspace (WEdit * edit, gboolean byte_delete)
         p = edit_buffer_backspace (&edit->buffer);
 
         edit->buffer.size--;
-        edit_push_undo_action (edit, p);
+        edit_undo_push_action (edit, p);
     }
     edit_modification (edit);
     if (p == '\n')
@@ -2420,7 +2420,7 @@ edit_cursor_move (WEdit * edit, off_t increment)
         {
             int c;
 
-            edit_push_undo_action (edit, CURS_RIGHT);
+            edit_undo_push_action (edit, CURS_RIGHT);
 
             c = edit_buffer_get_previous_byte (&edit->buffer);
             edit_buffer_insert_ahead (&edit->buffer, c);
@@ -2438,7 +2438,7 @@ edit_cursor_move (WEdit * edit, off_t increment)
         {
             int c;
 
-            edit_push_undo_action (edit, CURS_LEFT);
+            edit_undo_push_action (edit, CURS_LEFT);
 
             c = edit_buffer_get_current_byte (&edit->buffer);
             edit_buffer_insert (&edit->buffer, c);
@@ -2732,9 +2732,9 @@ edit_move_display (WEdit * e, long line)
 void
 edit_push_markers (WEdit * edit)
 {
-    edit_push_undo_action (edit, MARK_1 + edit->mark1);
-    edit_push_undo_action (edit, MARK_2 + edit->mark2);
-    edit_push_undo_action (edit, MARK_CURS + edit->end_mark_curs);
+    edit_undo_push_action (edit, MARK_1 + edit->mark1);
+    edit_undo_push_action (edit, MARK_2 + edit->mark2);
+    edit_undo_push_action (edit, MARK_CURS + edit->end_mark_curs);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -2857,11 +2857,11 @@ edit_delete_line (WEdit * edit)
 void
 edit_push_key_press (WEdit * edit)
 {
-    edit_push_undo_action (edit, KEY_PRESS + edit->start_display);
+    edit_undo_push_action (edit, KEY_PRESS + edit->start_display);
     if (edit->mark2 == -1)
     {
-        edit_push_undo_action (edit, MARK_1 + edit->mark1);
-        edit_push_undo_action (edit, MARK_CURS + edit->end_mark_curs);
+        edit_undo_push_action (edit, MARK_1 + edit->mark1);
+        edit_undo_push_action (edit, MARK_CURS + edit->end_mark_curs);
     }
 }
 
@@ -3109,7 +3109,7 @@ edit_execute_cmd (WEdit * edit, long command, int char_for_insertion)
         if (!option_persistent_selections && edit->mark2 >= 0)
         {
             if (edit->column_highlight)
-                edit_push_undo_action (edit, COLUMN_ON);
+                edit_undo_push_action (edit, COLUMN_ON);
             edit->column_highlight = 0;
             edit_mark_cmd (edit, TRUE);
         }
@@ -3360,14 +3360,14 @@ edit_execute_cmd (WEdit * edit, long command, int char_for_insertion)
         if (edit->mark2 >= 0)
         {
             if (edit->column_highlight)
-                edit_push_undo_action (edit, COLUMN_ON);
+                edit_undo_push_action (edit, COLUMN_ON);
             edit->column_highlight = 0;
         }
         edit_mark_cmd (edit, FALSE);
         break;
     case CK_MarkColumn:
         if (!edit->column_highlight)
-            edit_push_undo_action (edit, COLUMN_OFF);
+            edit_undo_push_action (edit, COLUMN_OFF);
         edit->column_highlight = 1;
         edit_mark_cmd (edit, FALSE);
         break;
@@ -3377,19 +3377,19 @@ edit_execute_cmd (WEdit * edit, long command, int char_for_insertion)
         break;
     case CK_Unmark:
         if (edit->column_highlight)
-            edit_push_undo_action (edit, COLUMN_ON);
+            edit_undo_push_action (edit, COLUMN_ON);
         edit->column_highlight = 0;
         edit_mark_cmd (edit, TRUE);
         break;
     case CK_MarkWord:
         if (edit->column_highlight)
-            edit_push_undo_action (edit, COLUMN_ON);
+            edit_undo_push_action (edit, COLUMN_ON);
         edit->column_highlight = 0;
         edit_mark_current_word_cmd (edit);
         break;
     case CK_MarkLine:
         if (edit->column_highlight)
-            edit_push_undo_action (edit, COLUMN_ON);
+            edit_undo_push_action (edit, COLUMN_ON);
         edit->column_highlight = 0;
         edit_mark_current_line_cmd (edit);
         break;
@@ -3484,7 +3484,7 @@ edit_execute_cmd (WEdit * edit, long command, int char_for_insertion)
         if (!option_persistent_selections && edit->mark2 >= 0)
         {
             if (edit->column_highlight)
-                edit_push_undo_action (edit, COLUMN_ON);
+                edit_undo_push_action (edit, COLUMN_ON);
             edit->column_highlight = 0;
             edit_mark_cmd (edit, TRUE);
         }

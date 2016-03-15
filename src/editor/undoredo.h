@@ -38,29 +38,20 @@ typedef struct
     unsigned long size_mask;
     unsigned long pointer;
     unsigned long bottom;
-    gboolean disable;           /* If TRUE, don't save events in the undo stack */
-} edit_undo_stack_t;
-
-typedef struct
-{
-    long *stack;
-    unsigned long size;
-    unsigned long size_mask;
-    unsigned long pointer;
-    unsigned long bottom;
-    gboolean reset;             /* If TRUE, need clear redo stack */
-} edit_redo_stack_t;
+    gboolean disable;           /* If TRUE, don't save events in the undo stack. Currently is used in undo only. */
+    gboolean reset;             /* If TRUE, need clear redo stack. Currently is used in redo only. */
+} edit_action_stack_t;
 
 /*** global variables defined in .c file *********************************************************/
 
 /*** declarations of public functions ************************************************************/
 
-void edit_push_undo_action (WEdit * edit, long c);
-long edit_pop_undo_action (WEdit * edit);
-long edit_get_prev_undo_action (WEdit * edit);
+void edit_undo_push_action (WEdit * edit, long c);
+long edit_undo_pop_action (WEdit * edit);
+long edit_undo_get_prev_action (WEdit * edit);
 
-void edit_push_redo_action (WEdit * edit, long c);
-long edit_pop_redo_action (WEdit * edit);
+void edit_redo_push_action (WEdit * edit, long c);
+long edit_redo_pop_action (WEdit * edit);
 
 /*** inline functions ****************************************************************************/
 
