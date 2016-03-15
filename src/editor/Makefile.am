@@ -20,7 +20,8 @@ libedit_la_SOURCES = \
 	editwidget.c editwidget.h \
 	etags.c etags.h \
 	format.c \
-	syntax.c
+	syntax.c \
+	undoredo.c undoredo.h
 
 if USE_ASPELL
 if HAVE_GMODULE

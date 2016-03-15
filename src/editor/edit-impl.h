@@ -39,26 +39,6 @@
 #define EDIT_TOP_EXTREME 0
 #define EDIT_BOTTOM_EXTREME 0
 
-/* Initial size of the undo stack, in bytes */
-#define START_STACK_SIZE 32
-
-/* Some codes that may be pushed onto or returned from the undo stack */
-#define CURS_LEFT       601
-#define CURS_RIGHT      602
-#define DELCHAR         603
-#define BACKSPACE       604
-#define STACK_BOTTOM    605
-#define CURS_LEFT_LOTS  606
-#define CURS_RIGHT_LOTS 607
-#define COLUMN_ON       608
-#define COLUMN_OFF      609
-#define DELCHAR_BR      610
-#define BACKSPACE_BR    611
-#define MARK_1          1000
-#define MARK_2          500000000
-#define MARK_CURS       1000000000
-#define KEY_PRESS       1500000000
-
 /* Tabs spaces: (sofar only HALF_TAB_SIZE is used: */
 #define TAB_SIZE      option_tab_spacing
 #define HALF_TAB_SIZE ((int) option_tab_spacing / 2)
@@ -172,8 +152,6 @@ int edit_backspace (WEdit * edit, gboolean byte_delete);
 void edit_insert (WEdit * edit, int c);
 void edit_insert_over (WEdit * edit);
 void edit_cursor_move (WEdit * edit, off_t increment);
-void edit_push_undo_action (WEdit * edit, long c);
-void edit_push_redo_action (WEdit * edit, long c);
 void edit_push_key_press (WEdit * edit);
 void edit_insert_ahead (WEdit * edit, int c);
 off_t edit_write_stream (WEdit * edit, FILE * f);

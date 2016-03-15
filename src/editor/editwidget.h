@@ -10,6 +10,7 @@
 
 #include "edit-impl.h"
 #include "editbuffer.h"
+#include "undoredo.h"
 
 /*** typedefs(not structures) and defined constants **********************************************/
 
@@ -133,20 +134,9 @@ struct WEdit
     edit_book_mark_t *book_mark;
     GArray *serialized_bookmarks;
 
-    /* undo stack and pointers */
-    unsigned long undo_stack_pointer;
-    long *undo_stack;
-    unsigned long undo_stack_size;
-    unsigned long undo_stack_size_mask;
-    unsigned long undo_stack_bottom;
-    unsigned int undo_stack_disable:1;  /* If not 0, don't save events in the undo stack */
-
-    unsigned long redo_stack_pointer;
-    long *redo_stack;
-    unsigned long redo_stack_size;
-    unsigned long redo_stack_size_mask;
-    unsigned long redo_stack_bottom;
-    unsigned int redo_stack_reset:1;    /* If 1, need clear redo stack */
+    /* undo and redo stacks */
+    edit_undo_stack_t undo_stack;
+    edit_redo_stack_t redo_stack;
 
     struct stat stat1;          /* Result of mc_fstat() on the file */
     unsigned int skip_detach_prompt:1;  /* Do not prompt whether to detach a file anymore */
