@@ -1,0 +1,1268 @@
+From c91060bca3750d4d20b60b50d5c6b919ed7e5daf Mon Sep 17 00:00:00 2001
+From: Andrew Borodin <aborodin@vmail.ru>
+Date: Mon, 6 Jan 2014 16:12:03 +0400
+Subject: [PATCH] Ticket #26: mcedit: reset 'modified' status after undo.
+
+Initial step: refactor undo/redo engine of mcedit.
+Move undo/redo engine to separate classes.
+
+Signed-off-by: Andrew Borodin <aborodin@vmail.ru>
+---
+ src/editor/Makefile.am  |   1 +
+ src/editor/edit-impl.h  |  22 ---
+ src/editor/edit.c       | 400 ++++++------------------------------------------
+ src/editor/editcmd.c    |  14 +-
+ src/editor/editwidget.h |  17 +-
+ src/editor/undoredo.c   | 382 +++++++++++++++++++++++++++++++++++++++++++++
+ src/editor/undoredo.h   |  71 +++++++++
+ 7 files changed, 514 insertions(+), 393 deletions(-)
+ create mode 100644 src/editor/undoredo.c
+ create mode 100644 src/editor/undoredo.h
+
+diff --git a/src/editor/Makefile.am b/src/editor/Makefile.am
+index 0ca0fc5..90c2594 100644
+--- a/src/editor/Makefile.am
++++ b/src/editor/Makefile.am
+@@ -20,6 +20,7 @@ libedit_la_SOURCES = \
+ 	editwidget.c editwidget.h \
+ 	etags.c etags.h \
+ 	syntax.c \
++	undoredo.c undoredo.h \
+ 	wordproc.c
+ 
+ if USE_ASPELL
+diff --git a/src/editor/edit-impl.h b/src/editor/edit-impl.h
+index e840d30..cdc8b5b 100644
+--- a/src/editor/edit-impl.h
++++ b/src/editor/edit-impl.h
+@@ -39,26 +39,6 @@
+ #define EDIT_TOP_EXTREME option_edit_top_extreme
+ #define EDIT_BOTTOM_EXTREME option_edit_bottom_extreme
+ 
+-/* Initial size of the undo stack, in bytes */
+-#define START_STACK_SIZE 32
+-
+-/* Some codes that may be pushed onto or returned from the undo stack */
+-#define CURS_LEFT       601
+-#define CURS_RIGHT      602
+-#define DELCHAR         603
+-#define BACKSPACE       604
+-#define STACK_BOTTOM    605
+-#define CURS_LEFT_LOTS  606
+-#define CURS_RIGHT_LOTS 607
+-#define COLUMN_ON       608
+-#define COLUMN_OFF      609
+-#define DELCHAR_BR      610
+-#define BACKSPACE_BR    611
+-#define MARK_1          1000
+-#define MARK_2          500000000
+-#define MARK_CURS       1000000000
+-#define KEY_PRESS       1500000000
+-
+ /* Tabs spaces: (sofar only HALF_TAB_SIZE is used: */
+ #define TAB_SIZE      option_tab_spacing
+ #define HALF_TAB_SIZE ((int) option_tab_spacing / 2)
+@@ -180,8 +160,6 @@ int edit_backspace (WEdit * edit, gboolean byte_delete);
+ void edit_insert (WEdit * edit, int c);
+ void edit_insert_over (WEdit * edit);
+ void edit_cursor_move (WEdit * edit, off_t increment);
+-void edit_push_undo_action (WEdit * edit, long c);
+-void edit_push_redo_action (WEdit * edit, long c);
+ void edit_push_key_press (WEdit * edit);
+ void edit_insert_ahead (WEdit * edit, int c);
+ off_t edit_write_stream (WEdit * edit, FILE * f);
+diff --git a/src/editor/edit.c b/src/editor/edit.c
+index 66a97fe..f906d95 100644
+--- a/src/editor/edit.c
++++ b/src/editor/edit.c
+@@ -403,13 +403,13 @@ edit_load_file (WEdit * edit)
+         if (edit->filename_vpath != NULL
+             && *(vfs_path_get_by_index (edit->filename_vpath, 0)->path) != '\0')
+         {
+-            edit->undo_stack_disable = 1;
++            edit->undo_stack.disable = TRUE;
+             if (edit_insert_file (edit, edit->filename_vpath) < 0)
+             {
+                 edit_clean (edit);
+                 return FALSE;
+             }
+-            edit->undo_stack_disable = 0;
++            edit->undo_stack.disable = FALSE;
+         }
+     }
+     edit->lb = LB_ASIS;
+@@ -471,99 +471,16 @@ edit_save_position (WEdit * edit)
+ static void
+ edit_purge_widget (WEdit * edit)
+ {
+-    size_t len = sizeof (WEdit) - sizeof (Widget);
+-    char *start = (char *) edit + sizeof (Widget);
+-    memset (start, 0, len);
+-}
+-
+-/* --------------------------------------------------------------------------------------------- */
+-
+-/*
+-   TODO: if the user undos until the stack bottom, and the stack has not wrapped,
+-   then the file should be as it was when he loaded up. Then set edit->modified to 0.
+- */
+-
+-static long
+-edit_pop_undo_action (WEdit * edit)
+-{
+-    long c;
+-    unsigned long sp = edit->undo_stack_pointer;
+-
+-    if (sp == edit->undo_stack_bottom)
+-        return STACK_BOTTOM;
+-
+-    sp = (sp - 1) & edit->undo_stack_size_mask;
+-    c = edit->undo_stack[sp];
+-    if (c >= 0)
+-    {
+-        /*      edit->undo_stack[sp] = '@'; */
+-        edit->undo_stack_pointer = (edit->undo_stack_pointer - 1) & edit->undo_stack_size_mask;
+-        return c;
+-    }
+-
+-    if (sp == edit->undo_stack_bottom)
+-        return STACK_BOTTOM;
+-
+-    c = edit->undo_stack[(sp - 1) & edit->undo_stack_size_mask];
+-    if (edit->undo_stack[sp] == -2)
+-    {
+-        /*      edit->undo_stack[sp] = '@'; */
+-        edit->undo_stack_pointer = sp;
+-    }
+-    else
+-        edit->undo_stack[sp]++;
+-
+-    return c;
+-}
++    size_t len;
++    char *start;
+ 
+-static long
+-edit_pop_redo_action (WEdit * edit)
+-{
+-    long c;
+-    unsigned long sp = edit->redo_stack_pointer;
++    edit_undo_stack_free (&edit->undo_stack);
++    edit_redo_stack_free (&edit->redo_stack);
+ 
+-    if (sp == edit->redo_stack_bottom)
+-        return STACK_BOTTOM;
++    len = sizeof (WEdit) - sizeof (Widget);
++    start = (char *) edit + sizeof (Widget);
+ 
+-    sp = (sp - 1) & edit->redo_stack_size_mask;
+-    c = edit->redo_stack[sp];
+-    if (c >= 0)
+-    {
+-        edit->redo_stack_pointer = (edit->redo_stack_pointer - 1) & edit->redo_stack_size_mask;
+-        return c;
+-    }
+-
+-    if (sp == edit->redo_stack_bottom)
+-        return STACK_BOTTOM;
+-
+-    c = edit->redo_stack[(sp - 1) & edit->redo_stack_size_mask];
+-    if (edit->redo_stack[sp] == -2)
+-        edit->redo_stack_pointer = sp;
+-    else
+-        edit->redo_stack[sp]++;
+-
+-    return c;
+-}
+-
+-static long
+-get_prev_undo_action (WEdit * edit)
+-{
+-    long c;
+-    unsigned long sp = edit->undo_stack_pointer;
+-
+-    if (sp == edit->undo_stack_bottom)
+-        return STACK_BOTTOM;
+-
+-    sp = (sp - 1) & edit->undo_stack_size_mask;
+-    c = edit->undo_stack[sp];
+-    if (c >= 0)
+-        return c;
+-
+-    if (sp == edit->undo_stack_bottom)
+-        return STACK_BOTTOM;
+-
+-    c = edit->undo_stack[(sp - 1) & edit->undo_stack_size_mask];
+-    return c;
++    memset (start, 0, len);
+ }
+ 
+ /* --------------------------------------------------------------------------------------------- */
+@@ -1101,9 +1018,10 @@ edit_do_undo (WEdit * edit)
+     long ac;
+     long count = 0;
+ 
+-    edit->undo_stack_disable = 1;       /* don't record undo's onto undo stack! */
++    edit->undo_stack.disable = TRUE;    /* don't record undo's onto undo stack! */
+     edit->over_col = 0;
+-    while ((ac = edit_pop_undo_action (edit)) < KEY_PRESS)
++
++    while ((ac = edit_pop_undo_action (&edit->undo_stack)) < KEY_PRESS)
+     {
+         switch ((int) ac)
+         {
+@@ -1173,7 +1091,7 @@ edit_do_undo (WEdit * edit)
+     edit_update_curs_row (edit);
+ 
+   done_undo:
+-    edit->undo_stack_disable = 0;
++    edit->undo_stack.disable = FALSE;
+ }
+ 
+ /* --------------------------------------------------------------------------------------------- */
+@@ -1184,11 +1102,12 @@ edit_do_redo (WEdit * edit)
+     long ac;
+     long count = 0;
+ 
+-    if (edit->redo_stack_reset)
++    if (edit->redo_stack.reset)
+         return;
+ 
+     edit->over_col = 0;
+-    while ((ac = edit_pop_redo_action (edit)) < KEY_PRESS)
++
++    while ((ac = edit_pop_redo_action (&edit->redo_stack)) < KEY_PRESS)
+     {
+         switch ((int) ac)
+         {
+@@ -1263,16 +1182,19 @@ edit_group_undo (WEdit * edit)
+ {
+     long ac = KEY_PRESS;
+     long cur_ac = KEY_PRESS;
++
+     while (ac != STACK_BOTTOM && ac == cur_ac)
+     {
+-        cur_ac = get_prev_undo_action (edit);
++        cur_ac = edit_get_prev_undo_action (&edit->undo_stack);
+         edit_do_undo (edit);
+-        ac = get_prev_undo_action (edit);
++
+         /* exit from cycle if option_group_undo is not set,
+          * and make single UNDO operation
+          */
+         if (!option_group_undo)
+-            ac = STACK_BOTTOM;
++            break;
++
++        ac = edit_get_prev_undo_action (&edit->undo_stack);
+     }
+ }
+ 
+@@ -1972,7 +1894,7 @@ edit_insert_file (WEdit * edit, const vfs_path_t * filename_vpath)
+             if (!option_persistent_selections && edit->modified)
+             {
+                 if (!edit->column_highlight)
+-                    edit_push_undo_action (edit, COLUMN_OFF);
++                    edit_push_undo_action (&edit->undo_stack, COLUMN_OFF);
+                 edit->column_highlight = 1;
+             }
+         }
+@@ -1990,7 +1912,7 @@ edit_insert_file (WEdit * edit, const vfs_path_t * filename_vpath)
+             {
+                 edit_set_markers (edit, edit->buffer.curs1, current, 0, 0);
+                 if (edit->column_highlight)
+-                    edit_push_undo_action (edit, COLUMN_ON);
++                    edit_push_undo_action (&edit->undo_stack, COLUMN_ON);
+                 edit->column_highlight = 0;
+             }
+ 
+@@ -2073,13 +1995,8 @@ edit_init (WEdit * edit, int y, int x, int lines, int cols, const vfs_path_t * f
+     /* set file name before load file */
+     edit_set_filename (edit, filename_vpath);
+ 
+-    edit->undo_stack_size = START_STACK_SIZE;
+-    edit->undo_stack_size_mask = START_STACK_SIZE - 1;
+-    edit->undo_stack = g_malloc0 ((edit->undo_stack_size + 10) * sizeof (long));
+-
+-    edit->redo_stack_size = START_STACK_SIZE;
+-    edit->redo_stack_size_mask = START_STACK_SIZE - 1;
+-    edit->redo_stack = g_malloc0 ((edit->redo_stack_size + 10) * sizeof (long));
++    edit_undo_stack_init (&edit->undo_stack, edit);
++    edit_redo_stack_init (&edit->redo_stack, edit);
+ 
+ #ifdef HAVE_CHARSET
+     edit->utf8 = FALSE;
+@@ -2145,8 +2062,6 @@ edit_clean (WEdit * edit)
+ 
+     edit_buffer_clean (&edit->buffer);
+ 
+-    g_free (edit->undo_stack);
+-    g_free (edit->redo_stack);
+     vfs_path_free (edit->filename_vpath);
+     vfs_path_free (edit->dir_vpath);
+     mc_search_free (edit->search);
+@@ -2229,221 +2144,6 @@ edit_set_codeset (WEdit * edit)
+ #endif
+ 
+ /* --------------------------------------------------------------------------------------------- */
+-
+-/**
+- * Recording stack for undo:
+- * The following is an implementation of a compressed stack. Identical
+- * pushes are recorded by a negative prefix indicating the number of times the
+- * same char was pushed. This saves space for repeated curs-left or curs-right
+- * delete etc.
+- *
+- * eg:
+- *
+- * pushed:       stored:
+- *
+- * a
+- * b             a
+- * b            -3
+- * b             b
+- * c  -->       -4
+- * c             c
+- * c             d
+- * c
+- * d
+- *
+- * If the stack long int is 0-255 it represents a normal insert (from a backspace),
+- * 256-512 is an insert ahead (from a delete), If it is betwen 600 and 700 it is one
+- * of the cursor functions define'd in edit-impl.h. 1000 through 700'000'000 is to
+- * set edit->mark1 position. 700'000'000 through 1400'000'000 is to set edit->mark2
+- * position.
+- *
+- * The only way the cursor moves or the buffer is changed is through the routines:
+- * insert, backspace, insert_ahead, delete, and cursor_move.
+- * These record the reverse undo movements onto the stack each time they are
+- * called.
+- *
+- * Each key press results in a set of actions (insert; delete ...). So each time
+- * a key is pressed the current position of start_display is pushed as
+- * KEY_PRESS + start_display. Then for undoing, we pop until we get to a number
+- * over KEY_PRESS. We then assign this number less KEY_PRESS to start_display. So undo
+- * tracks scrolling and key actions exactly. (KEY_PRESS is about (2^31) * (2/3) = 1400'000'000)
+- *
+- *
+- *
+- * @param edit editor object
+- * @param c code of the action
+- */
+-
+-void
+-edit_push_undo_action (WEdit * edit, long c)
+-{
+-    unsigned long sp = edit->undo_stack_pointer;
+-    unsigned long spm1;
+-    long *t;
+-
+-    /* first enlarge the stack if necessary */
+-    if (sp > edit->undo_stack_size - 10)
+-    {                           /* say */
+-        if (option_max_undo < 256)
+-            option_max_undo = 256;
+-        if (edit->undo_stack_size < (unsigned long) option_max_undo)
+-        {
+-            t = g_realloc (edit->undo_stack, (edit->undo_stack_size * 2 + 10) * sizeof (long));
+-            if (t)
+-            {
+-                edit->undo_stack = t;
+-                edit->undo_stack_size <<= 1;
+-                edit->undo_stack_size_mask = edit->undo_stack_size - 1;
+-            }
+-        }
+-    }
+-    spm1 = (edit->undo_stack_pointer - 1) & edit->undo_stack_size_mask;
+-    if (edit->undo_stack_disable)
+-    {
+-        edit_push_redo_action (edit, KEY_PRESS);
+-        edit_push_redo_action (edit, c);
+-        return;
+-    }
+-
+-    if (edit->redo_stack_reset)
+-        edit->redo_stack_bottom = edit->redo_stack_pointer = 0;
+-
+-    if (edit->undo_stack_bottom != sp
+-        && spm1 != edit->undo_stack_bottom
+-        && ((sp - 2) & edit->undo_stack_size_mask) != edit->undo_stack_bottom)
+-    {
+-        int d;
+-        if (edit->undo_stack[spm1] < 0)
+-        {
+-            d = edit->undo_stack[(sp - 2) & edit->undo_stack_size_mask];
+-            if (d == c && edit->undo_stack[spm1] > -1000000000)
+-            {
+-                if (c < KEY_PRESS)      /* --> no need to push multiple do-nothings */
+-                    edit->undo_stack[spm1]--;
+-                return;
+-            }
+-        }
+-        else
+-        {
+-            d = edit->undo_stack[spm1];
+-            if (d == c)
+-            {
+-                if (c >= KEY_PRESS)
+-                    return;     /* --> no need to push multiple do-nothings */
+-                edit->undo_stack[sp] = -2;
+-                goto check_bottom;
+-            }
+-        }
+-    }
+-    edit->undo_stack[sp] = c;
+-
+-  check_bottom:
+-    edit->undo_stack_pointer = (edit->undo_stack_pointer + 1) & edit->undo_stack_size_mask;
+-
+-    /* if the sp wraps round and catches the undo_stack_bottom then erase
+-     * the first set of actions on the stack to make space - by moving
+-     * undo_stack_bottom forward one "key press" */
+-    c = (edit->undo_stack_pointer + 2) & edit->undo_stack_size_mask;
+-    if ((unsigned long) c == edit->undo_stack_bottom ||
+-        (((unsigned long) c + 1) & edit->undo_stack_size_mask) == edit->undo_stack_bottom)
+-        do
+-        {
+-            edit->undo_stack_bottom = (edit->undo_stack_bottom + 1) & edit->undo_stack_size_mask;
+-        }
+-        while (edit->undo_stack[edit->undo_stack_bottom] < KEY_PRESS
+-               && edit->undo_stack_bottom != edit->undo_stack_pointer);
+-
+-    /*If a single key produced enough pushes to wrap all the way round then we would notice that the [undo_stack_bottom] does not contain KEY_PRESS. The stack is then initialised: */
+-    if (edit->undo_stack_pointer != edit->undo_stack_bottom
+-        && edit->undo_stack[edit->undo_stack_bottom] < KEY_PRESS)
+-    {
+-        edit->undo_stack_bottom = edit->undo_stack_pointer = 0;
+-    }
+-}
+-
+-/* --------------------------------------------------------------------------------------------- */
+-
+-void
+-edit_push_redo_action (WEdit * edit, long c)
+-{
+-    unsigned long sp = edit->redo_stack_pointer;
+-    unsigned long spm1;
+-    long *t;
+-    /* first enlarge the stack if necessary */
+-    if (sp > edit->redo_stack_size - 10)
+-    {                           /* say */
+-        if (option_max_undo < 256)
+-            option_max_undo = 256;
+-        if (edit->redo_stack_size < (unsigned long) option_max_undo)
+-        {
+-            t = g_realloc (edit->redo_stack, (edit->redo_stack_size * 2 + 10) * sizeof (long));
+-            if (t)
+-            {
+-                edit->redo_stack = t;
+-                edit->redo_stack_size <<= 1;
+-                edit->redo_stack_size_mask = edit->redo_stack_size - 1;
+-            }
+-        }
+-    }
+-    spm1 = (edit->redo_stack_pointer - 1) & edit->redo_stack_size_mask;
+-
+-    if (edit->redo_stack_bottom != sp
+-        && spm1 != edit->redo_stack_bottom
+-        && ((sp - 2) & edit->redo_stack_size_mask) != edit->redo_stack_bottom)
+-    {
+-        int d;
+-        if (edit->redo_stack[spm1] < 0)
+-        {
+-            d = edit->redo_stack[(sp - 2) & edit->redo_stack_size_mask];
+-            if (d == c && edit->redo_stack[spm1] > -1000000000)
+-            {
+-                if (c < KEY_PRESS)      /* --> no need to push multiple do-nothings */
+-                    edit->redo_stack[spm1]--;
+-                return;
+-            }
+-        }
+-        else
+-        {
+-            d = edit->redo_stack[spm1];
+-            if (d == c)
+-            {
+-                if (c >= KEY_PRESS)
+-                    return;     /* --> no need to push multiple do-nothings */
+-                edit->redo_stack[sp] = -2;
+-                goto redo_check_bottom;
+-            }
+-        }
+-    }
+-    edit->redo_stack[sp] = c;
+-
+-  redo_check_bottom:
+-    edit->redo_stack_pointer = (edit->redo_stack_pointer + 1) & edit->redo_stack_size_mask;
+-
+-    /* if the sp wraps round and catches the redo_stack_bottom then erase
+-     * the first set of actions on the stack to make space - by moving
+-     * redo_stack_bottom forward one "key press" */
+-    c = (edit->redo_stack_pointer + 2) & edit->redo_stack_size_mask;
+-    if ((unsigned long) c == edit->redo_stack_bottom ||
+-        (((unsigned long) c + 1) & edit->redo_stack_size_mask) == edit->redo_stack_bottom)
+-        do
+-        {
+-            edit->redo_stack_bottom = (edit->redo_stack_bottom + 1) & edit->redo_stack_size_mask;
+-        }
+-        while (edit->redo_stack[edit->redo_stack_bottom] < KEY_PRESS
+-               && edit->redo_stack_bottom != edit->redo_stack_pointer);
+-
+-    /*
+-     * If a single key produced enough pushes to wrap all the way round then
+-     * we would notice that the [redo_stack_bottom] does not contain KEY_PRESS.
+-     * The stack is then initialised:
+-     */
+-
+-    if (edit->redo_stack_pointer != edit->redo_stack_bottom
+-        && edit->redo_stack[edit->redo_stack_bottom] < KEY_PRESS)
+-        edit->redo_stack_bottom = edit->redo_stack_pointer = 0;
+-}
+-
+-/* --------------------------------------------------------------------------------------------- */
+ /**
+    Basic low level single character buffer alterations and movements at the cursor.
+  */
+@@ -2475,9 +2175,9 @@ edit_insert (WEdit * edit, int c)
+     /* save the reverse command onto the undo stack */
+     /* ordinary char and not space */
+     if (c > 32)
+-        edit_push_undo_action (edit, BACKSPACE);
++        edit_push_undo_action (&edit->undo_stack, BACKSPACE);
+     else
+-        edit_push_undo_action (edit, BACKSPACE_BR);
++        edit_push_undo_action (&edit->undo_stack, BACKSPACE_BR);
+     /* update markers */
+     edit->mark1 += (edit->mark1 > edit->buffer.curs1) ? 1 : 0;
+     edit->mark2 += (edit->mark2 > edit->buffer.curs1) ? 1 : 0;
+@@ -2510,9 +2210,9 @@ edit_insert_ahead (WEdit * edit, int c)
+     }
+     /* ordinary char and not space */
+     if (c > 32)
+-        edit_push_undo_action (edit, DELCHAR);
++        edit_push_undo_action (&edit->undo_stack, DELCHAR);
+     else
+-        edit_push_undo_action (edit, DELCHAR_BR);
++        edit_push_undo_action (&edit->undo_stack, DELCHAR_BR);
+ 
+     edit->mark1 += (edit->mark1 >= edit->buffer.curs1) ? 1 : 0;
+     edit->mark2 += (edit->mark2 >= edit->buffer.curs1) ? 1 : 0;
+@@ -2578,7 +2278,7 @@ edit_delete (WEdit * edit, gboolean byte_delete)
+         p = edit_buffer_delete (&edit->buffer);
+ 
+         edit->buffer.size--;
+-        edit_push_undo_action (edit, p + 256);
++        edit_push_undo_action (&edit->undo_stack, p + 256);
+     }
+ 
+     edit_modification (edit);
+@@ -2639,7 +2339,7 @@ edit_backspace (WEdit * edit, gboolean byte_delete)
+         p = edit_buffer_backspace (&edit->buffer);
+ 
+         edit->buffer.size--;
+-        edit_push_undo_action (edit, p);
++        edit_push_undo_action (&edit->undo_stack, p);
+     }
+     edit_modification (edit);
+     if (p == '\n')
+@@ -2672,7 +2372,7 @@ edit_cursor_move (WEdit * edit, off_t increment)
+         {
+             int c;
+ 
+-            edit_push_undo_action (edit, CURS_RIGHT);
++            edit_push_undo_action (&edit->undo_stack, CURS_RIGHT);
+ 
+             c = edit_buffer_get_previous_byte (&edit->buffer);
+             edit_buffer_insert_ahead (&edit->buffer, c);
+@@ -2690,7 +2390,7 @@ edit_cursor_move (WEdit * edit, off_t increment)
+         {
+             int c;
+ 
+-            edit_push_undo_action (edit, CURS_LEFT);
++            edit_push_undo_action (&edit->undo_stack, CURS_LEFT);
+ 
+             c = edit_buffer_get_current_byte (&edit->buffer);
+             edit_buffer_insert (&edit->buffer, c);
+@@ -2984,9 +2684,9 @@ edit_move_display (WEdit * e, long line)
+ void
+ edit_push_markers (WEdit * edit)
+ {
+-    edit_push_undo_action (edit, MARK_1 + edit->mark1);
+-    edit_push_undo_action (edit, MARK_2 + edit->mark2);
+-    edit_push_undo_action (edit, MARK_CURS + edit->end_mark_curs);
++    edit_push_undo_action (&edit->undo_stack, MARK_1 + edit->mark1);
++    edit_push_undo_action (&edit->undo_stack, MARK_2 + edit->mark2);
++    edit_push_undo_action (&edit->undo_stack, MARK_CURS + edit->end_mark_curs);
+ }
+ 
+ /* --------------------------------------------------------------------------------------------- */
+@@ -3109,11 +2809,11 @@ edit_delete_line (WEdit * edit)
+ void
+ edit_push_key_press (WEdit * edit)
+ {
+-    edit_push_undo_action (edit, KEY_PRESS + edit->start_display);
++    edit_push_undo_action (&edit->undo_stack, KEY_PRESS + edit->start_display);
+     if (edit->mark2 == -1)
+     {
+-        edit_push_undo_action (edit, MARK_1 + edit->mark1);
+-        edit_push_undo_action (edit, MARK_CURS + edit->end_mark_curs);
++        edit_push_undo_action (&edit->undo_stack, MARK_1 + edit->mark1);
++        edit_push_undo_action (&edit->undo_stack, MARK_CURS + edit->end_mark_curs);
+     }
+ }
+ 
+@@ -3261,7 +2961,7 @@ edit_execute_cmd (WEdit * edit, unsigned long command, int char_for_insertion)
+     /* first check for undo */
+     if (command == CK_Undo)
+     {
+-        edit->redo_stack_reset = 0;
++        edit->redo_stack.reset = FALSE;
+         edit_group_undo (edit);
+         edit->found_len = 0;
+         edit->prev_col = edit_get_col (edit);
+@@ -3271,7 +2971,7 @@ edit_execute_cmd (WEdit * edit, unsigned long command, int char_for_insertion)
+     /*  check for redo */
+     if (command == CK_Redo)
+     {
+-        edit->redo_stack_reset = 0;
++        edit->redo_stack.reset = FALSE;
+         edit_do_redo (edit);
+         edit->found_len = 0;
+         edit->prev_col = edit_get_col (edit);
+@@ -3279,7 +2979,7 @@ edit_execute_cmd (WEdit * edit, unsigned long command, int char_for_insertion)
+         return;
+     }
+ 
+-    edit->redo_stack_reset = 1;
++    edit->redo_stack.reset = TRUE;
+ 
+     /* An ordinary key press */
+     if (char_for_insertion >= 0)
+@@ -3361,7 +3061,7 @@ edit_execute_cmd (WEdit * edit, unsigned long command, int char_for_insertion)
+         if (!option_persistent_selections && edit->mark2 >= 0)
+         {
+             if (edit->column_highlight)
+-                edit_push_undo_action (edit, COLUMN_ON);
++                edit_push_undo_action (&edit->undo_stack, COLUMN_ON);
+             edit->column_highlight = 0;
+             edit_mark_cmd (edit, TRUE);
+         }
+@@ -3608,14 +3308,14 @@ edit_execute_cmd (WEdit * edit, unsigned long command, int char_for_insertion)
+         if (edit->mark2 >= 0)
+         {
+             if (edit->column_highlight)
+-                edit_push_undo_action (edit, COLUMN_ON);
++                edit_push_undo_action (&edit->undo_stack, COLUMN_ON);
+             edit->column_highlight = 0;
+         }
+         edit_mark_cmd (edit, FALSE);
+         break;
+     case CK_MarkColumn:
+         if (!edit->column_highlight)
+-            edit_push_undo_action (edit, COLUMN_OFF);
++            edit_push_undo_action (&edit->undo_stack, COLUMN_OFF);
+         edit->column_highlight = 1;
+         edit_mark_cmd (edit, FALSE);
+         break;
+@@ -3625,19 +3325,19 @@ edit_execute_cmd (WEdit * edit, unsigned long command, int char_for_insertion)
+         break;
+     case CK_Unmark:
+         if (edit->column_highlight)
+-            edit_push_undo_action (edit, COLUMN_ON);
++            edit_push_undo_action (&edit->undo_stack, COLUMN_ON);
+         edit->column_highlight = 0;
+         edit_mark_cmd (edit, TRUE);
+         break;
+     case CK_MarkWord:
+         if (edit->column_highlight)
+-            edit_push_undo_action (edit, COLUMN_ON);
++            edit_push_undo_action (&edit->undo_stack, COLUMN_ON);
+         edit->column_highlight = 0;
+         edit_mark_current_word_cmd (edit);
+         break;
+     case CK_MarkLine:
+         if (edit->column_highlight)
+-            edit_push_undo_action (edit, COLUMN_ON);
++            edit_push_undo_action (&edit->undo_stack, COLUMN_ON);
+         edit->column_highlight = 0;
+         edit_mark_current_line_cmd (edit);
+         break;
+@@ -3732,7 +3432,7 @@ edit_execute_cmd (WEdit * edit, unsigned long command, int char_for_insertion)
+         if (!option_persistent_selections && edit->mark2 >= 0)
+         {
+             if (edit->column_highlight)
+-                edit_push_undo_action (edit, COLUMN_ON);
++                edit_push_undo_action (&edit->undo_stack, COLUMN_ON);
+             edit->column_highlight = 0;
+             edit_mark_cmd (edit, TRUE);
+         }
+diff --git a/src/editor/editcmd.c b/src/editor/editcmd.c
+index 202cb79..1e5a09e 100644
+--- a/src/editor/editcmd.c
++++ b/src/editor/editcmd.c
+@@ -923,7 +923,7 @@ edit_do_search (WEdit * edit)
+     if (edit->search == NULL)
+         edit->search_start = edit->buffer.curs1;
+ 
+-    edit_push_undo_action (edit, KEY_PRESS + edit->start_display);
++    edit_push_undo_action (&edit->undo_stack, KEY_PRESS + edit->start_display);
+ 
+     if (search_create_bookmark)
+     {
+@@ -1643,7 +1643,7 @@ edit_save_as_cmd (WEdit * edit)
+         return FALSE;
+ 
+     exp_vpath = edit_get_save_file_as (edit);
+-    edit_push_undo_action (edit, KEY_PRESS + edit->start_display);
++    edit_push_undo_action (&edit->undo_stack, KEY_PRESS + edit->start_display);
+ 
+     if (exp_vpath != NULL)
+     {
+@@ -1833,7 +1833,7 @@ edit_store_macro_cmd (WEdit * edit)
+     if (macros_config == NULL)
+         return FALSE;
+ 
+-    edit_push_undo_action (edit, KEY_PRESS + edit->start_display);
++    edit_push_undo_action (&edit->undo_stack, KEY_PRESS + edit->start_display);
+ 
+     marcros_string = g_string_sized_new (250);
+     macros = g_array_new (TRUE, FALSE, sizeof (macro_action_t));
+@@ -1905,7 +1905,7 @@ edit_repeat_macro_cmd (WEdit * edit)
+ 
+     g_free (f);
+ 
+-    edit_push_undo_action (edit, KEY_PRESS + edit->start_display);
++    edit_push_undo_action (&edit->undo_stack, KEY_PRESS + edit->start_display);
+     edit->force |= REDRAW_PAGE;
+ 
+     for (j = 0; j < count_repeat; j++)
+@@ -2483,7 +2483,7 @@ edit_replace_cmd (WEdit * edit, int again)
+         disp1 = edit_replace_cmd__conv_to_display (saved1 ? saved1 : (char *) "");
+         disp2 = edit_replace_cmd__conv_to_display (saved2 ? saved2 : (char *) "");
+ 
+-        edit_push_undo_action (edit, KEY_PRESS + edit->start_display);
++        edit_push_undo_action (&edit->undo_stack, KEY_PRESS + edit->start_display);
+ 
+         editcmd_dialog_replace_show (edit, disp1, disp2, &input1, &input2);
+ 
+@@ -3011,7 +3011,7 @@ edit_save_block_cmd (WEdit * edit)
+         input_expand_dialog (_("Save block"), _("Enter file name:"),
+                              MC_HISTORY_EDIT_SAVE_BLOCK, tmp, INPUT_COMPLETE_FILENAMES);
+     g_free (tmp);
+-    edit_push_undo_action (edit, KEY_PRESS + edit->start_display);
++    edit_push_undo_action (&edit->undo_stack, KEY_PRESS + edit->start_display);
+ 
+     if (exp != NULL && *exp != '\0')
+     {
+@@ -3044,7 +3044,7 @@ edit_insert_file_cmd (WEdit * edit)
+                                MC_HISTORY_EDIT_INSERT_FILE, tmp, INPUT_COMPLETE_FILENAMES);
+     g_free (tmp);
+ 
+-    edit_push_undo_action (edit, KEY_PRESS + edit->start_display);
++    edit_push_undo_action (&edit->undo_stack, KEY_PRESS + edit->start_display);
+ 
+     if (exp != NULL && *exp != '\0')
+     {
+diff --git a/src/editor/editwidget.h b/src/editor/editwidget.h
+index 90c73f6..7354603 100644
+--- a/src/editor/editwidget.h
++++ b/src/editor/editwidget.h
+@@ -10,6 +10,7 @@
+ 
+ #include "edit-impl.h"
+ #include "editbuffer.h"
++#include "undoredo.h"
+ 
+ /*** typedefs(not structures) and defined constants **********************************************/
+ 
+@@ -133,20 +134,8 @@ struct WEdit
+     edit_book_mark_t *book_mark;
+     GArray *serialized_bookmarks;
+ 
+-    /* undo stack and pointers */
+-    unsigned long undo_stack_pointer;
+-    long *undo_stack;
+-    unsigned long undo_stack_size;
+-    unsigned long undo_stack_size_mask;
+-    unsigned long undo_stack_bottom;
+-    unsigned int undo_stack_disable:1;  /* If not 0, don't save events in the undo stack */
+-
+-    unsigned long redo_stack_pointer;
+-    long *redo_stack;
+-    unsigned long redo_stack_size;
+-    unsigned long redo_stack_size_mask;
+-    unsigned long redo_stack_bottom;
+-    unsigned int redo_stack_reset:1;    /* If 1, need clear redo stack */
++    edit_undo_stack_t undo_stack;
++    edit_redo_stack_t redo_stack;
+ 
+     struct stat stat1;          /* Result of mc_fstat() on the file */
+     unsigned int skip_detach_prompt:1;  /* Do not prompt whether to detach a file anymore */
+diff --git a/src/editor/undoredo.c b/src/editor/undoredo.c
+new file mode 100644
+index 0000000..a10d8e6
+--- /dev/null
++++ b/src/editor/undoredo.c
+@@ -0,0 +1,382 @@
++/*
++   Editor undo and redo stacks.
++
++   Copyright (C) 2014
++   The Free Software Foundation, Inc.
++
++   Written by:
++   Andrew Borodin <aborodin@vmail.ru> 2014
++
++   This file is part of the Midnight Commander.
++
++   The Midnight Commander is free software: you can redistribute it
++   and/or modify it under the terms of the GNU General Public License as
++   published by the Free Software Foundation, either version 3 of the License,
++   or (at your option) any later version.
++
++   The Midnight Commander is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License
++   along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++/** \file
++ *  \brief Source: editor undo and redo stacks.
++ *  \author Andrew Borodin
++ *  \date 2014
++ */
++
++#include <config.h>
++
++#include <stdlib.h>
++#include <string.h>
++#include <sys/types.h>
++
++#include "lib/global.h"
++
++#include "edit-impl.h"
++#include "editwidget.h"
++#include "undoredo.h"
++
++/*** global variables ****************************************************************************/
++
++/*** file scope macro definitions ****************************************************************/
++
++#define UNDOREDOSTACK(x) ((edit_undoredo_stack_t *) (x))
++
++/* Initial size of stacks */
++#define START_STACK_SIZE 32
++
++/*** file scope type declarations ****************************************************************/
++
++/*** file scope variables ************************************************************************/
++
++/* --------------------------------------------------------------------------------------------- */
++/*** file scope functions ************************************************************************/
++/* --------------------------------------------------------------------------------------------- */
++
++static void
++edit_undoredo_stack_init (edit_undoredo_stack_t * stack, struct WEdit *edit)
++{
++    stack->size = START_STACK_SIZE;
++    stack->size_mask = START_STACK_SIZE - 1;
++    stack->stack = g_malloc0 ((stack->size + 10) * sizeof (long));
++    stack->bottom = 0;
++    stack->pointer = 0;
++    stack->edit = edit;
++}
++
++/* --------------------------------------------------------------------------------------------- */
++
++static void
++edit_undoredo_stack_enlarge (edit_undoredo_stack_t * stack)
++{
++    if (stack->pointer > stack->size - 10)
++    {
++        if (option_max_undo < 256)
++            option_max_undo = 256;
++
++        if (stack->size < (unsigned long) option_max_undo)
++        {
++            long *t;
++
++            t = g_try_realloc (stack->stack, (stack->size * 2 + 10) * sizeof (long));
++            if (t != NULL)
++            {
++                stack->stack = t;
++                stack->size *= 2;
++                stack->size_mask = stack->size - 1;
++            }
++        }
++    }
++}
++
++/* --------------------------------------------------------------------------------------------- */
++
++static void
++edit_undoredo_stack_check_bottom (edit_undoredo_stack_t * stack)
++{
++    unsigned long c;
++
++    stack->pointer = (stack->pointer + 1) & stack->size_mask;
++
++    /* If the sp wraps round and catches the stack->bottom then erase
++     * the first set of actions on the stack->stack to make space -
++     * by moving stack->bottom forward one "key press" */
++    c = (unsigned long) ((stack->pointer + 2) & stack->size_mask);
++    if (c == stack->bottom || ((c + 1) & stack->size_mask) == stack->bottom)
++    {
++        do
++        {
++            stack->bottom = (stack->bottom + 1) & stack->size_mask;
++        }
++        while (stack->stack[stack->bottom] < KEY_PRESS && stack->bottom != stack->pointer);
++    }
++
++    /* If a single key produced enough pushes to wrap all the way round then
++     * we would notice that the [stack->bottom] does not contain KEY_PRESS.
++     * The stack is then initialised: */
++    if (stack->pointer != stack->bottom && stack->stack[stack->bottom] < KEY_PRESS)
++    {
++        stack->bottom = 0;
++        stack->pointer = 0;
++    }
++}
++
++/* --------------------------------------------------------------------------------------------- */
++
++static void
++edit_push_undoredo_action (edit_undoredo_stack_t * stack, long c)
++{
++    unsigned long sp, spm1;
++
++    sp = stack->pointer;
++    spm1 = (sp - 1) & stack->size_mask;
++
++    if (sp != stack->bottom && spm1 != stack->bottom
++        && ((sp - 2) & stack->size_mask) != stack->bottom)
++    {
++        int d;
++
++        if (stack->stack[spm1] < 0)
++        {
++            d = stack->stack[(sp - 2) & stack->size_mask];
++            if (d == c && stack->stack[spm1] > -1000000000)
++            {
++                if (c < KEY_PRESS)      /* --> no need to push multiple do-nothings */
++                    stack->stack[spm1]--;
++                return;
++            }
++        }
++        else
++        {
++            d = stack->stack[spm1];
++            if (d == c)
++            {
++                if (c < KEY_PRESS)      /* --> no need to push multiple do-nothings */
++                {
++                    stack->stack[sp] = -2;
++                    edit_undoredo_stack_check_bottom (stack);
++                }
++                return;
++            }
++        }
++    }
++
++    stack->stack[sp] = c;
++    edit_undoredo_stack_check_bottom (stack);
++}
++
++/* --------------------------------------------------------------------------------------------- */
++
++static long
++edit_pop_undoredo_action (edit_undoredo_stack_t * stack)
++{
++    long c;
++    unsigned long sp = stack->pointer;
++
++    if (sp == stack->bottom)
++        return STACK_BOTTOM;
++
++    sp = (sp - 1) & stack->size_mask;
++    c = stack->stack[sp];
++    if (c >= 0)
++    {
++        stack->pointer = (stack->pointer - 1) & stack->size_mask;
++        return c;
++    }
++
++    if (sp == stack->bottom)
++        return STACK_BOTTOM;
++
++    c = stack->stack[(sp - 1) & stack->size_mask];
++
++    if (stack->stack[sp] == -2)
++        stack->pointer = sp;
++    else
++        stack->stack[sp]++;
++
++    return c;
++}
++
++/* --------------------------------------------------------------------------------------------- */
++
++static long
++edit_get_prev_undoredo_action (const edit_undoredo_stack_t * stack)
++{
++    long c;
++    unsigned long sp = stack->pointer;
++
++    if (sp == stack->bottom)
++        return STACK_BOTTOM;
++
++    sp = (sp - 1) & stack->size_mask;
++    c = stack->stack[sp];
++    if (c >= 0)
++        return c;
++
++    if (sp == stack->bottom)
++        return STACK_BOTTOM;
++
++    c = stack->stack[(sp - 1) & stack->size_mask];
++
++    return c;
++}
++
++/* --------------------------------------------------------------------------------------------- */
++/*** public functions ****************************************************************************/
++/* --------------------------------------------------------------------------------------------- */
++
++void
++edit_undo_stack_init (edit_undo_stack_t * undo, struct WEdit *edit)
++{
++    edit_undoredo_stack_init (UNDOREDOSTACK (undo), edit);
++    undo->disable = FALSE;
++}
++
++/* --------------------------------------------------------------------------------------------- */
++
++void
++edit_undo_stack_free (edit_undo_stack_t * undo)
++{
++    g_free (undo->base.stack);
++}
++
++/* --------------------------------------------------------------------------------------------- */
++/**
++ * Recording stack for undo:
++ * The following is an implementation of a compressed stack. Identical
++ * pushes are recorded by a negative prefix indicating the number of times the
++ * same char was pushed. This saves space for repeated curs-left or curs-right
++ * delete etc.
++ *
++ * eg:
++ *
++ * pushed:       stored:
++ *
++ * a
++ * b             a
++ * b            -3
++ * b             b
++ * c  -->       -4
++ * c             c
++ * c             d
++ * c
++ * d
++ *
++ * If the stack long int is 0-255 it represents a normal insert (from a backspace),
++ * 256-512 is an insert ahead (from a delete), If it is betwen 600 and 700 it is one
++ * of the cursor functions define'd in undoredo.h. 1000 through 700'000'000 is to
++ * set edit->mark1 position. 700'000'000 through 1400'000'000 is to set edit->mark2
++ * position.
++ *
++ * The only way the cursor moves or the buffer is changed is through the routines:
++ * insert, backspace, insert_ahead, delete, and cursor_move.
++ * These record the reverse undo movements onto the stack each time they are
++ * called.
++ *
++ * Each key press results in a set of actions (insert; delete ...). So each time
++ * a key is pressed the current position of start_display is pushed as
++ * KEY_PRESS + start_display. Then for undoing, we pop until we get to a number
++ * over KEY_PRESS. We then assign this number less KEY_PRESS to start_display. So undo
++ * tracks scrolling and key actions exactly. (KEY_PRESS is about (2^31) * (2/3) = 1400'000'000)
++ *
++ * @param undo undo stack object
++ * @param c code of the action
++ */
++
++void
++edit_push_undo_action (edit_undo_stack_t * undo, long c)
++{
++    edit_undoredo_stack_t *stack = UNDOREDOSTACK (undo);
++    edit_redo_stack_t *redo = &stack->edit->redo_stack;
++
++    /* Enlarge the stack if necessary */
++    edit_undoredo_stack_enlarge (stack);
++
++    if (undo->disable)
++    {
++        edit_push_redo_action (redo, KEY_PRESS);
++        edit_push_redo_action (redo, c);
++        return;
++    }
++
++    if (redo->reset)
++    {
++        UNDOREDOSTACK (redo)->bottom = 0;
++        UNDOREDOSTACK (redo)->pointer = 0;
++    }
++
++    edit_push_undoredo_action (stack, c);
++}
++
++/* --------------------------------------------------------------------------------------------- */
++/*
++   TODO: if the user undos until the stack bottom, and the stack has not wrapped,
++   then the file should be as it was when he loaded up. Then set edit->modified to 0.
++ */
++
++long
++edit_pop_undo_action (edit_undo_stack_t * undo)
++{
++    return edit_pop_undoredo_action (UNDOREDOSTACK (undo));
++}
++
++/* --------------------------------------------------------------------------------------------- */
++
++long
++edit_get_prev_undo_action (const edit_undo_stack_t * undo)
++{
++    return edit_get_prev_undoredo_action (UNDOREDOSTACK (undo));
++}
++
++/* --------------------------------------------------------------------------------------------- */
++
++void
++edit_redo_stack_init (edit_redo_stack_t * redo, struct WEdit *edit)
++{
++    edit_undoredo_stack_init (UNDOREDOSTACK (redo), edit);
++    redo->reset = FALSE;
++}
++
++/* --------------------------------------------------------------------------------------------- */
++
++void
++edit_redo_stack_free (edit_redo_stack_t * redo)
++{
++    g_free (redo->base.stack);
++}
++
++/* --------------------------------------------------------------------------------------------- */
++
++void
++edit_push_redo_action (edit_redo_stack_t * redo, long c)
++{
++    edit_undoredo_stack_t *stack = UNDOREDOSTACK (redo);
++
++    /* Enlarge the stack if necessary */
++    edit_undoredo_stack_enlarge (stack);
++
++    edit_push_undoredo_action (stack, c);
++}
++
++/* --------------------------------------------------------------------------------------------- */
++
++long
++edit_pop_redo_action (edit_redo_stack_t * redo)
++{
++    return edit_pop_undoredo_action (UNDOREDOSTACK (redo));
++}
++
++/* --------------------------------------------------------------------------------------------- */
++
++long
++edit_get_prev_redo_action (const edit_redo_stack_t * redo)
++{
++    return edit_get_prev_undoredo_action (UNDOREDOSTACK (redo));
++}
++
++/* --------------------------------------------------------------------------------------------- */
+diff --git a/src/editor/undoredo.h b/src/editor/undoredo.h
+new file mode 100644
+index 0000000..0d79681
+--- /dev/null
++++ b/src/editor/undoredo.h
+@@ -0,0 +1,71 @@
++/** \file
++ *  \brief Header: undo and redo stacks for WEdit
++ */
++
++#ifndef MC__EDIT_UNDOREDO_H
++#define MC__EDIT_UNDOREDO_H
++
++/*** typedefs(not structures) and defined constants **********************************************/
++
++/* Some codes that may be pushed onto or returned from the undo/redo stacks */
++#define CURS_LEFT       601
++#define CURS_RIGHT      602
++#define DELCHAR         603
++#define BACKSPACE       604
++#define STACK_BOTTOM    605
++#define CURS_LEFT_LOTS  606
++#define CURS_RIGHT_LOTS 607
++#define COLUMN_ON       608
++#define COLUMN_OFF      609
++#define DELCHAR_BR      610
++#define BACKSPACE_BR    611
++#define MARK_1          1000
++#define MARK_2          500000000
++#define MARK_CURS       1000000000
++#define KEY_PRESS       1500000000
++
++/*** enums ***************************************************************************************/
++
++/*** structures declarations (and typedefs of structures)*****************************************/
++
++typedef struct edit_undoredo_stack_struct
++{
++    long *stack;
++    unsigned long size;
++    unsigned long size_mask;
++    unsigned long bottom;
++    unsigned long pointer;
++    struct WEdit *edit;
++} edit_undoredo_stack_t;
++
++typedef struct edit_undo_stack_struct
++{
++    edit_undoredo_stack_t base;
++    gboolean disable;           /* If TRUE, don't save events in the undo stack */
++} edit_undo_stack_t;
++
++typedef struct edit_redo_stack_struct
++{
++    edit_undoredo_stack_t base;
++    gboolean reset;             /* If TRUE, clear */
++} edit_redo_stack_t;
++
++/*** global variables defined in .c file *********************************************************/
++
++/*** declarations of public functions ************************************************************/
++
++void edit_undo_stack_init (edit_undo_stack_t * undo, struct WEdit *edit);
++void edit_undo_stack_free (edit_undo_stack_t * undo);
++void edit_push_undo_action (edit_undo_stack_t * undo, long c);
++long edit_pop_undo_action (edit_undo_stack_t * undo);
++long edit_get_prev_undo_action (const edit_undo_stack_t * undo);
++
++void edit_redo_stack_init (edit_redo_stack_t * redo, struct WEdit *edit);
++void edit_redo_stack_free (edit_redo_stack_t * redo);
++void edit_push_redo_action (edit_redo_stack_t * redo, long c);
++long edit_pop_redo_action (edit_redo_stack_t * redo);
++long edit_get_prev_redo_action (const edit_redo_stack_t * redo);
++
++/*** inline functions ****************************************************************************/
++
++#endif /* MC__EDIT_UNDOREDO_H */
+-- 
+2.1.4
+
