@@ -147,25 +147,6 @@ configure_callback (Widget *w, Widget *sender, widget_msg_t msg, int parm, void 
 
 /* --------------------------------------------------------------------------------------------- */
 
-static void
-skin_apply (const gchar *skin_override)
-{
-    GError *mcerror = NULL;
-
-    mc_skin_deinit ();
-    mc_skin_init (skin_override, &mcerror);
-    scripting_trigger_event ("ui::skin-change");
-    mc_fhl_free (&mc_filehighlight);
-    mc_filehighlight = mc_fhl_new (TRUE);
-    panel_deinit ();
-    panel_init ();
-    repaint_screen ();
-
-    mc_error_message (&mcerror, NULL);
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
 static const gchar *
 skin_name_to_label (const gchar *name)
 {
@@ -699,6 +680,25 @@ appearance_box (void)
 
     g_free (current_skin_name);
     g_ptr_array_free (skin_names, TRUE);
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+void
+skin_apply (const gchar *skin_override)
+{
+    GError *mcerror = NULL;
+
+    mc_skin_deinit ();
+    mc_skin_init (skin_override, &mcerror);
+    scripting_trigger_event ("ui::skin-change");
+    mc_fhl_free (&mc_filehighlight);
+    mc_filehighlight = mc_fhl_new (TRUE);
+    panel_deinit ();
+    panel_init ();
+    repaint_screen ();
+
+    mc_error_message (&mcerror, NULL);
 }
 
 /* --------------------------------------------------------------------------------------------- */
