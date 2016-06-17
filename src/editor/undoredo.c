@@ -100,97 +100,94 @@
  */
 
 void
-edit_undo_push_action (WEdit * edit, long c)
+edit_undo_push_action (edit_action_stack_t * stack, long c)
 {
-    unsigned long sp = edit->undo_stack.pointer;
+    unsigned long sp = stack->pointer;
     unsigned long spm1;
 
     /* first enlarge the stack if necessary */
-    if (sp > edit->undo_stack.size - 10)
+    if (sp > stack->size - 10)
     {                           /* say */
         if (option_max_undo < 256)
             option_max_undo = 256;
 
-        if (edit->undo_stack.size < (unsigned long) option_max_undo)
+        if (stack->size < (unsigned long) option_max_undo)
         {
             long *t;
 
-            t = g_realloc (edit->undo_stack.stack,
-                           (edit->undo_stack.size * 2 + 10) * sizeof (long));
+            t = g_realloc (stack->stack, (stack->size * 2 + 10) * sizeof (long));
             if (t != NULL)
             {
-                edit->undo_stack.stack = t;
-                edit->undo_stack.size *= 2;
-                edit->undo_stack.size_mask = edit->undo_stack.size - 1;
+                stack->stack = t;
+                stack->size *= 2;
+                stack->size_mask = stack->size - 1;
             }
         }
     }
 
-    spm1 = (edit->undo_stack.pointer - 1) & edit->undo_stack.size_mask;
+    spm1 = (stack->pointer - 1) & stack->size_mask;
 
-    if (edit->undo_stack.disable)
+    if (stack->disable)
     {
         edit_push_redo_action (edit, KEY_PRESS);
         edit_push_redo_action (edit, c);
         return;
     }
 
-    if (edit->redo_stack.reset)
-        edit->redo_stack.bottom = edit->redo_stack.pointer = 0;
+    if (stack->reset)
+        stack->bottom = stack->pointer = 0;
 
-    if (edit->undo_stack.bottom != sp
-        && spm1 != edit->undo_stack.bottom
-        && ((sp - 2) & edit->undo_stack.size_mask) != edit->undo_stack.bottom)
+    if (stack->bottom != sp && spm1 != stack->bottom && ((sp - 2) & stack->size_mask) != stack->bottom)
     {
         long d;
 
-        if (edit->undo_stack.stack[spm1] < 0)
+        if (stack->stack[spm1] < 0)
         {
-            d = edit->undo_stack.stack[(sp - 2) & edit->undo_stack.size_mask];
-            if (d == c && edit->undo_stack.stack[spm1] > -1000000000)
+            d = stack->stack[(sp - 2) & stack->size_mask];
+            if (d == c && stack->stack[spm1] > -1000000000)
             {
                 if (c < KEY_PRESS)      /* --> no need to push multiple do-nothings */
-                    edit->undo_stack.stack[spm1]--;
+                    stack->stack[spm1]--;
                 return;
             }
         }
         else
         {
-            d = edit->undo_stack.stack[spm1];
+            d = stack->stack[spm1];
             if (d == c)
             {
                 if (c >= KEY_PRESS)
                     return;     /* --> no need to push multiple do-nothings */
-                edit->undo_stack.stack[sp] = -2;
+                stack->stack[sp] = -2;
                 goto check_bottom;
             }
         }
     }
-    edit->undo_stack.stack[sp] = c;
+    stack->stack[sp] = c;
 
   check_bottom:
-    edit->undo_stack.pointer = (edit->undo_stack.pointer + 1) & edit->undo_stack.size_mask;
+    stack->pointer = (stack->pointer + 1) & stack->size_mask;
 
     /* if the sp wraps round and catches the undo_stack.bottom then erase
      * the first set of actions on the stack to make space - by moving
      * undo_stack.bottom forward one "key press" */
-    c = (edit->undo_stack.pointer + 2) & edit->undo_stack.size_mask;
-    if ((unsigned long) c == edit->undo_stack.bottom ||
-        (((unsigned long) c + 1) & edit->undo_stack.size_mask) == edit->undo_stack.bottom)
+    c = (stack->pointer + 2) & stack->size_mask;
+    if ((unsigned long) c == stack->bottom ||
+        (((unsigned long) c + 1) & stack->size_mask) == stack->bottom)
         do
         {
-            edit->undo_stack.bottom = (edit->undo_stack.bottom + 1) & edit->undo_stack.size_mask;
+            stack->bottom = (stack->bottom + 1) & stack->size_mask;
         }
-        while (edit->undo_stack.stack[edit->undo_stack.bottom] < KEY_PRESS
-               && edit->undo_stack.bottom != edit->undo_stack.pointer);
+        while (stack->stack[stack->bottom] < KEY_PRESS
+               && stack->bottom != stack->pointer);
 
     /* If a single key produced enough pushes to wrap all the way round
      * then we would notice that the [undo_stack.bottom] does not contain KEY_PRESS.
      * The stack is then initialised:
      */
-    if (edit->undo_stack.pointer != edit->undo_stack.bottom
-        && edit->undo_stack.stack[edit->undo_stack.bottom] < KEY_PRESS)
-        edit->undo_stack.bottom = edit->undo_stack.pointer = 0;
+    if (stack->pointer != stack->bottom
+        && stack->stack[stack->bottom] < KEY_PRESS)
+        stack->bottom = stack->pointer = 0;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -201,34 +198,34 @@ edit_undo_push_action (WEdit * edit, long c)
  */
 
 long
-edit_undo_pop_action (WEdit * edit)
+edit_undo_pop_action (edit_action_stack_t * stack)
 {
     long c;
-    unsigned long sp = edit->undo_stack.pointer;
+    unsigned long sp = stack->pointer;
 
-    if (sp == edit->undo_stack.bottom)
+    if (sp == stack->bottom)
         return STACK_BOTTOM;
 
-    sp = (sp - 1) & edit->undo_stack.size_mask;
-    c = edit->undo_stack.stack[sp];
+    sp = (sp - 1) & stack->size_mask;
+    c = stack->stack[sp];
     if (c >= 0)
     {
-        /*      edit->undo_stack.stack[sp] = '@'; */
-        edit->undo_stack.pointer = (edit->undo_stack.pointer - 1) & edit->undo_stack.size_mask;
+        /*      stack->stack[sp] = '@'; */
+        stack->pointer = (stack->pointer - 1) & stack->size_mask;
         return c;
     }
 
-    if (sp == edit->undo_stack.bottom)
+    if (sp == stack->bottom)
         return STACK_BOTTOM;
 
-    c = edit->undo_stack.stack[(sp - 1) & edit->undo_stack.size_mask];
-    if (edit->undo_stack.stack[sp] == -2)
+    c = stack->stack[(sp - 1) & stack->size_mask];
+    if (stack->stack[sp] == -2)
     {
-        /*      edit->undo_stack.stack[sp] = '@'; */
-        edit->undo_stack.pointer = sp;
+        /*      stack->stack[sp] = '@'; */
+        stack->pointer = sp;
     }
     else
-        edit->undo_stack.stack[sp]++;
+        stack->stack[sp]++;
 
     return c;
 }
@@ -236,140 +233,140 @@ edit_undo_pop_action (WEdit * edit)
 /* --------------------------------------------------------------------------------------------- */
 
 long
-edit_undo_get_prev_action (WEdit * edit)
+edit_undo_get_prev_action (const edit_action_stack_t * stack)
 {
     long c;
-    unsigned long sp = edit->undo_stack.pointer;
+    unsigned long sp = stack->pointer;
 
-    if (sp == edit->undo_stack.bottom)
+    if (sp == stack->bottom)
         return STACK_BOTTOM;
 
-    sp = (sp - 1) & edit->undo_stack.size_mask;
-    c = edit->undo_stack.stack[sp];
+    sp = (sp - 1) & stack->size_mask;
+    c = stack->stack[sp];
     if (c >= 0)
         return c;
 
-    if (sp == edit->undo_stack.bottom)
+    if (sp == stack->bottom)
         return STACK_BOTTOM;
 
-    c = edit->undo_stack.stack[(sp - 1) & edit->undo_stack.size_mask];
+    c = stack->stack[(sp - 1) & stack->size_mask];
     return c;
 }
 
 /* --------------------------------------------------------------------------------------------- */
 
 void
-edit_redo_push_action (WEdit * edit, long c)
+edit_redo_push_action (edit_action_stack_t * stack, long c)
 {
-    unsigned long sp = edit->redo_stack.pointer;
+    unsigned long sp = stack->pointer;
     unsigned long spm1;
 
     /* first enlarge the stack if necessary */
-    if (sp > edit->redo_stack.size - 10)
+    if (sp > stack->size - 10)
     {                           /* say */
         if (option_max_undo < 256)
             option_max_undo = 256;
 
-        if (edit->redo_stack.size < (unsigned long) option_max_undo)
+        if (stack->size < (unsigned long) option_max_undo)
         {
             long *t;
 
-            t = g_realloc (edit->redo_stack.stack,
-                           (edit->redo_stack.size * 2 + 10) * sizeof (long));
+            t = g_realloc (stack->stack,
+                           (stack->size * 2 + 10) * sizeof (long));
             if (t != NULL)
             {
-                edit->redo_stack.stack = t;
-                edit->redo_stack.size <<= 1;
-                edit->redo_stack.size_mask = edit->redo_stack.size - 1;
+                stack->stack = t;
+                stack->size <<= 1;
+                stack->size_mask = stack->size - 1;
             }
         }
     }
 
-    spm1 = (edit->redo_stack.pointer - 1) & edit->redo_stack.size_mask;
+    spm1 = (stack->pointer - 1) & stack->size_mask;
 
-    if (edit->redo_stack.bottom != sp
-        && spm1 != edit->redo_stack.bottom
-        && ((sp - 2) & edit->redo_stack.size_mask) != edit->redo_stack.bottom)
+    if (stack->bottom != sp
+        && spm1 != stack->bottom
+        && ((sp - 2) & stack->size_mask) != stack->bottom)
     {
         long d;
 
-        if (edit->redo_stack.stack[spm1] < 0)
+        if (stack->stack[spm1] < 0)
         {
-            d = edit->redo_stack.stack[(sp - 2) & edit->redo_stack.size_mask];
-            if (d == c && edit->redo_stack.stack[spm1] > -1000000000)
+            d = stack->stack[(sp - 2) & stack->size_mask];
+            if (d == c && stack->stack[spm1] > -1000000000)
             {
                 if (c < KEY_PRESS)      /* --> no need to push multiple do-nothings */
-                    edit->redo_stack.stack[spm1]--;
+                    stack->stack[spm1]--;
                 return;
             }
         }
         else
         {
-            d = edit->redo_stack.stack[spm1];
+            d = stack->stack[spm1];
             if (d == c)
             {
                 if (c >= KEY_PRESS)
                     return;     /* --> no need to push multiple do-nothings */
-                edit->redo_stack.stack[sp] = -2;
+                stack->stack[sp] = -2;
                 goto redo_check_bottom;
             }
         }
     }
-    edit->redo_stack.stack[sp] = c;
+    stack->stack[sp] = c;
 
   redo_check_bottom:
-    edit->redo_stack.pointer = (edit->redo_stack.pointer + 1) & edit->redo_stack.size_mask;
+    stack->pointer = (stack->pointer + 1) & stack->size_mask;
 
     /* if the sp wraps round and catches the redo_stack.bottom then erase
      * the first set of actions on the stack to make space - by moving
      * redo_stack.bottom forward one "key press" */
-    c = (edit->redo_stack.pointer + 2) & edit->redo_stack.size_mask;
-    if ((unsigned long) c == edit->redo_stack.bottom ||
-        (((unsigned long) c + 1) & edit->redo_stack.size_mask) == edit->redo_stack.bottom)
+    c = (stack->pointer + 2) & stack->size_mask;
+    if ((unsigned long) c == stack->bottom ||
+        (((unsigned long) c + 1) & stack->size_mask) == stack->bottom)
         do
         {
-            edit->redo_stack.bottom = (edit->redo_stack.bottom + 1) & edit->redo_stack.size_mask;
+            stack->bottom = (stack->bottom + 1) & stack->size_mask;
         }
-        while (edit->redo_stack.stack[edit->redo_stack.bottom] < KEY_PRESS
-               && edit->redo_stack.bottom != edit->redo_stack.pointer);
+        while (stack->stack[stack->bottom] < KEY_PRESS
+               && stack->bottom != stack->pointer);
 
     /*
      * If a single key produced enough pushes to wrap all the way round then
      * we would notice that the [redo_stack.bottom] does not contain KEY_PRESS.
      * The stack is then initialised:
      */
-    if (edit->redo_stack.pointer != edit->redo_stack.bottom
-        && edit->redo_stack.stack[edit->redo_stack.bottom] < KEY_PRESS)
-        edit->redo_stack.bottom = edit->redo_stack.pointer = 0;
+    if (stack->pointer != stack->bottom
+        && stack->stack[stack->bottom] < KEY_PRESS)
+        stack->bottom = stack->pointer = 0;
 }
 
 /* --------------------------------------------------------------------------------------------- */
 
 long
-edit_redo_pop_action (WEdit * edit)
+edit_redo_pop_action (edit_action_stack_t * stack)
 {
     long c;
-    unsigned long sp = edit->redo_stack.pointer;
+    unsigned long sp = stack->pointer;
 
-    if (sp == edit->redo_stack.bottom)
+    if (sp == stack->bottom)
         return STACK_BOTTOM;
 
-    sp = (sp - 1) & edit->redo_stack.size_mask;
-    c = edit->redo_stack.stack[sp];
+    sp = (sp - 1) & stack->size_mask;
+    c = stack->stack[sp];
     if (c >= 0)
     {
-        edit->redo_stack.pointer = (edit->redo_stack.pointer - 1) & edit->redo_stack.size_mask;
+        stack->pointer = (stack->pointer - 1) & stack->size_mask;
         return c;
     }
 
-    if (sp == edit->redo_stack.bottom)
+    if (sp == stack->bottom)
         return STACK_BOTTOM;
 
-    c = edit->redo_stack.stack[(sp - 1) & edit->redo_stack.size_mask];
-    if (edit->redo_stack.stack[sp] == -2)
-        edit->redo_stack.pointer = sp;
+    c = stack->stack[(sp - 1) & stack->size_mask];
+    if (stack->stack[sp] == -2)
+        stack->pointer = sp;
     else
-        edit->redo_stack.stack[sp]++;
+        stack->stack[sp]++;
 
     return c;
 }

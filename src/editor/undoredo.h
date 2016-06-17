@@ -46,12 +46,12 @@ typedef struct
 
 /*** declarations of public functions ************************************************************/
 
-void edit_undo_push_action (WEdit * edit, long c);
-long edit_undo_pop_action (WEdit * edit);
-long edit_undo_get_prev_action (WEdit * edit);
+void edit_undo_push_action (edit_action_stack_t * stack, long c);
+long edit_undo_pop_action (edit_action_stack_t * stack);
+long edit_undo_get_prev_action (const edit_action_stack_t * stack);
 
-void edit_redo_push_action (WEdit * edit, long c);
-long edit_redo_pop_action (WEdit * edit);
+void edit_redo_push_action (edit_action_stack_t * stack, long c);
+long edit_redo_pop_action (edit_action_stack_t * stack);
 
 /*** inline functions ****************************************************************************/
 
