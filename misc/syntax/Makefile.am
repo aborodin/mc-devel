@@ -1,6 +1,6 @@
-SYNTAX_IN = Syntax.in
+SYNTAX_IN = Synatx.ini.in
 
-SYNTAX_OUT = Syntax
+SYNTAX_OUT = Syntax.ini
 
 SYNTAXFILES =			\
 	PKGBUILD.syntax		\

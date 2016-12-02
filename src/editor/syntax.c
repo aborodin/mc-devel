@@ -55,6 +55,7 @@
 
 #include "lib/global.h"
 #include "lib/search.h"         /* search engine */
+#include "lib/mcconfig.h"       /* ini engine */
 #include "lib/skin.h"
 #include "lib/fileloc.h"        /* EDIT_DIR, EDIT_SYNTAX_FILE */
 #include "lib/strutil.h"        /* utf string functions */
@@ -1246,131 +1247,145 @@ edit_read_syntax_rules (WEdit * edit, FILE * f, char **args, int args_size)
 
 /* --------------------------------------------------------------------------------------------- */
 
-/* returns -1 on file error, line number on error in file syntax */
+/* returns 0 on sucess, -1 on file open error, positive value on error in file syntax */
 static int
 edit_read_syntax_file (WEdit * edit, GPtrArray * pnames, const char *syntax_file,
                        const char *editor_file, const char *first_line, const char *type)
 {
-    FILE *f, *g = NULL;
-    char *args[1024], *l = NULL;
-    long line = 0;
+    mc_config_t *syntax_ini;
+    char **groups, **group;
+    size_t groups_num = 0;
     int result = 0;
-    char *lib_file;
-    gboolean found = FALSE;
 
-    f = fopen (syntax_file, "r");
-    if (f == NULL)
+    /* Try open Syntax.ini file */
+    syntax_ini = mc_config_init (syntax_file, TRUE);
+    groups = mc_config_get_groups (syntax_ini, &groups_num);
+    if (groups_num == 0)
     {
-        lib_file = g_build_filename (mc_global.share_data_dir, "syntax", "Syntax", (char *) NULL);
-        f = fopen (lib_file, "r");
+        char *lib_file;
+
+        g_free (groups);
+        mc_config_deinit (syntax_ini);
+
+        lib_file =
+            g_build_filename (mc_global.share_data_dir, "syntax", "Syntax.ini", (char *) NULL);
+        syntax_ini = mc_config_init (lib_file, TRUE);
         g_free (lib_file);
-        if (f == NULL)
-            return -1;
+
+        groups = mc_config_get_groups (syntax_ini, &groups_num);
+        if (groups_num == 0)
+            goto ret;
     }
 
-    args[0] = NULL;
-    while (TRUE)
+    /* Iterate sections */
+    for (group = groups; *group != NULL; group++)
     {
-        line++;
-        MC_PTR_FREE (l);
-        if (read_one_line (&l, f) == 0)
-            break;
-        (void) get_args (l, args, 1023);        /* Final NULL */
-        if (args[0] == NULL)
-            continue;
-
-        /* Looking for 'include ...' lines before first 'file ...' ones */
-        if (!found && strcmp (args[0], "include") == 0)
-        {
-            if (g != NULL)
-                continue;
-
-            if (!args[1] || !(g = open_include_file (args[1])))
-            {
-                result = line;
-                break;
-            }
-            goto found_type;
-        }
-
-        /* looking for 'file ...' lines only */
-        if (strcmp (args[0], "file") != 0)
-            continue;
-
-        found = TRUE;
-
-        /* must have two args or report error */
-        if (!args[1] || !args[2])
-        {
-            result = line;
-            break;
-        }
+        char *g = *group;
 
         if (pnames != NULL)
         {
-            /* 1: just collecting a list of names of rule sets */
-            g_ptr_array_add (pnames, g_strdup (args[2]));
+            /* collect highlighting types for dialog */
+            g_ptr_array_add (pnames, g_strdup (g));
         }
-        else if (type)
+        else
         {
-            /* 2: rule set was explicitly specified by the caller */
-            if (strcmp (type, args[2]) == 0)
-                goto found_type;
-        }
-        else if (editor_file && edit)
-        {
-            /* 3: auto-detect rule set from regular expressions */
-            int q;
+            /* must have two params */
+            if (!mc_config_has_param (syntax_ini, g, "pattern")
+                || !mc_config_has_param (syntax_ini, g, "file"))
+                continue;
 
-            q = mc_search (args[1], DEFAULT_CHARSET, editor_file, MC_SEARCH_T_REGEX);
-            /* does filename match arg 1 ? */
-            if (!q && args[3])
+            if (type != NULL)
             {
-                /* does first line match arg 3 ? */
-                q = mc_search (args[3], DEFAULT_CHARSET, first_line, MC_SEARCH_T_REGEX);
+                /* rule set was explicitly specified by the caller */
+                if (strcmp (type, g) == 0)
+                    goto found_type;
             }
-            if (q)
+            else if (editor_file != NULL && edit != NULL)
             {
-                int line_error;
-                char *syntax_type;
-              found_type:
-                syntax_type = args[2];
-                line_error = edit_read_syntax_rules (edit, g ? g : f, args, 1023);
-                if (line_error)
+                /* auto-detect rule set from regular expressions */
+                char *pattern;
+                mc_search_t *search;
+                gboolean q;
+
+                pattern = mc_config_get_string_raw (syntax_ini, g, "pattern", ".*");
+
+                search = mc_search_new (pattern, DEFAULT_CHARSET);
+                search->search_type = MC_SEARCH_T_REGEX;
+                search->is_case_sensitive =
+                    !mc_config_get_bool (syntax_ini, g, "pattern_ignore_case", FALSE);
+
+                q = mc_search_run (search, editor_file, 0, strlen (editor_file), NULL);
+                mc_search_free (search);
+                g_free (pattern);
+
+                /* does filename match pattern ? */
+                if (!q && mc_config_has_param (syntax_ini, g, "first_line"))
                 {
-                    if (!error_file_name)       /* an included file */
-                        result = line + line_error;
-                    else
-                        result = line_error;
+                    /* does first line match first_line ? */
+                    char *f_line;
+
+                    f_line = mc_config_get_string_raw (syntax_ini, g, "first_line", NULL);
+                    /* FIXME: use convert() for first_line ? */
+
+                    search = mc_search_new (f_line, DEFAULT_CHARSET);
+                    search->search_type = MC_SEARCH_T_REGEX;
+                    search->is_case_sensitive =
+                        !mc_config_get_bool (syntax_ini, g, "first_line_ignore_case", FALSE);
+
+                    q = mc_search_run (search, first_line, 0, strlen (first_line), NULL);
+                    mc_search_free (search);
+                    g_free (f_line);
                 }
-                else
+
+                /* open highlighting rules */
+                if (q)
                 {
-                    g_free (edit->syntax_type);
-                    edit->syntax_type = g_strdup (syntax_type);
-                    /* if there are no rules then turn off syntax highlighting for speed */
-                    if (g == NULL && edit->rules->len == 1)
+                    char *fl;
+                    int line_error;
+
+                  found_type:
+                    line_error = -1;
+
+                    fl = mc_config_get_string_raw (syntax_ini, g, "file", NULL);
+                    if (fl != NULL)
                     {
-                        context_rule_t *r0;
+                        FILE *f;
+                        char *args[1024];
 
-                        r0 = CONTEXT_RULE (g_ptr_array_index (edit->rules, 0));
-                        if (r0->keyword->len == 1 && !r0->spelling)
-                        {
-                            edit_free_syntax_rules (edit);
-                            break;
-                        }
+                        f = open_include_file (fl);
+                        g_free (fl);
+                        line_error = edit_read_syntax_rules (edit, f, args, 1023);
+                        fclose (f);
                     }
+
+                    if (line_error != 0)
+                        result = line_error;
+                    else
+                    {
+                        g_free (edit->syntax_type);
+                        edit->syntax_type = g_strdup (g);
+                    }
+
+                    break;      /* found */
                 }
-
-                if (g == NULL)
-                    break;
-
-                fclose (g);
-                g = NULL;
             }
         }
     }
-    g_free (l);
-    fclose (f);
+
+    /* if there are no rules then turn off syntax highlighting for speed */
+    if (edit->rules->len == 1)
+    {
+        context_rule_t *r0;
+
+        r0 = CONTEXT_RULE (g_ptr_array_index (edit->rules, 0));
+        if (r0->keyword->len == 1 && !r0->spelling)
+            edit_free_syntax_rules (edit);
+    }
+
+  ret:
+    g_strfreev (groups);
+    mc_config_deinit (syntax_ini);
+
     return result;
 }
 
@@ -1498,7 +1513,7 @@ edit_load_syntax (WEdit * edit, GPtrArray * pnames, const char *type)
     {
         edit_free_syntax_rules (edit);
         message (D_ERROR, _("Load syntax file"),
-                 _("Error in file %s on line %d"), error_file_name ? error_file_name : f, r);
+                 _("Cannot load file %s"), error_file_name != NULL ? error_file_name : f);
         MC_PTR_FREE (error_file_name);
     }
 

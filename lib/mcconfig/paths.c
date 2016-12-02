@@ -71,7 +71,7 @@ static const struct
     { "hotlist",                               &mc_config_str, MC_HOTLIST_FILE},
     { "mc.keymap",                             &mc_config_str, GLOBAL_KEYMAP_FILE},
     { "menu",                                  &mc_config_str, MC_USERMENU_FILE},
-    { "cedit" PATH_SEP_STR "Syntax",           &mc_config_str, EDIT_SYNTAX_FILE},
+    { "cedit" PATH_SEP_STR "Syntax.ini",       &mc_config_str, EDIT_SYNTAX_FILE},
     { "cedit" PATH_SEP_STR "menu",             &mc_config_str, EDIT_HOME_MENU},
     { "cedit" PATH_SEP_STR "edit.indent.rc",   &mc_config_str, EDIT_DIR PATH_SEP_STR "edit.indent.rc"},
     { "cedit" PATH_SEP_STR "edit.spell.rc",    &mc_config_str, EDIT_DIR PATH_SEP_STR "edit.spell.rc"},

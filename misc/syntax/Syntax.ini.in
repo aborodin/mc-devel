@@ -1,0 +1,404 @@
+# This file describes which highlighting scheme is applied to a particular
+# file in mcedit.
+#
+# Group name is a description of the file type and it is agroup ID,
+# which is used to override syntax definition from another Syntax.ini file.
+#
+# Each group consists of folloing keys:
+#       pattern - a regular expression that is matched against the file name.
+#               The first pattern that matches wins, that is, all the patterns
+#               below are ignored.
+#       pattern_ignore_case - defines whether pattern is case insensitive or not.
+#               Default is false.
+#       first_line - a regular expression that is matched against the first line
+#               of the file.
+#       first_line_ignore_case - defines whether first_line is case insensitive
+#               or not. Default if false.
+#       file - a highlighting definition file.
+#               TODO: describe order of file search.
+
+# TODO: check usage of \\ here
+#       add include of another Syntax.ini
+
+[Syntax Highlighting Definitions]
+pattern = [Ss]yntax$
+first_line = ^#\ssyntax\srules\sversion\s
+first_line_ignore_case = true
+file = syntax.syntax
+
+[File Highlighting Definitions]
+pattern = filehighlight.ini$
+first_line = ^#\sfile\shighlight\srules\sversion\s
+first_line_ignore_case = true
+file = filehighlight.syntax
+
+[Eiffel Source File]
+pattern = ..*\.e$
+file = eiffel.syntax
+
+[Diff Output]
+pattern = ..*\.(diff|rej|patch)$
+first_line = ^(diff|Index:)\s
+file = diff.syntax
+
+[LSM File]
+pattern = ..*\.lsm$
+file = lsm.syntax
+
+[Shell Script]
+pattern = .*(bash_completion|profile|\.(sh|bash_login|bash_profile|bash_logout|bash_aliases|bash_exports|bash_history|bashrc|profile|zlogin|zlogout|zprofile|zshenv|zshrc))$
+first_line = ^#!\s*/(.*/|usr/bin/env\s)([a-z]?|ba|pdk)sh
+file = sh.syntax
+
+[Perl Program]
+pattern = ..*\.(pl|pm|psgi|t)$
+pattern_ignore_case = true
+first_line = ^#!.*([\s/]perl|@PERL@)
+file = perl.syntax
+
+[Python Program]
+pattern = ..*\.py$
+pattern_ignore_case = true
+first_line = ^#!.*([\s/]python|@PYTHON@)
+file = python.syntax
+
+[Cython or Pyrex Program]
+pattern = ..*\.(pyx|pxd|pxi)$
+file = cython.syntax
+
+[Ruby Program]
+pattern = ..*\.rb$
+pattern_ignore_case = true
+first_line = ^#!.*([\s/]ruby|@RUBY@)
+file = ruby.syntax
+
+[NROFF Source]
+pattern = ..*\.(man|[0-9n]|[0-9](x|ncurses|ssl|p|pm|menu|form|vga|t|td))$
+file = nroff.syntax
+
+[HTML File]
+pattern = ..*\.(htm|html)$
+pattern_ignore_case = true
+file = html.syntax
+
+[XML document]
+pattern = ..*\.(xml|xsd|xslt?|dtd|qpg|qpg.in)$
+pattern_ignore_case = true
+first_line = (\?xml\sversion|!DOCTYPE\s)
+file = xml.syntax
+
+[Template::Toolkit File]
+pattern = ..*\.tt$
+pattern_ignore_case = true
+file = tt.syntax
+
+[Makefile]
+pattern = (.*[Mm]akefile[.A-Za-z0-9]*|..*\.mk|..*\.mak|Kbuild)$
+file = makefile.syntax
+
+[CMake]
+pattern = (CMakeLists.txt|.*.cmake)$
+file = cmake.syntax
+
+[Pascal Program]
+pattern = ..*\.(pas|dpr|inc)$
+pattern_ignore_case = true
+file = pascal.syntax
+
+[Ada Program]
+pattern = ..*\.(ada|adb|ads)$
+pattern_ignore_case = true
+file = ada95.syntax
+
+[Tcl Program]
+pattern = ..*\.(tcl|itcl)$
+pattern_ignore_case = true
+file = tcl.syntax
+
+[S-Lang Program]
+pattern = ..*\.sl$
+pattern_ignore_case = true
+file = slang.syntax
+
+[LaTeX 2.09 Document]
+pattern = ..*\.tex$
+file = latex.syntax
+
+[Texinfo Document]
+pattern = ..*\.(texi|texinfo)$
+pattern_ignore_case = true
+file = texinfo.syntax
+
+[C Program]
+pattern = ..*\.c$
+file = c.syntax
+
+[C/C++ Program]
+pattern = ..*\.(h|C|cxx|CXX|cc|CC|cpp|CPP|hxx|hh|hpp|HPP|h\.in)$
+file = cxx.syntax
+
+[D Program]
+pattern = ..*\.d$
+file = d.syntax
+
+[Fortran Program]
+pattern = ..*\.f$
+pattern_ignore_case = true
+file = fortran.syntax
+
+[GoLang Program]
+pattern = ..*\.go$
+file = go.syntax
+
+[Freeform Fortran Program]
+pattern = ..*\.f9[05]$
+pattern_ignore_case = true
+file = f90.syntax
+
+[SWIG Source]
+pattern = ..*\.i$
+file = swig.syntax
+
+[PHP Program]
+pattern = ..*\.php[0-9]?$
+pattern_ignore_case = true
+file = php.syntax
+
+[J File]
+pattern = ..*\.ij[xs]$
+file = j.syntax
+
+[Java Program]
+pattern = ..*\.(java|JAVA|Java|jav|groovy|GROOVY|Groovy)$
+file = java.syntax
+
+[Java File]
+pattern = ..*\.(properties|config)$
+file = properties.syntax
+
+[C# Program]
+pattern = ..*\.cs$
+pattern_ignore_case = true
+file = cs.syntax
+
+[JavaScript Program]
+pattern = ..*\.js$
+pattern_ignore_case = true
+first_line = ^#!.*[\s/](node|nodejs)\\b
+file = js.syntax
+
+[ActionScript Program]
+pattern = ..*\.as$
+pattern_ignore_case = true
+file = as.syntax
+
+[ASPX File]
+pattern = ..*\.(asax|aspx|ascx|asmx|ashx)$
+file = aspx.syntax
+
+[SmallTalk Program]
+pattern = ..*\.st$
+file = smalltalk.syntax
+
+[Lisp Program]
+pattern = ..*\.(lisp|lsp|el)$
+file = lisp.syntax
+
+[ML Program]
+pattern = ..*\.(ml|mli|mly|mll|mlp)$
+file = ml.syntax
+
+[Matlab or Octave File]
+pattern = ..*\.m$
+file = octave.syntax
+
+[SQL Program]
+pattern = ..*\.sql$
+pattern_ignore_case = true
+file = sql.syntax
+
+[RPM Specfile]
+pattern = ..*\.(spec|spec\.in)$
+file = spec.syntax
+
+[YUM Repo File]
+pattern = ..*\.repo$
+file = yum-repo.syntax
+
+[AWK File]
+pattern = ..*\.awk$
+file = awk.syntax
+
+[CSS File]
+pattern = ..*\.(css|qss)$
+pattern_ignore_case = true
+file = css.syntax
+
+[GNU ChangeLog File]
+pattern = .*ChangeLog[.A-Za-z0-9_]*$
+file = changelog.syntax
+
+[M4 Macroprocessor Source]
+pattern = (..*\.m4$|configure\.in|configure\.ac)
+file = m4.syntax
+
+[DOS Batch]
+pattern = ..*\.(bat|cmd)$
+file = dos.syntax
+
+[PO File]
+pattern = ..*\.(po|pot|pox)$
+file = po.syntax
+
+[ASM Program]
+pattern = ..*\.(asm|s)$
+pattern_ignore_case = true
+file = assembler.syntax
+
+[POV Script]
+pattern = ..*\.pov$
+pattern_ignore_case = true
+file = povray.syntax
+
+[Gentoo Ebuild]
+pattern = .*\.(ebuild|eclass)$
+file = ebuild.syntax
+
+[Lua Program]
+pattern = ..*\.lua$
+pattern_ignore_case = true
+first_line = ^#!.*[\s/]lua
+file = lua.syntax
+
+[CORBA IDL]
+pattern = ..*\.idl$
+pattern_ignore_case = true
+file = idl.syntax
+
+[INI File]
+pattern = ..*\.ini$
+pattern_ignore_case = true
+file = ini.syntax
+
+[Mail folder]
+pattern = Don_t_match_me
+first_line = ^(From|Return-(P|p)ath:|From:|Date:)\s
+file = mail.syntax
+
+[Procmail RC File]
+pattern = \.procmailrc$
+first_line = ^#/usr/bin/procmail
+file = procmail.syntax
+
+[Sources List]
+pattern = sources.list$
+file = debian-sources-list.syntax
+
+[Debian control file]
+pattern = control$
+file = debian-control.syntax
+
+[Debian rules]
+pattern = (rules|rocks)$
+file = makefile.syntax
+
+[Debian changelog file]
+pattern = .*changelog$
+file = debian-changelog.syntax
+
+[Debian changelog file]
+pattern = changelog.Debian$
+file = debian-changelog.syntax
+
+[Debian descriptiom file]
+pattern = .*\.dsc$
+file = debian-description.syntax
+
+[Haskell program]
+pattern = ..*\.hsc?)$
+pattern_ignore_case = true
+file = haskell.syntax
+
+[Cabal config file]
+pattern = ..*\.cabal$
+pattern_ignore_case = true
+file = cabal.syntax
+
+[Nemerle Program]
+pattern = ..*\.n$
+pattern_ignore_case = true
+file = nemerle.syntax
+
+[Verilog Device Description]
+pattern = ..*\.v$
+pattern_ignore_case = true
+file = verilog.syntax
+
+[VHDL Device Description]
+pattern = ..*\.(hdl|vhd|vdhl)$
+pattern_ignore_case = true
+file = vhdl.syntax
+
+[Erlang Program]
+pattern = ..*\.erl$
+first_line = ^(-module\\(|#!.*escript)
+file = erlang.syntax
+
+[Erlang Header]
+pattern = ..*\.hrl$
+first_line = ^-record\\(
+file = erlang.syntax
+
+[Bind9 configuration]
+pattern = .*named.conf$
+file = named.syntax
+
+[Strace debug output]
+pattern = .*\.strace$
+file = strace.syntax
+
+[Arch package build script]
+pattern = PKGBUILD$
+file = PKGBUILD.syntax
+
+[Arch package install script]
+pattern = \.install$
+file = sh.syntax
+
+[Lex/Flex/Yacc/Bison source]
+pattern = ..*\.(l|y|yxx|ypp)$
+file = yxx.syntax
+
+[D-Link Switch Commands]
+pattern = ..*\.dlink\.sw$
+file = dlink.syntax
+
+[Jal source]
+pattern = ..*\.jalt?$ 
+pattern_ignore_case = true
+file = jal.syntax
+
+[PIC linker script file]
+pattern = ..*\.lkr$
+pattern_ignore_case = true
+file = lkr.syntax
+
+[Puppet manifest file]
+pattern = ..*\.pp$
+file = puppet.syntax
+
+[GLSL Program]
+pattern = ..*\.(glsl|vert|frag|geom)$
+file = glsl.syntax
+
+[CUDA Program]
+pattern = ..*\.(cu|cuh)$
+file = cuda.syntax
+
+[OpenCL Program]
+pattern = ..*\.cl$
+file = opencl.syntax
+
+[Unknown]
+pattern = .*
+file = unknown.syntax

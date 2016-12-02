@@ -598,7 +598,7 @@ lib/vfs/Makefile
 lib/widget/Makefile
 
 misc/syntax/Makefile
-misc/syntax/Syntax
+misc/syntax/Syntax.ini
 
 doc/Makefile
 
