@@ -913,20 +913,26 @@ xx_lowerize_line (WEdit * edit, char *line, size_t len)
 /** returns line number on error */
 
 static int
-edit_read_syntax_rules (WEdit * edit, FILE * f, char **args, int args_size)
+edit_read_syntax_rules (WEdit * edit, const char *filename)
 {
+    FILE *f;
+    char *args[1024] = { NULL };
+    int args_size = 1023;
     FILE *g = NULL;
     char *fg, *bg, *attrs;
     char last_fg[32] = "", last_bg[32] = "", last_attrs[64] = "";
     char whole_right[512];
     char whole_left[512];
-    char *l = 0;
+    char *l = NULL;
     int save_line = 0, line = 0;
     context_rule_t *c = NULL;
     gboolean no_words = TRUE;
     int result = 0;
 
-    args[0] = NULL;
+    f = open_include_file (filename);
+    if (f == NULL)
+        return (-1);
+
     edit->is_case_insensitive = FALSE;
 
     strcpy (whole_left, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_01234567890");
@@ -934,7 +940,7 @@ edit_read_syntax_rules (WEdit * edit, FILE * f, char **args, int args_size)
 
     edit->rules = g_ptr_array_new ();
 
-    if (!edit->defines)
+    if (edit->defines == NULL)
         edit->defines = g_tree_new ((GCompareFunc) strcmp);
 
     while (TRUE)
@@ -944,7 +950,7 @@ edit_read_syntax_rules (WEdit * edit, FILE * f, char **args, int args_size)
         int argc;
 
         line++;
-        l = 0;
+        l = NULL;
 
         len = read_one_line (&l, f);
         if (len != 0)
@@ -1211,36 +1217,41 @@ edit_read_syntax_rules (WEdit * edit, FILE * f, char **args, int args_size)
 
     if (result == 0)
     {
-        size_t i;
-        GString *first_chars;
 
         if (edit->rules == NULL)
-            return line;
-
-        first_chars = g_string_sized_new (32);
-
-        /* collect first character of keywords */
-        for (i = 0; i < edit->rules->len; i++)
+            result = line;
+        else
         {
-            size_t j;
+            size_t i;
+            GString *first_chars;
 
-            g_string_set_size (first_chars, 0);
-            c = CONTEXT_RULE (g_ptr_array_index (edit->rules, i));
+            first_chars = g_string_sized_new (32);
 
-            g_string_append_c (first_chars, (char) 1);
-            for (j = 1; j < c->keyword->len; j++)
+            /* collect first character of keywords */
+            for (i = 0; i < edit->rules->len; i++)
             {
-                syntax_keyword_t *k;
+                size_t j;
 
-                k = SYNTAX_KEYWORD (g_ptr_array_index (c->keyword, j));
-                g_string_append_c (first_chars, k->keyword[0]);
+                g_string_set_size (first_chars, 0);
+                c = CONTEXT_RULE (g_ptr_array_index (edit->rules, i));
+
+                g_string_append_c (first_chars, (char) 1);
+                for (j = 1; j < c->keyword->len; j++)
+                {
+                    syntax_keyword_t *k;
+
+                    k = SYNTAX_KEYWORD (g_ptr_array_index (c->keyword, j));
+                    g_string_append_c (first_chars, k->keyword[0]);
+                }
+
+                c->keyword_first_chars = g_strndup (first_chars->str, first_chars->len);
             }
 
-            c->keyword_first_chars = g_strndup (first_chars->str, first_chars->len);
+            g_string_free (first_chars, TRUE);
         }
-
-        g_string_free (first_chars, TRUE);
     }
+
+    fclose (f);
 
     return result;
 }
@@ -1385,18 +1396,13 @@ edit_read_syntax_file (WEdit * edit, GPtrArray * pnames, const char *syntax_file
         if (g != NULL)
         {
             char *fl;
-            int line_error = 1;
+            int line_error = -1;
 
             fl = mc_config_get_string_raw (syntax_ini, g, "file", NULL);
             if (fl != NULL)
             {
-                FILE *f;
-                char *args[1024];
-
-                f = open_include_file (fl);
+                line_error = edit_read_syntax_rules (edit, fl);
                 g_free (fl);
-                line_error = edit_read_syntax_rules (edit, f, args, 1023);
-                fclose (f);
             }
 
             if (line_error != 0)
@@ -1545,7 +1551,8 @@ edit_load_syntax (WEdit * edit, GPtrArray * pnames, const char *type)
 
     if (r == -1)
         message (D_ERROR, _("Load syntax file"),
-                 _("Cannot open file %s\n%s"), f, unix_error_string (errno));
+                 _("Cannot open file %s\n%s"), error_file_name != NULL ? error_file_name : f,
+                 unix_error_string (errno));
     else if (r != 0)
     {
         message (D_ERROR, _("Load syntax file"),
