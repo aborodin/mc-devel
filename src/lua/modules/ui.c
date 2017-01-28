@@ -791,7 +791,8 @@ l_widget_set_enabled (lua_State * L)
 
         g = w->owner;
 
-        if (g != NULL && g->current != NULL && g->current->data == w)
+        // VERIFY: this behaves strangely (see tetris).
+        if (g != NULL && widget_get_state (w, WST_FOCUSED))
         {
             /* If we've disabled ourselves, focus the next widget. This in
              * order to circumvent a "bug" in MC where it's still possible
