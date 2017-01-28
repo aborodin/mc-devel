@@ -186,6 +186,7 @@ static int l_widget_send_message (lua_State *L);
 static int l_widget_is_alive (lua_State *L);
 static int l_widget_redraw (lua_State *L);
 static int l_widget_focus (lua_State *L);
+static int l_widget_get_pos_flags (lua_State *L);
 static int l_widget_set_pos_flags (lua_State *L);
 static int l_widget_destroy (lua_State *L);
 
@@ -311,6 +312,7 @@ static const struct luaL_Reg ui_widget_methods_lib[] = {
     { "is_alive", l_widget_is_alive },
     { "redraw", l_widget_redraw },
     { "focus", l_widget_focus },
+    { "get_pos_flags", l_widget_get_pos_flags },
     { "set_pos_flags", l_widget_set_pos_flags },
     { "_destroy", l_widget_destroy },
     { NULL, NULL },
@@ -720,7 +722,8 @@ l_widget_set_enabled (lua_State *L)
 
         g = w->owner;
 
-        if (g != NULL && g->current != NULL && g->current->data == w)
+        // VERIFY: this behaves strangely (see tetris).
+        if (g != NULL && widget_get_state (w, WST_FOCUSED))
         {
             /* If we've disabled ourselves, focus the next widget. This in
              * order to circumvent a "bug" in MC where it's still possible
@@ -1022,6 +1025,13 @@ l_widget_set_pos_flags (lua_State *L)
 }
 
 /* --------------------------------------------------------------------------------------------- */
+
+static int
+l_widget_get_pos_flags (lua_State *L)
+{
+    lua_pushi (L, luaUI_check_widget (L, 1)->pos_flags);
+    return 1;
+}
 
 /* ------------------------------- Button --------------------------------- */
 
@@ -3010,8 +3020,13 @@ l_dialog_run (lua_State *L)
 
         w = WIDGET (g->current->data);
 
+#if 0
         if (!widget_get_state (w, WST_DISABLED)
             && (widget_get_options (w, WOP_WANT_CURSOR) || widget_get_options (w, WOP_WANT_HOTKEY)))
+#else
+        if (widget_get_options (w, WOP_SELECTABLE) && !widget_get_state (w, WST_DISABLED)
+            && widget_set_state (w, WST_FOCUSED, TRUE) == MSG_HANDLED)
+#endif
             break;
 
         g->current = g_list_next (g->current);
