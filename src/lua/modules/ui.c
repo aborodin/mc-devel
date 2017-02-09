@@ -191,6 +191,8 @@ static int l_widget_redraw (lua_State * L);
 static int l_widget_focus (lua_State * L);
 static int l_widget_get_canvas (lua_State * L);
 static int l_widget_set_pos_flags (lua_State * L);
+static int l_widget_get__state_ (lua_State * L);
+static int l_widget_get__options_ (lua_State * L);
 static int l_widget_destroy (lua_State * L);
 
 static int l_button_new (lua_State * L);
@@ -319,6 +321,8 @@ static const struct luaL_Reg ui_widget_methods_lib[] =
     { "focus", l_widget_focus },
     { "get_canvas", l_widget_get_canvas },
     { "set_pos_flags", l_widget_set_pos_flags },
+    { "get__state_", l_widget_get__state_ },
+    { "get__options_", l_widget_get__options_ },
     { "_destroy", l_widget_destroy },
     { NULL, NULL }
 };
@@ -1156,6 +1160,36 @@ l_widget_set_pos_flags (lua_State * L)
 {
     luaUI_check_widget (L, 1)->pos_flags = luaL_checki (L, 2);
     return 0;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/*
+ * Debugging: the widget's low-level **state** variable.
+ *
+ * @attr widget._state_
+ * @property r
+ */
+static int
+l_widget_get__state_ (lua_State * L)
+{
+    lua_pushi (L, luaUI_check_widget (L, 1)->state);
+    return 1;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/*
+ * Debugging: the widget's low-level **options** variable.
+ *
+ * @attr widget._options_
+ * @property r
+ */
+static int
+l_widget_get__options_ (lua_State * L)
+{
+    lua_pushi (L, luaUI_check_widget (L, 1)->options);
+    return 1;
 }
 
 /* --------------------------------------------------------------------------------------------- */
