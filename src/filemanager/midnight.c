@@ -578,7 +578,7 @@ midnight_editor_run (const gchar * event_group_name, const gchar * event_name,
     (void) event_group_name;
     (void) init_data;
 
-    if (regex_command (qer->path, "Edit") == 0)
+    if (qer->direct || regex_command (qer->path, "Edit") == 0)
         edit_file_at_line (qer->path, qer->internal, qer->start_line);
 
     return FALSE;

@@ -44,6 +44,7 @@ typedef struct
     gboolean internal;
     struct vfs_path_t *path;
     long start_line;
+    gboolean direct;            /* edit file directly ignoring "Edit" action of extension engine */
 } qev_editor_run_t;
 
 /* MCEVENT_GROUP_CORE:vfs_timestamp */

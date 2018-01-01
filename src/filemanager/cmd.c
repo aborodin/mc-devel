@@ -165,7 +165,8 @@ do_view_cmd (gboolean normal)
 /* --------------------------------------------------------------------------------------------- */
 
 static void
-put_editor_run_event (vfs_path_t * path, gboolean internal, long start_line)
+put_editor_run_event (vfs_path_t * path, gboolean internal, long start_line, gboolean direct,
+                      GFreeFunc free_func)
 {
     qev_editor_run_t *qer;
     queue_event_t *ev;
@@ -189,11 +190,12 @@ put_editor_run_event (vfs_path_t * path, gboolean internal, long start_line)
 
     ev->receiver = midnight_dlg;
     ev->command = g_strdup (MCEVENT_EDITOR_RUN);
-    ev->free = (GFreeFunc) qev_editor_run_deinit;
+    ev->free = free_func != NULL ? free_func : (GFreeFunc) qev_editor_run_deinit;
 
     qer->internal = internal;
     qer->path = path;
     qer->start_line = start_line;
+    qer->direct = direct;
 
     dlg_put_queue_event (ev);
 }
@@ -548,6 +550,16 @@ switch_to_listing (int panel_index)
 }
 
 /* --------------------------------------------------------------------------------------------- */
+
+static void
+qev_editor_ext_deinit (queue_event_t * event)
+{
+    (void) event;
+
+    flush_extension_file ();
+}
+
+/* --------------------------------------------------------------------------------------------- */
 /*** public functions ****************************************************************************/
 /* --------------------------------------------------------------------------------------------- */
 
@@ -750,7 +762,7 @@ edit_cmd (void)
     vfs_path_t *fname;
 
     fname = vfs_path_from_str (selection (current_panel)->fname);
-    put_editor_run_event (fname, use_internal_edit, 0);
+    put_editor_run_event (fname, use_internal_edit, 0, FALSE, NULL);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -762,7 +774,7 @@ edit_cmd_force_internal (void)
     vfs_path_t *fname;
 
     fname = vfs_path_from_str (selection (current_panel)->fname);
-    put_editor_run_event (fname, TRUE, 1);
+    put_editor_run_event (fname, TRUE, 1, FALSE, NULL);
 }
 #endif
 
@@ -774,7 +786,7 @@ edit_cmd_new (void)
 #ifdef HAVE_CHARSET
     mc_global.source_codepage = default_source_codepage;
 #endif
-    put_editor_run_event (NULL, use_internal_edit, 0);
+    put_editor_run_event (NULL, use_internal_edit, 0, FALSE, NULL);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -957,9 +969,8 @@ void
 ext_cmd (void)
 {
     vfs_path_t *extdir_vpath;
-    int dir;
+    int dir = 0;
 
-    dir = 0;
     if (geteuid () == 0)
     {
         dir = query_dialog (_("Extension file edit"),
@@ -974,8 +985,8 @@ ext_cmd (void)
 
         buffer_vpath = mc_config_get_full_vpath (MC_FILEBIND_FILE);
         check_for_default (extdir_vpath, buffer_vpath);
-        do_edit (buffer_vpath);
-        vfs_path_free (buffer_vpath);
+        put_editor_run_event (buffer_vpath, use_internal_edit, 0, TRUE,
+                              (GFreeFunc) qev_editor_ext_deinit);
     }
     else if (dir == 1)
     {
@@ -985,10 +996,12 @@ ext_cmd (void)
             extdir_vpath =
                 vfs_path_build_filename (mc_global.share_data_dir, MC_LIB_EXT, (char *) NULL);
         }
-        do_edit (extdir_vpath);
+        put_editor_run_event (extdir_vpath, use_internal_edit, 0, TRUE,
+                              (GFreeFunc) qev_editor_ext_deinit);
+        extdir_vpath = NULL;
     }
+
     vfs_path_free (extdir_vpath);
-    flush_extension_file ();
 }
 
 /* --------------------------------------------------------------------------------------------- */
