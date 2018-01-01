@@ -1058,9 +1058,8 @@ edit_mc_menu_cmd (void)
         return;
     }
 
-    do_edit (buffer_vpath);
+    put_editor_run_event (buffer_vpath, use_internal_edit, 0, TRUE, NULL);
 
-    vfs_path_free (buffer_vpath);
     vfs_path_free (menufile_vpath);
 }
 
