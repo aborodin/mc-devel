@@ -107,3 +107,57 @@ qev_editor_run_deinit (queue_event_t * event)
 }
 
 /* --------------------------------------------------------------------------------------------- */
+/**
+ * qev_viewer_run_t creation function
+ *
+ * @command command to view result of
+ * @path VFS object for file name
+ * @plain TRUE to view raw file, FALSE to view filtered one
+ * @internal TRUE for internal editor, FALSE for external one
+ * @start_line start line number to open @path
+ * @search_start offset of search result start
+ * @search_end offset of search result end
+ *
+ * @return newly-allocated qev_viewer_run_t event
+ */
+
+queue_event_t *
+qev_viewer_run_init (char *command, struct vfs_path_t *path, gboolean plain, gboolean internal,
+                     long start_line, off_t search_start, off_t search_end)
+{
+    qev_viewer_run_t *qvr;
+    queue_event_t *ev;
+
+    qvr = g_new (qev_viewer_run_t, 1);
+    ev = QUEUE_EVENT (qvr);
+
+    ev->receiver = midnight_dlg;
+    ev->command = g_strdup (MCEVENT_VIEWER_RUN);
+    ev->free = (GFreeFunc) qev_viewer_run_deinit;
+
+    qvr->internal = internal;
+    qvr->plain = plain;
+    qvr->path = path;
+    qvr->command = command;
+    qvr->start_line = start_line;
+    qvr->search_start = search_start;
+    qvr->search_end = search_end;
+
+    return ev;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+/**
+ * qev_viewer_run_t desctuctor
+ */
+
+void
+qev_viewer_run_deinit (queue_event_t * event)
+{
+    qev_viewer_run_t *ev = QEV_VIEWER_RUN (event);
+
+    vfs_path_free (ev->path);
+    g_free (ev->command);
+}
+
+/* --------------------------------------------------------------------------------------------- */

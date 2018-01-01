@@ -124,18 +124,31 @@ static const char *machine_str = N_("Enter machine name (F1 for details):");
 /* --------------------------------------------------------------------------------------------- */
 /*** file scope functions ************************************************************************/
 /* --------------------------------------------------------------------------------------------- */
+
+static void
+put_viewer_run_event (char *command, vfs_path_t * path, gboolean plain, gboolean internal,
+                      long start_line, off_t search_start, off_t search_end)
+{
+    queue_event_t *ev;
+
+    ev = qev_viewer_run_init (command, path, plain, internal, start_line, search_start, search_end);
+    dlg_put_queue_event (ev);
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Run viewer (internal or external) on the currently selected file.
- * If normal is TRUE, force internal viewer and raw mode (used for F13).
+ * If normal is TRUE, force internal viewer and raw mode (used for CK_ViewRaw).
  */
 static void
 do_view_cmd (gboolean normal)
 {
+    vfs_path_t *fname_vpath;
+
     /* Directories are viewed by changing to them */
     if (S_ISDIR (selection (current_panel)->st.st_mode) || link_isdir (selection (current_panel)))
     {
-        vfs_path_t *fname_vpath;
-
         if (confirm_view_dir && (current_panel->marked != 0 || current_panel->dirs_marked != 0) &&
             query_dialog (_("Confirmation"), _("Files tagged, want to cd?"), D_NORMAL, 2,
                           _("&Yes"), _("&No")) != 0)
@@ -149,15 +162,11 @@ do_view_cmd (gboolean normal)
     else
     {
         int file_idx;
-        vfs_path_t *filename_vpath;
 
         file_idx = current_panel->selected;
-        filename_vpath = vfs_path_from_str (current_panel->dir.list[file_idx].fname);
-        view_file (filename_vpath, normal, use_internal_view);
-        vfs_path_free (filename_vpath);
+        fname_vpath = vfs_path_from_str (current_panel->dir.list[file_idx].fname);
+        put_viewer_run_event (NULL, fname_vpath, normal, use_internal_view, 0, 0, 0);
     }
-
-    repaint_screen ();
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -648,9 +657,10 @@ view_file_at_line (const vfs_path_t * filename_vpath, gboolean plain_view, gbool
 gboolean
 view_file (const vfs_path_t * filename_vpath, gboolean plain_view, gboolean internal)
 {
-    return view_file_at_line (filename_vpath, plain_view, internal, 0, 0, 0);
-}
+    put_viewer_run_event (NULL, vfs_path_clone (filename_vpath), plain_view, internal, 0, 0, 0);
 
+    return TRUE;
+}
 
 /* --------------------------------------------------------------------------------------------- */
 /** Run user's preferred viewer on the currently selected file */

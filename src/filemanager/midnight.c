@@ -593,6 +593,24 @@ midnight_editor_run (const gchar * event_group_name, const gchar * event_name,
 
 /* --------------------------------------------------------------------------------------------- */
 
+/* event callback */
+static gboolean
+midnight_viewer_run (const gchar * event_group_name, const gchar * event_name,
+                     gpointer init_data, gpointer data)
+{
+    qev_viewer_run_t *qvr = QEV_VIEWER_RUN (data);
+
+    (void) event_group_name;
+    (void) init_data;
+
+    view_file_at_line (qvr->path, qvr->plain, qvr->internal, qvr->start_line, qvr->search_start,
+                       qvr->search_end);
+
+    return FALSE;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
 static void
 create_panels (void)
 {
@@ -1513,6 +1531,8 @@ midnight_subscribe (WDialog * h)
 {
     /* subscribe to "editor_run" event */
     mc_event_add (h->event_group, MCEVENT_EDITOR_RUN, midnight_editor_run, h, NULL);
+    /* subscribe to "viewer_run" event */
+    mc_event_add (h->event_group, MCEVENT_VIEWER_RUN, midnight_viewer_run, h, NULL);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -1522,6 +1542,8 @@ midnight_unsubscribe (WDialog * h)
 {
     /* unsubscribe from "editor_run" event */
     mc_event_del (h->event_group, MCEVENT_EDITOR_RUN, midnight_editor_run, h);
+    /* unsubscribe from "viewer_run" event */
+    mc_event_del (h->event_group, MCEVENT_VIEWER_RUN, midnight_viewer_run, h);
 }
 
 /* --------------------------------------------------------------------------------------------- */
