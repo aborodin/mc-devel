@@ -32,6 +32,7 @@
 #include <config.h>
 
 #include "global.h"
+#include "lib/widget/dialog-switch.h"   /* midnight_dlg */
 #include "event-types.h"
 
 /*** global variables ****************************************************************************/
@@ -58,6 +59,50 @@ queue_event_deinit (queue_event_t * event)
     if (event->free != NULL)
         event->free (event);
     g_free (event);
+}
+
+/* --------------------------------------------------------------------------------------------- */
+/**
+ * qev_editor_run_t creation function
+ *
+ * @path VSF object for file name
+ * @internal TRUE for internal editor, FALSE for external one
+ * @start_line start line number to open @path
+ *
+ * @return newly-allocated qev_editor_run_t event
+ */
+
+queue_event_t *
+qev_editor_run_init (struct vfs_path_t *path, gboolean internal, long start_line)
+{
+    qev_editor_run_t *qer;
+    queue_event_t *ev;
+
+    qer = g_new (qev_editor_run_t, 1);
+    ev = QUEUE_EVENT (qer);
+
+    ev->receiver = midnight_dlg;
+    ev->command = g_strdup (MCEVENT_EDITOR_RUN);
+    ev->free = (GFreeFunc) qev_editor_run_deinit;
+
+    qer->internal = internal;
+    qer->path = path;
+    qer->start_line = start_line;
+
+    return ev;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+/**
+ * qev_editor_run_t desctuctor
+ */
+
+void
+qev_editor_run_deinit (queue_event_t * event)
+{
+    qev_editor_run_t *ev = QEV_EDITOR_RUN (event);
+
+    vfs_path_free (ev->path);
 }
 
 /* --------------------------------------------------------------------------------------------- */

@@ -16,8 +16,10 @@
 /* Events */
 #define MCEVENT_HISTORY_LOAD "history_load"
 #define MCEVENT_HISTORY_SAVE "history_save"
+#define MCEVENT_EDITOR_RUN "editor_run"
 
 #define QUEUE_EVENT(x) ((queue_event_t *)(x))
+#define QEV_EDITOR_RUN(x) ((qev_editor_run_t *)(x))
 
 /*** enums ***************************************************************************************/
 
@@ -33,6 +35,16 @@ typedef struct
     char *command;              /* see lib/keybind.c. Must be newly-allocated string  */
     GFreeFunc free;             /* function to destroy derived class data */
 } queue_event_t;
+
+/* event class for MCEVENT_EDITOR_RUN */
+typedef struct
+{
+    queue_event_t qev;          /* base class */
+
+    gboolean internal;
+    struct vfs_path_t *path;
+    long start_line;
+} qev_editor_run_t;
 
 /* MCEVENT_GROUP_CORE:vfs_timestamp */
 struct vfs_class;
@@ -93,6 +105,9 @@ typedef struct
 /*** declarations of public functions ************************************************************/
 
 void queue_event_deinit (queue_event_t * event);
+
+queue_event_t *qev_editor_run_init (struct vfs_path_t *path, gboolean internal, long start_line);
+void qev_editor_run_deinit (queue_event_t * event);
 
 /*** inline functions ****************************************************************************/
 

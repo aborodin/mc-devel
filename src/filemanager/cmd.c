@@ -62,6 +62,7 @@
 #include "lib/widget.h"
 #include "lib/keybind.h"        /* CK_Down, CK_History */
 #include "lib/event.h"          /* mc_event_raise() */
+#include "lib/event-types.h"    /* queue events */
 
 #include "src/setup.h"
 #include "src/execute.h"        /* toggle_panels() */
@@ -157,6 +158,17 @@ do_view_cmd (gboolean normal)
     }
 
     repaint_screen ();
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+static void
+put_editor_run_event (vfs_path_t * path, gboolean internal, long start_line)
+{
+    queue_event_t *ev;
+
+    ev = qev_editor_run_init (path, internal, start_line);
+    dlg_put_queue_event (ev);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -717,9 +729,7 @@ edit_cmd (void)
     vfs_path_t *fname;
 
     fname = vfs_path_from_str (selection (current_panel)->fname);
-    if (regex_command (fname, "Edit") == 0)
-        do_edit (fname);
-    vfs_path_free (fname);
+    put_editor_run_event (fname, use_internal_edit, 0);
 }
 
 /* --------------------------------------------------------------------------------------------- */
