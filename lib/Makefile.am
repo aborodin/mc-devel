@@ -14,7 +14,7 @@ endif
 
 
 SUBLIB_includes = \
-	event.h event-types.h \
+	event.h \
 	filehighlight.h \
 	mcconfig.h \
 	search.h \
@@ -32,6 +32,7 @@ SRC_mc_utils = \
 libmc_la_SOURCES = \
 	$(SUBLIB_includes) \
 	$(SRC_mc_utils) \
+	event-types.c event-types.h \
 	fileloc.h \
 	fs.h \
 	hook.c hook.h \

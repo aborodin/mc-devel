@@ -17,9 +17,22 @@
 #define MCEVENT_HISTORY_LOAD "history_load"
 #define MCEVENT_HISTORY_SAVE "history_save"
 
+#define QUEUE_EVENT(x) ((queue_event_t *)(x))
+
 /*** enums ***************************************************************************************/
 
 /*** structures declarations (and typedefs of structures)*****************************************/
+
+/* Base class for queued events
+ * Only this events can be posted to the event queue.
+ */
+struct WDialog;
+typedef struct
+{
+    struct WDialog *receiver;   /* dialog that will handle this event */
+    char *command;              /* see lib/keybind.c. Must be newly-allocated string  */
+    GFreeFunc free;             /* function to destroy derived class data */
+} queue_event_t;
 
 /* MCEVENT_GROUP_CORE:vfs_timestamp */
 struct vfs_class;
@@ -78,6 +91,8 @@ typedef struct
 /*** global variables defined in .c file *********************************************************/
 
 /*** declarations of public functions ************************************************************/
+
+void queue_event_deinit (queue_event_t * event);
 
 /*** inline functions ****************************************************************************/
 
