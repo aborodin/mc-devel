@@ -17,9 +17,11 @@
 #define MCEVENT_HISTORY_LOAD "history_load"
 #define MCEVENT_HISTORY_SAVE "history_save"
 #define MCEVENT_EDITOR_RUN "editor_run"
+#define MCEVENT_VIEWER_RUN "viewer_run"
 
 #define QUEUE_EVENT(x) ((queue_event_t *)(x))
 #define QEV_EDITOR_RUN(x) ((qev_editor_run_t *)(x))
+#define QEV_VIEWER_RUN(x) ((qev_viewer_run_t *)(x))
 
 /*** enums ***************************************************************************************/
 
@@ -45,6 +47,20 @@ typedef struct
     struct vfs_path_t *path;
     long start_line;
     gboolean direct;            /* edit file directly ignoring "Edit" action of extension engine */
+} qev_editor_run_t;
+
+/* event class for MCEVENT_VIEWER_RUN */
+typedef struct
+{
+    queue_event_t qev;          /* base class */
+
+    gboolean internal;
+    gboolean plain;
+    struct vfs_path_t *path;
+    char *command;
+    long start_line;
+    off_t search_start;
+    off_t search_end;
 } qev_editor_run_t;
 
 /* MCEVENT_GROUP_CORE:vfs_timestamp */
@@ -108,6 +124,8 @@ typedef struct
 void queue_event_deinit (queue_event_t * event);
 
 void qev_editor_run_deinit (queue_event_t * event);
+
+void qev_viewer_run_deinit (queue_event_t * event);
 
 /*** inline functions ****************************************************************************/
 

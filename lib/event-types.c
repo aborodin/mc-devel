@@ -71,3 +71,14 @@ qev_editor_run_deinit (queue_event_t *event)
 }
 
 /* --------------------------------------------------------------------------------------------- */
+
+void
+qev_viewer_run_deinit (queue_event_t *event)
+{
+    qev_viewer_run_t *ev = QEV_VIEWER_RUN (event);
+
+    vfs_path_free (ev->path);
+    g_free (ev->command);
+}
+
+/* --------------------------------------------------------------------------------------------- */
