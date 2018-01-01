@@ -23,7 +23,7 @@ typedef enum
 struct vfs_class;
 struct vfs_url_struct;
 
-typedef struct
+typedef struct vfs_path_t
 {
     gboolean relative;
     GArray *path;
