@@ -3470,9 +3470,6 @@ panel_execute_cmd (WPanel * panel, long command)
     case CK_ViewRaw:
         view_raw_cmd ();
         break;
-    case CK_EditNew:
-        edit_cmd_new ();
-        break;
     case CK_MoveSingle:
         rename_cmd_local ();
         break;

@@ -1204,6 +1204,9 @@ midnight_execute_cmd (Widget * sender, long command)
     case CK_Edit:
         edit_cmd ();
         break;
+    case CK_EditNew:
+        edit_cmd_new ();
+        break;
 #ifdef USE_INTERNAL_EDIT
     case CK_EditForceInternal:
         edit_cmd_force_internal ();
