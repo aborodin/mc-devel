@@ -762,9 +762,7 @@ edit_cmd_force_internal (void)
     vfs_path_t *fname;
 
     fname = vfs_path_from_str (selection (current_panel)->fname);
-    if (regex_command (fname, "Edit") == 0)
-        edit_file_at_line (fname, TRUE, 1);
-    vfs_path_free (fname);
+    put_editor_run_event (fname, TRUE, 1);
 }
 #endif
 
