@@ -594,8 +594,6 @@ view_file_at_line (const vfs_path_t * filename_vpath, gboolean plain_view, gbool
             mcview_global_flags.magic = TRUE;
         if (changed_flags.nroff && !mcview_altered_flags.nroff)
             mcview_global_flags.nroff = TRUE;
-
-        dialog_switch_process_pending ();
     }
     else if (internal)
     {
@@ -608,10 +606,7 @@ view_file_at_line (const vfs_path_t * filename_vpath, gboolean plain_view, gbool
 
         ret = (regex_command (filename_vpath, view_entry) == 0);
         if (ret)
-        {
             ret = mcview_viewer (NULL, filename_vpath, start_line, search_start, search_end);
-            dialog_switch_process_pending ();
-        }
     }
     else
     {
@@ -628,6 +623,14 @@ view_file_at_line (const vfs_path_t * filename_vpath, gboolean plain_view, gbool
 
         execute_external_editor_or_viewer (viewer, filename_vpath, start_line);
     }
+
+    if (mc_global.mc_run_mode == MC_RUN_FULL)
+        update_panels (UP_OPTIMIZE, UP_KEEPSEL);
+
+    if (plain_view || internal)
+        dialog_switch_process_pending ();
+    else
+        repaint_screen ();
 
     return ret;
 }
