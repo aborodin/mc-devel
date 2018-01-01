@@ -73,7 +73,7 @@ queue_event_deinit (queue_event_t * event)
  */
 
 queue_event_t *
-qev_editor_run_init (struct vfs_path_t *path, gboolean internal, long start_line)
+qev_editor_run_init (struct vfs_path_t *path, gboolean internal, long start_line, gboolean direct)
 {
     qev_editor_run_t *qer;
     queue_event_t *ev;
@@ -88,6 +88,7 @@ qev_editor_run_init (struct vfs_path_t *path, gboolean internal, long start_line
     qer->internal = internal;
     qer->path = path;
     qer->start_line = start_line;
+    qer->direct = direct;
 
     return ev;
 }
