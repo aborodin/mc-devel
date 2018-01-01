@@ -170,6 +170,20 @@ put_editor_run_event (vfs_path_t * path, gboolean internal, long start_line)
     qev_editor_run_t *qer;
     queue_event_t *ev;
 
+    if (path == NULL && editor_ask_filename_before_edit)
+    {
+        char *fname;
+
+        fname = input_expand_dialog (_("Edit file"), _("Enter file name:"),
+                                     MC_HISTORY_EDIT_LOAD, "", INPUT_COMPLETE_FILENAMES);
+        if (fname == NULL)
+            return;
+
+        if (*fname != '\0')
+            path = vfs_path_from_str (fname);
+        g_free (fname);
+    }
+
     qer = g_new (qev_editor_run_t, 1);
     ev = QUEUE_EVENT (qer);
 
@@ -759,29 +773,10 @@ edit_cmd_force_internal (void)
 void
 edit_cmd_new (void)
 {
-    vfs_path_t *fname_vpath = NULL;
-
-    if (editor_ask_filename_before_edit)
-    {
-        char *fname;
-
-        fname = input_expand_dialog (_("Edit file"), _("Enter file name:"),
-                                     MC_HISTORY_EDIT_LOAD, "", INPUT_COMPLETE_FILENAMES);
-        if (fname == NULL)
-            return;
-
-        if (*fname != '\0')
-            fname_vpath = vfs_path_from_str (fname);
-
-        g_free (fname);
-    }
-
 #ifdef HAVE_CHARSET
     mc_global.source_codepage = default_source_codepage;
 #endif
-    do_edit (fname_vpath);
-
-    vfs_path_free (fname_vpath);
+    put_editor_run_event (NULL, use_internal_edit, 0);
 }
 
 /* --------------------------------------------------------------------------------------------- */
