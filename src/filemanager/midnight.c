@@ -72,6 +72,7 @@
 #include "panelize.h"
 #include "command.h"            /* cmdline */
 #include "dir.h"                /* dir_list_clean() */
+#include "ext.h"                /* regex_command() */
 
 #include "chmod.h"
 #include "chown.h"
@@ -563,6 +564,24 @@ print_vfs_message (const gchar * event_group_name, const gchar * event_name,
   ret:
     MC_PTR_FREE (event_data->msg);
     return TRUE;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/* event callback */
+static gboolean
+midnight_editor_run (const gchar * event_group_name, const gchar * event_name,
+                     gpointer init_data, gpointer data)
+{
+    qev_editor_run_t *qer = QEV_EDITOR_RUN (data);
+
+    (void) event_group_name;
+    (void) init_data;
+
+    if (regex_command (qer->path, "Edit") == 0)
+        edit_file_at_line (qer->path, qer->internal, qer->start_line);
+
+    return FALSE;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -1448,6 +1467,24 @@ handle_cmdline_enter (void)
 
 /* --------------------------------------------------------------------------------------------- */
 
+static void
+midnight_subscribe (WDialog * h)
+{
+    /* subscribe to "editor_run" event */
+    mc_event_add (h->event_group, MCEVENT_EDITOR_RUN, midnight_editor_run, h, NULL);
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+static void
+midnight_unsubscribe (WDialog * h)
+{
+    /* unsubscribe from "editor_run" event */
+    mc_event_del (h->event_group, MCEVENT_EDITOR_RUN, midnight_editor_run, h);
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
 static cb_ret_t
 midnight_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm, void *data)
 {
@@ -1456,6 +1493,7 @@ midnight_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm, void
     switch (msg)
     {
     case MSG_INIT:
+        midnight_subscribe (DIALOG (w));
         panel_init ();
         setup_panels ();
         return MSG_HANDLED;
@@ -1587,6 +1625,7 @@ midnight_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm, void
 
     case MSG_END:
         panel_deinit ();
+        midnight_unsubscribe (DIALOG (w));
         return MSG_HANDLED;
 
     default:

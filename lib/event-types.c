@@ -61,3 +61,13 @@ queue_event_deinit (queue_event_t * event)
 }
 
 /* --------------------------------------------------------------------------------------------- */
+
+void
+qev_editor_run_deinit (queue_event_t *event)
+{
+    qev_editor_run_t *ev = QEV_EDITOR_RUN (event);
+
+    vfs_path_free (ev->path);
+}
+
+/* --------------------------------------------------------------------------------------------- */
