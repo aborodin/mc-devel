@@ -190,14 +190,6 @@ put_editor_run_event (vfs_path_t * path, gboolean internal, long start_line, gbo
 
 /* --------------------------------------------------------------------------------------------- */
 
-static inline void
-do_edit (const vfs_path_t * what_vpath)
-{
-    edit_file_at_line (what_vpath, use_internal_edit, 0);
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
 static void
 set_panel_filter_to (WPanel * p, char *filter)
 {
@@ -552,6 +544,18 @@ qev_editor_ext_deinit (queue_event_t * event)
     (void) event;
 
     flush_extension_file ();
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+static void
+qev_editor_fhl_deinit (queue_event_t * event)
+{
+    (void) event;
+
+    /* refresh highlighting rules */
+    mc_fhl_free (&mc_filehighlight);
+    mc_filehighlight = mc_fhl_new (TRUE);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -1082,8 +1086,8 @@ edit_fhl_cmd (void)
 
         buffer_vpath = mc_config_get_full_vpath (MC_FHL_INI_FILE);
         check_for_default (fhlfile_vpath, buffer_vpath);
-        do_edit (buffer_vpath);
-        vfs_path_free (buffer_vpath);
+        put_editor_run_event (buffer_vpath, use_internal_edit, 0, TRUE,
+                              (GFreeFunc) qev_editor_fhl_deinit);
     }
     else if (dir == 1)
     {
@@ -1093,13 +1097,12 @@ edit_fhl_cmd (void)
             fhlfile_vpath =
                 vfs_path_build_filename (mc_global.sysconfig_dir, MC_FHL_INI_FILE, (char *) NULL);
         }
-        do_edit (fhlfile_vpath);
+        put_editor_run_event (fhlfile_vpath, use_internal_edit, 0, TRUE,
+                              (GFreeFunc) qev_editor_fhl_deinit);
+        fhlfile_vpath = NULL;
     }
 
     vfs_path_free (fhlfile_vpath);
-    /* refresh highlighting rules */
-    mc_fhl_free (&mc_filehighlight);
-    mc_filehighlight = mc_fhl_new (TRUE);
 }
 
 /* --------------------------------------------------------------------------------------------- */
