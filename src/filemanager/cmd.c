@@ -678,19 +678,19 @@ void
 view_file_cmd (void)
 {
     char *filename;
-    vfs_path_t *vpath;
 
     filename =
         input_expand_dialog (_("View file"), _("Filename:"),
                              MC_HISTORY_FM_VIEW_FILE, selection (current_panel)->fname,
                              INPUT_COMPLETE_FILENAMES);
-    if (filename == NULL)
-        return;
+    if (filename != NULL)
+    {
+        vfs_path_t *vpath;
 
-    vpath = vfs_path_from_str (filename);
-    g_free (filename);
-    view_file (vpath, FALSE, use_internal_view);
-    vfs_path_free (vpath);
+        vpath = vfs_path_from_str (filename);
+        put_viewer_run_event (NULL, vpath, FALSE, use_internal_view, 0, 0, 0);
+        g_free (filename);
+    }
 }
 
 /* --------------------------------------------------------------------------------------------- */
