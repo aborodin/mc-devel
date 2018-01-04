@@ -572,8 +572,8 @@ qev_editor_fhl_deinit (queue_event_t * event)
 /* --------------------------------------------------------------------------------------------- */
 
 gboolean
-view_file_at_line (const vfs_path_t * filename_vpath, gboolean plain_view, gboolean internal,
-                   long start_line, off_t search_start, off_t search_end)
+view_file_at_line (const char *command, const vfs_path_t * filename_vpath, gboolean plain_view,
+                   gboolean internal, long start_line, off_t search_start, off_t search_end)
 {
     gboolean ret = TRUE;
 
@@ -595,7 +595,7 @@ view_file_at_line (const vfs_path_t * filename_vpath, gboolean plain_view, gbool
         mcview_global_flags.magic = FALSE;
         mcview_global_flags.nroff = FALSE;
 
-        ret = mcview_viewer (NULL, filename_vpath, start_line, search_start, search_end);
+        ret = mcview_viewer (command, filename_vpath, start_line, search_start, search_end);
 
         if (changed_flags.hex && !mcview_altered_flags.hex)
             mcview_global_flags.hex = TRUE;
@@ -615,7 +615,7 @@ view_file_at_line (const vfs_path_t * filename_vpath, gboolean plain_view, gbool
 
         ret = (regex_command (filename_vpath, view_entry) == 0);
         if (ret)
-            ret = mcview_viewer (NULL, filename_vpath, start_line, search_start, search_end);
+            ret = mcview_viewer (command, filename_vpath, start_line, search_start, search_end);
     }
     else
     {
@@ -721,11 +721,8 @@ view_filtered_cmd (void)
                       INPUT_COMPLETE_FILENAMES | INPUT_COMPLETE_COMMANDS);
 
     if (command != NULL)
-    {
-        mcview_viewer (command, NULL, 0, 0, 0);
-        g_free (command);
-        dialog_switch_process_pending ();
-    }
+        /* use internal viewer only for filterd view */
+        put_viewer_run_event (command, NULL, FALSE, TRUE, 0, 0, 0);
 }
 
 /* --------------------------------------------------------------------------------------------- */

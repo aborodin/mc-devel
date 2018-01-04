@@ -1448,8 +1448,8 @@ find_do_view_edit (gboolean unparsed_view, gboolean edit, char *dir, char *file,
     if (edit)
         edit_file_at_line (fullname_vpath, use_internal_edit, line);
     else
-        view_file_at_line (fullname_vpath, unparsed_view, use_internal_view, line, search_start,
-                           search_end);
+        view_file_at_line (NULL, fullname_vpath, unparsed_view, use_internal_view, line,
+                           search_start, search_end);
     vfs_path_free (fullname_vpath);
 }
 

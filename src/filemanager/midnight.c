@@ -603,8 +603,8 @@ midnight_viewer_run (const gchar * event_group_name, const gchar * event_name,
     (void) event_group_name;
     (void) init_data;
 
-    view_file_at_line (qvr->path, qvr->plain, qvr->internal, qvr->start_line, qvr->search_start,
-                       qvr->search_end);
+    view_file_at_line (qvr->command, qvr->path, qvr->plain, qvr->internal, qvr->start_line,
+                       qvr->search_start, qvr->search_end);
 
     return FALSE;
 }
