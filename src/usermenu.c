@@ -546,8 +546,11 @@ execute_menu_command (const WEdit * edit_widget, const char *commands, gboolean 
 
     if (run_view)
     {
-        mcview_viewer (vfs_path_as_str (file_name_vpath), NULL, 0, 0, 0);
-        dialog_switch_process_pending ();
+        queue_event_t *ev;
+
+        ev = qev_viewer_run_init (file_name_vpath, NULL, FALSE /* FIXME */, TRUE, 0, 0, 0);
+        dlg_put_queue_event (ev);
+        file_name_vpath = NULL;
     }
     else
     {
