@@ -59,6 +59,7 @@
 #endif
 #include "lib/event.h"          /* mc_event_raise() */
 #include "lib/mcconfig.h"       /* mc_config_history_get() */
+#include "lib/event-types.h"    /* qev_editor_run_init() */
 
 #include "src/filemanager/layout.h"
 #include "src/filemanager/midnight.h"   /* current_panel */
@@ -68,6 +69,7 @@
 #include "src/file_history.h"   /* show_file_history() */
 #include "src/execute.h"
 #include "src/keybind-defaults.h"
+#include "src/setup.h"          /* use_internal_edit */
 
 #include "internal.h"
 
@@ -78,6 +80,8 @@
 /*** file scope type declarations ****************************************************************/
 
 /*** file scope variables ************************************************************************/
+
+static gboolean run_editor = FALSE;
 
 /* --------------------------------------------------------------------------------------------- */
 /*** file scope functions ************************************************************************/
@@ -575,9 +579,13 @@ mcview_execute_cmd (WView * view, long command)
     case CK_History:
         mcview_load_file_from_history (view);
         break;
+    case CK_Edit:
     case CK_Quit:
         if (!mcview_is_in_panel (view))
+        {
+            run_editor = command == CK_Edit;
             dlg_stop (WIDGET (view)->owner);
+        }
         break;
     case CK_Cancel:
         /* don't close viewer due to SIGINT */
@@ -626,7 +634,6 @@ mcview_handle_key (WView * view, int key)
     /* Key not used */
     return MSG_NOT_HANDLED;
 }
-
 
 /* --------------------------------------------------------------------------------------------- */
 
@@ -791,6 +798,21 @@ mcview_dialog_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm,
             dlg_stop (h);
         else
             mcview_update (view);
+        return MSG_HANDLED;
+
+    case MSG_END:
+        if (run_editor)
+        {
+            queue_event_t *ev;
+
+            view = (WView *) find_widget_type (h, mcview_callback);
+
+            ev = qev_editor_run_init (view->filename_vpath, use_internal_edit, 0, FALSE);
+            dlg_put_queue_event (ev);
+            view->filename_vpath = NULL;
+        }
+
+        run_editor = FALSE;
         return MSG_HANDLED;
 
     default:
