@@ -440,6 +440,7 @@ static const global_keymap_ini_t default_editor_keymap[] = {
 #ifdef HAVE_ASPELL
     {"SpellCheckCurrentWord", "ctrl-p"},
 #endif
+    {"View", "f16"},
     {"ExtendedKeyMap", "ctrl-x"},
     {NULL, NULL}
 };

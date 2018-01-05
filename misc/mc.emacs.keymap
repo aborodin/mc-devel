@@ -367,6 +367,7 @@ SelectCodepage = alt-e
 # WindowList =
 # WindowNext =
 # WindowPrev =
+View = f16
 ExtendedKeyMap = ctrl-x
 
 [editor:xmap]

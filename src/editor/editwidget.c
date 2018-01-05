@@ -51,12 +51,13 @@
 #include "lib/widget.h"
 #include "lib/mcconfig.h"
 #include "lib/event.h"          /* mc_event_raise() */
+#include "lib/event-types.h"    /* qev_viewer_run_init() */
 #ifdef HAVE_CHARSET
 #include "lib/charsets.h"
 #endif
 
 #include "src/keybind-defaults.h"       /* keybind_lookup_keymap_command() */
-#include "src/setup.h"          /* home_dir */
+#include "src/setup.h"          /* home_dir, use_internal_view */
 #include "src/execute.h"        /* toggle_subshell()  */
 #include "src/filemanager/cmd.h"        /* save_setup_cmd()  */
 #include "src/learn.h"          /* learn_keys() */
@@ -81,7 +82,9 @@ char *edit_window_close_char = NULL;
 /*** file scope type declarations ****************************************************************/
 
 /*** file scope variables ************************************************************************/
+
 static unsigned int edit_dlg_init_refcounter = 0;
+static gboolean run_viewer = FALSE;
 
 /*** file scope functions ************************************************************************/
 
@@ -412,6 +415,10 @@ edit_dialog_command_execute (WDialog * h, long command)
     case CK_Menu:
         edit_menu_cmd (h);
         break;
+    case CK_View:
+        run_viewer = TRUE;
+        dlg_stop (h);
+        break;
     case CK_Quit:
     case CK_Cancel:
         /* don't close editor due to SIGINT, but stop move/resize window */
@@ -606,7 +613,7 @@ edit_translate_key (WEdit * edit, long x_key, int *cmd, int *ch)
 
 /* --------------------------------------------------------------------------------------------- */
 
-static inline void
+static inline gboolean
 edit_quit (WDialog * h)
 {
     GList *l;
@@ -627,7 +634,7 @@ edit_quit (WDialog * h)
             {
                 edit_restore_size (e);
                 g_slist_free (m);
-                return;
+                return FALSE;
             }
 
             /* create separate list because widget_select()
@@ -651,6 +658,8 @@ edit_quit (WDialog * h)
         dlg_stop (h);
 
     g_slist_free (m);
+
+    return TRUE;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -825,10 +834,34 @@ edit_dialog_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm, v
         return edit_drop_hotkey_menu (h, parm) ? MSG_HANDLED : MSG_NOT_HANDLED;
 
     case MSG_VALIDATE:
-        edit_quit (h);
+        if (!edit_quit (h))
+            run_viewer = FALSE;
         return MSG_HANDLED;
 
     case MSG_END:
+        if (run_viewer)
+        {
+            Widget *we = WIDGET (h->current->data);
+
+            if (edit_widget_is_editor (CONST_WIDGET (we)))
+            {
+                WEdit *e = (WEdit *) we;
+                const char *filename;
+
+                filename = vfs_path_as_str (e->filename_vpath);
+                if (filename != NULL && filename[0] != '\0')
+                {
+                    queue_event_t *ev;
+
+                    ev = qev_viewer_run_init (NULL, e->filename_vpath, TRUE, use_internal_view, 0, 0,
+                                              0);
+                    dlg_put_queue_event (ev);
+                    e->filename_vpath = NULL;
+                }
+            }
+        }
+
+        run_viewer = FALSE;
         edit_dlg_deinit ();
         return MSG_HANDLED;
 

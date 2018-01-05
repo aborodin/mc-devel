@@ -368,6 +368,7 @@ SpellCheckCurrentWord = ctrl-p
 # WindowList =
 # WindowNext =
 # WindowPrev =
+View = f16
 # ExtendedKeyMap =
 
 [viewer]
