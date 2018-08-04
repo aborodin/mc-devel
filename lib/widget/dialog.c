@@ -564,6 +564,10 @@ frontend_dlg_run (WDialog * h)
             queue_event_deinit (qev);
         }
 
+        /* HACK: close dummy mc */
+        if (event_queue == NULL && h == midnight_dlg && h->widgets == NULL)
+            dlg_stop (h);
+
         if (widget_get_state (wh, WST_CLOSED))
             send_message (h, NULL, MSG_VALIDATE, 0, NULL);
     }

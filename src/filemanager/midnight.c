@@ -65,6 +65,7 @@
 #include "lib/fileloc.h"        /* MC_FILEPOS_FILE */
 #include "lib/keybind.h"
 #include "lib/event.h"
+#include "lib/event-types.h"    /* qev_editor_run_init(), qev_viewer_run_init() */
 
 #include "tree.h"
 #include "boxes.h"              /* sort_box(), tree_box() */
@@ -1007,7 +1008,7 @@ prepend_cwd_on_local (const char *filename)
 /** Invoke the internal view/edit routine with:
  * the default processing and forcing the internal viewer/editor
  */
-static gboolean
+static void
 mc_maybe_editor_or_viewer (void)
 {
     gboolean ret;
@@ -1016,34 +1017,36 @@ mc_maybe_editor_or_viewer (void)
     {
 #ifdef USE_INTERNAL_EDIT
     case MC_RUN_EDITOR:
-        ret = edit_files ((GList *) mc_run_param0);
-        if (!mc_global.midnight_shutdown)
-            dlg_run (midnight_dlg);
-        break;
+        {
+            vfs_path_t *fname;
+            queue_event_t *ev;
+
+            fname = vfs_path_from_str ((char *) mc_run_param0);
+            ev = qev_editor_run_init (fname, TRUE, 0, TRUE);
+            dlg_put_queue_event (ev);
+            break;
+        }
 #endif /* USE_INTERNAL_EDIT */
     case MC_RUN_VIEWER:
         {
             vfs_path_t *vpath = NULL;
+            queue_event_t *ev;
 
             if (mc_run_param0 != NULL && *(char *) mc_run_param0 != '\0')
                 vpath = prepend_cwd_on_local ((char *) mc_run_param0);
 
-            ret = view_file (vpath, FALSE, TRUE);
-            vfs_path_free (vpath);
-            if (!mc_global.midnight_shutdown)
-                dlg_run (midnight_dlg);
+            ev = qev_viewer_run_init (NULL, vpath, TRUE, TRUE, 0, 0, 0);
+            dlg_put_queue_event (ev);
             break;
         }
 #ifdef USE_DIFF_VIEW
     case MC_RUN_DIFFVIEWER:
-        ret = dview_diff_cmd (mc_run_param0, mc_run_param1);
+        (void) dview_diff_cmd (mc_run_param0, mc_run_param1);
         break;
 #endif /* USE_DIFF_VIEW */
     default:
-        ret = FALSE;
+        break;
     }
-
-    return ret;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -1562,9 +1565,18 @@ midnight_dummy_callback (Widget * w, Widget * sender, dlg_msg_t msg, int parm, v
     case MSG_INIT:
         midnight_subscribe (DIALOG (w));
         break;
+
+    case MSG_RESIZE:
+        /* FIXME: do we really need this */
+        /* dlg_set_size() is surplus for this case */
+        w->lines = LINES;
+        w->cols = COLS;
+        return MSG_HANDLED;
+
     case MSG_END:
         midnight_unsubscribe (DIALOG (w));
         break;
+
     default:
         break;
     }
@@ -1899,8 +1911,6 @@ quiet_quit_cmd (void)
 gboolean
 do_nc (void)
 {
-    gboolean ret;
-
 #ifdef USE_INTERNAL_EDIT
     edit_stack_init ();
 #endif
@@ -1910,7 +1920,9 @@ do_nc (void)
         midnight_dlg = dlg_create (FALSE, 0, 0, 1, 1, WPOS_FULLSCREEN, FALSE, dialog_colors,
                                    midnight_dummy_callback, NULL, "[main]", NULL);
         setup_dummy_mc ();
-        ret = mc_maybe_editor_or_viewer ();
+        /* put event into queue before run midnight_dlg */
+        mc_maybe_editor_or_viewer ();
+        (void) dlg_run (midnight_dlg);
     }
     else
     {
@@ -1927,8 +1939,6 @@ do_nc (void)
         (void) dlg_run (midnight_dlg);
 
         mc_fhl_free (&mc_filehighlight);
-
-        ret = TRUE;
 
         /* dlg_destroy destroys even current_panel->cwd_vpath, so we have to save a copy :) */
         if (mc_args__last_wd_file != NULL && vfs_current_is_local ())
@@ -1954,7 +1964,7 @@ do_nc (void)
     if ((quit & SUBSHELL_EXIT) == 0)
         clr_scr ();
 
-    return ret;
+    return TRUE;
 }
 
 /* --------------------------------------------------------------------------------------------- */
