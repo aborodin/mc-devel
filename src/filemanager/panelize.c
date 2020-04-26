@@ -172,7 +172,7 @@ init_panelize (void)
     panelize_cols = MAX (panelize_cols, blen + 4);
 
     panelize_dlg =
-        dlg_create (TRUE, 0, 0, 20, panelize_cols, WPOS_CENTER, FALSE, dialog_colors,
+        dlg_create (TRUE, 0, 0, 20, panelize_cols, WPOS_CENTER, FALSE, window_colors,
                     panelize_callback, NULL, "[External panelize]", _("External panelize"));
     g = GROUP (panelize_dlg);
 

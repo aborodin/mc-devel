@@ -29,17 +29,6 @@
 
 /*** enums ***************************************************************************************/
 
-/* Dialog color constants */
-typedef enum
-{
-    DLG_COLOR_NORMAL,
-    DLG_COLOR_FOCUS,
-    DLG_COLOR_HOT_NORMAL,
-    DLG_COLOR_HOT_FOCUS,
-    DLG_COLOR_TITLE,
-    DLG_COLOR_COUNT
-} dlg_colors_enum_t;
-
 /*** typedefs(not structures) ********************************************************************/
 
 typedef struct WDialog WDialog;
@@ -50,8 +39,6 @@ typedef char *(*dlg_shortcut_str) (long command);
 
 /* get dialog name to show in dialog list */
 typedef char *(*dlg_title_str) (const WDialog * h, size_t len);
-
-typedef int dlg_colors_t[DLG_COLOR_COUNT];
 
 /*** structures declarations (and typedefs of structures)*****************************************/
 
@@ -70,10 +57,8 @@ struct WDialog
 
 /*** global variables defined in .c file *********************************************************/
 
-/* Color styles for normal and error dialogs */
-extern dlg_colors_t dialog_colors;
-extern dlg_colors_t alarm_colors;
-extern dlg_colors_t listbox_colors;
+/* Color styles for error dialogs */
+extern window_colors_t alarm_colors;
 
 extern GList *top_dlg;
 
@@ -93,7 +78,7 @@ WDialog *dlg_create (gboolean modal, int y1, int x1, int lines, int cols,
                      const int *colors, widget_cb_fn callback, widget_mouse_cb_fn mouse_callback,
                      const char *help_ctx, const char *title);
 
-void dlg_set_default_colors (void);
+void dlg_set_alarm_colors (void);
 
 void dlg_init (WDialog * h);
 int dlg_run (WDialog * d);

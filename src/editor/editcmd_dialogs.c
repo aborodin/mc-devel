@@ -318,7 +318,7 @@ editcmd_dialog_raw_key_query (const char *heading, const char *query, gboolean c
     w = MAX (w, wq + 3 * 2 + 1 + 2);
 
     raw_dlg =
-        dlg_create (TRUE, 0, 0, cancel ? 7 : 5, w, WPOS_CENTER | WPOS_TRYUP, FALSE, dialog_colors,
+        dlg_create (TRUE, 0, 0, cancel ? 7 : 5, w, WPOS_CENTER | WPOS_TRYUP, FALSE, window_colors,
                     editcmd_dialog_raw_key_query_cb, NULL, NULL, heading);
     g = GROUP (raw_dlg);
     widget_want_tab (WIDGET (raw_dlg), TRUE);
@@ -381,7 +381,7 @@ editcmd_dialog_completion_show (const WEdit * edit, int max_len, GString ** comp
     /* create the dialog */
     compl_dlg =
         dlg_create (TRUE, start_y, start_x, compl_dlg_h, compl_dlg_w, WPOS_KEEP_DEFAULT, TRUE,
-                    dialog_colors, NULL, NULL, "[Completion]", NULL);
+                    window_colors, NULL, NULL, "[Completion]", NULL);
 
     /* create the listbox */
     compl_list = listbox_new (1, 1, compl_dlg_h - 2, compl_dlg_w - 2, FALSE, NULL);
@@ -444,7 +444,7 @@ editcmd_dialog_select_definition_show (WEdit * edit, char *match_expr, int max_l
         start_y -= (offset + 1);
 
     def_dlg = dlg_create (TRUE, start_y, start_x, def_dlg_h, def_dlg_w, WPOS_KEEP_DEFAULT, TRUE,
-                          dialog_colors, NULL, NULL, "[Definitions]", match_expr);
+                          window_colors, NULL, NULL, "[Definitions]", match_expr);
     def_list = listbox_new (1, 1, def_dlg_h - 2, def_dlg_w - 2, FALSE, NULL);
     group_add_widget (GROUP (def_dlg), def_list);
 

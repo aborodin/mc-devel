@@ -111,7 +111,7 @@ spell_dialog_spell_suggest_show (WEdit * edit, const char *word, char **new_word
     sug_dlg_w = MAX (sug_dlg_w, word_label_len) + 1;
 
     sug_dlg = dlg_create (TRUE, ypos, xpos, sug_dlg_h, sug_dlg_w, WPOS_KEEP_DEFAULT, TRUE,
-                          dialog_colors, NULL, NULL, "[ASpell]", _("Check word"));
+                          window_colors, NULL, NULL, "[ASpell]", _("Check word"));
     g = GROUP (sug_dlg);
 
     group_add_widget (g, label_new (1, 2, lang_label));

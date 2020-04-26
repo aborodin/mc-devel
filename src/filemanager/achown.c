@@ -553,7 +553,7 @@ user_group_button_cb (WButton * button, int action)
 
         chl_dlg =
             dlg_create (TRUE, wh->y - 1, lxx, wh->lines + 2, 17, WPOS_KEEP_DEFAULT, TRUE,
-                        dialog_colors, chl_callback, NULL, "[Advanced Chown]", title);
+                        window_colors, chl_callback, NULL, "[Advanced Chown]", title);
 
         /* get new listboxes */
         chl_list =
@@ -747,7 +747,7 @@ advanced_chown_dlg_create (void)
         lines += 2;
 
     ch_dlg =
-        dlg_create (TRUE, 0, 0, lines, cols, WPOS_CENTER, FALSE, dialog_colors,
+        dlg_create (TRUE, 0, 0, lines, cols, WPOS_CENTER, FALSE, window_colors,
                     advanced_chown_callback, NULL, "[Advanced Chown]", _("Chown advanced command"));
     ch_grp = GROUP (ch_dlg);
 

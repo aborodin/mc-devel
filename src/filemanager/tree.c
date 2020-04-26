@@ -249,7 +249,7 @@ tree_show_mini_info (WTree * tree, int tree_lines, int tree_cols)
         const int *colors;
 
         colors = widget_get_colors (w);
-        tty_setcolor (tree->is_panel ? NORMAL_COLOR : colors[DLG_COLOR_NORMAL]);
+        tty_setcolor (tree->is_panel ? NORMAL_COLOR : colors[WINDOW_COLOR_NORMAL]);
         tty_draw_hline (w->y + line, w->x + 1, ' ', tree_cols);
         widget_gotoyx (w, line, 1);
         tty_print_string (str_fit_to_term
@@ -335,7 +335,7 @@ show_tree (WTree * tree)
         const int *colors;
 
         colors = widget_get_colors (w);
-        tty_setcolor (tree->is_panel ? NORMAL_COLOR : colors[DLG_COLOR_NORMAL]);
+        tty_setcolor (tree->is_panel ? NORMAL_COLOR : colors[WINDOW_COLOR_NORMAL]);
 
         /* Move to the beginning of the line */
         tty_draw_hline (w->y + y + i, w->x + x, ' ', tree_cols);
@@ -352,7 +352,7 @@ show_tree (WTree * tree)
         }
         else
         {
-            int idx = current == tree->selected_ptr ? DLG_COLOR_FOCUS : DLG_COLOR_NORMAL;
+            int idx = current == tree->selected_ptr ? WINDOW_COLOR_FOCUS : WINDOW_COLOR_NORMAL;
 
             tty_setcolor (colors[idx]);
         }

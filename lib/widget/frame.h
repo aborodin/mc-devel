@@ -11,8 +11,8 @@
 #define FRAME(x) ((WFrame *)(x))
 #define CONST_FRAME(x) ((const WFrame *)(x))
 
-#define FRAME_COLOR_NORMAL DLG_COLOR_NORMAL
-#define FRAME_COLOR_TITLE DLG_COLOR_TITLE
+#define FRAME_COLOR_NORMAL WINDOW_COLOR_NORMAL
+#define FRAME_COLOR_TITLE WINDOW_COLOR_TITLE
 
 /*** enums ***************************************************************************************/
 

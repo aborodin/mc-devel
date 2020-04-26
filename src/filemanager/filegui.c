@@ -826,7 +826,7 @@ file_op_context_create_ui (file_op_context_t * ctx, gboolean with_eta,
     ui->replace_result = REPLACE_YES;
 
     ui->op_dlg =
-        dlg_create (TRUE, 0, 0, dlg_height, dlg_width, WPOS_CENTER, FALSE, dialog_colors, NULL,
+        dlg_create (TRUE, 0, 0, dlg_height, dlg_width, WPOS_CENTER, FALSE, window_colors, NULL,
                     NULL, NULL, op_names[ctx->operation]);
     w = WIDGET (ui->op_dlg);
     g = GROUP (ui->op_dlg);

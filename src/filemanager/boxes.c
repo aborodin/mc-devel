@@ -159,7 +159,8 @@ skin_apply (const gchar * skin_override)
     mc_skin_init (skin_override, &mcerror);
     mc_fhl_free (&mc_filehighlight);
     mc_filehighlight = mc_fhl_new (TRUE);
-    dlg_set_default_colors ();
+    window_set_default_colors ();
+    dlg_set_alarm_colors ();
     input_set_default_colors ();
     if (mc_global.mc_run_mode == MC_RUN_FULL)
         command_set_default_colors ();
@@ -221,7 +222,7 @@ sel_skin_button (WButton * button, int action)
     (void) action;
 
     skin_dlg =
-        dlg_create (TRUE, 0, 0, 13, 24, WPOS_KEEP_DEFAULT, TRUE, dialog_colors, skin_dlg_callback,
+        dlg_create (TRUE, 0, 0, 13, 24, WPOS_KEEP_DEFAULT, TRUE, window_colors, skin_dlg_callback,
                     NULL, "[Appearance]", _("Skins"));
     /* use Appearance dialog for positioning */
     skin_dlg->data = WIDGET (button)->owner;
@@ -1033,7 +1034,7 @@ tree_box (const char *current_dir)
     (void) current_dir;
 
     /* Create the components */
-    dlg = dlg_create (TRUE, 0, 0, LINES - 9, COLS - 20, WPOS_CENTER, FALSE, dialog_colors,
+    dlg = dlg_create (TRUE, 0, 0, LINES - 9, COLS - 20, WPOS_CENTER, FALSE, window_colors,
                       tree_callback, NULL, "[Directory Tree]", _("Directory tree"));
     g = GROUP (dlg);
     wd = WIDGET (dlg);
@@ -1255,7 +1256,7 @@ jobs_box (void)
     x += (int) n_but - 1;
     cols = MAX (cols, x + 6);
 
-    jobs_dlg = dlg_create (TRUE, 0, 0, lines, cols, WPOS_CENTER, FALSE, dialog_colors, NULL, NULL,
+    jobs_dlg = dlg_create (TRUE, 0, 0, lines, cols, WPOS_CENTER, FALSE, window_colors, NULL, NULL,
                            "[Background jobs]", _("Background jobs"));
     g = GROUP (jobs_dlg);
 

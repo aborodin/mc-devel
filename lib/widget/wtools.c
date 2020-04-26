@@ -280,7 +280,7 @@ query_dialog (const char *header, const char *text, int flags, int count, ...)
     int i;
     int result = -1;
     int cols, lines;
-    const int *query_colors = (flags & D_ERROR) != 0 ? alarm_colors : dialog_colors;
+    const int *query_colors = (flags & D_ERROR) != 0 ? alarm_colors : window_colors;
     widget_pos_flags_t pos_flags =
         (flags & D_CENTER) != 0 ? (WPOS_CENTER | WPOS_TRYUP) : WPOS_KEEP_DEFAULT;
 
@@ -591,7 +591,7 @@ status_msg_init (status_msg_t * sm, const char *title, double delay, status_msg_
     start = mc_timer_elapsed (mc_global.timer);
 
     sm->dlg = dlg_create (TRUE, 0, 0, 7, MIN (MAX (40, COLS / 2), COLS), WPOS_CENTER, FALSE,
-                          dialog_colors, NULL, NULL, NULL, title);
+                          window_colors, NULL, NULL, NULL, title);
     sm->start = start;
     sm->delay = (guint64) (delay * G_USEC_PER_SEC);
     sm->block = FALSE;

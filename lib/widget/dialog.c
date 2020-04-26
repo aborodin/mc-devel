@@ -50,10 +50,8 @@
 
 /*** global variables ****************************************************************************/
 
-/* Color styles for normal and error dialogs */
-dlg_colors_t dialog_colors;
-dlg_colors_t alarm_colors;
-dlg_colors_t listbox_colors;
+/* Color styles for error dialogs */
+window_colors_t alarm_colors;
 
 /* Primitive way to check if the the current dialog is our dialog */
 /* This is needed by async routines like load_prompt */
@@ -419,25 +417,13 @@ dlg_create (gboolean modal, int y1, int x1, int lines, int cols, widget_pos_flag
 /* --------------------------------------------------------------------------------------------- */
 
 void
-dlg_set_default_colors (void)
+dlg_set_alarm_colors (void)
 {
-    dialog_colors[DLG_COLOR_NORMAL] = COLOR_NORMAL;
-    dialog_colors[DLG_COLOR_FOCUS] = COLOR_FOCUS;
-    dialog_colors[DLG_COLOR_HOT_NORMAL] = COLOR_HOT_NORMAL;
-    dialog_colors[DLG_COLOR_HOT_FOCUS] = COLOR_HOT_FOCUS;
-    dialog_colors[DLG_COLOR_TITLE] = COLOR_TITLE;
-
-    alarm_colors[DLG_COLOR_NORMAL] = ERROR_COLOR;
-    alarm_colors[DLG_COLOR_FOCUS] = ERROR_FOCUS;
-    alarm_colors[DLG_COLOR_HOT_NORMAL] = ERROR_HOT_NORMAL;
-    alarm_colors[DLG_COLOR_HOT_FOCUS] = ERROR_HOT_FOCUS;
-    alarm_colors[DLG_COLOR_TITLE] = ERROR_TITLE;
-
-    listbox_colors[DLG_COLOR_NORMAL] = PMENU_ENTRY_COLOR;
-    listbox_colors[DLG_COLOR_FOCUS] = PMENU_SELECTED_COLOR;
-    listbox_colors[DLG_COLOR_HOT_NORMAL] = PMENU_ENTRY_COLOR;
-    listbox_colors[DLG_COLOR_HOT_FOCUS] = PMENU_SELECTED_COLOR;
-    listbox_colors[DLG_COLOR_TITLE] = PMENU_TITLE_COLOR;
+    alarm_colors[WINDOW_COLOR_NORMAL] = ERROR_COLOR;
+    alarm_colors[WINDOW_COLOR_FOCUS] = ERROR_FOCUS;
+    alarm_colors[WINDOW_COLOR_HOT_NORMAL] = ERROR_HOT_NORMAL;
+    alarm_colors[WINDOW_COLOR_HOT_FOCUS] = ERROR_HOT_FOCUS;
+    alarm_colors[WINDOW_COLOR_TITLE] = ERROR_TITLE;
 }
 
 /* --------------------------------------------------------------------------------------------- */

@@ -225,7 +225,7 @@ history_show (history_descriptor_t * hd)
     hist_data.max_width = hd->max_width;
 
     query_dlg =
-        dlg_create (TRUE, 0, 0, 4, 4, WPOS_KEEP_DEFAULT, TRUE, dialog_colors, history_dlg_callback,
+        dlg_create (TRUE, 0, 0, 4, 4, WPOS_KEEP_DEFAULT, TRUE, window_colors, history_dlg_callback,
                     NULL, "[History-query]", _("History"));
     query_dlg->data = &hist_data;
 

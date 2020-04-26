@@ -103,7 +103,7 @@ hline_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm, void *d
             const int *colors;
 
             colors = widget_get_colors (w);
-            tty_setcolor (colors[DLG_COLOR_NORMAL]);
+            tty_setcolor (colors[WINDOW_COLOR_NORMAL]);
         }
 
         tty_draw_hline (w->y, w->x + 1, ACS_HLINE, w->cols - 2);

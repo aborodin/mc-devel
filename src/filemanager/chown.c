@@ -202,7 +202,7 @@ chown_dlg_create (void)
     cols = GW * 3 + 2 + 6;
 
     ch_dlg =
-        dlg_create (TRUE, 0, 0, lines, cols, WPOS_CENTER, FALSE, dialog_colors, NULL, NULL,
+        dlg_create (TRUE, 0, 0, lines, cols, WPOS_CENTER, FALSE, window_colors, NULL, NULL,
                     "[Chown]", _("Chown command"));
     g = GROUP (ch_dlg);
 

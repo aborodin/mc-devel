@@ -333,7 +333,7 @@ chmod_dlg_create (const char *fname, const struct stat *sf_stat)
     }
 
     ch_dlg =
-        dlg_create (TRUE, 0, 0, lines, cols, WPOS_CENTER, FALSE, dialog_colors,
+        dlg_create (TRUE, 0, 0, lines, cols, WPOS_CENTER, FALSE, window_colors,
                     chmod_callback, NULL, "[Chmod]", _("Chmod command"));
     g = GROUP (ch_dlg);
 

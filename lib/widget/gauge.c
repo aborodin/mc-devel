@@ -67,7 +67,7 @@ gauge_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm, void *d
         widget_gotoyx (w, 0, 0);
         if (!g->shown)
         {
-            tty_setcolor (colors[DLG_COLOR_NORMAL]);
+            tty_setcolor (colors[WINDOW_COLOR_NORMAL]);
             tty_printf ("%*s", w->cols, "");
         }
         else
@@ -99,16 +99,16 @@ gauge_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm, void *d
             {
                 tty_setcolor (GAUGE_COLOR);
                 tty_printf ("%*s", columns, "");
-                tty_setcolor (colors[DLG_COLOR_NORMAL]);
+                tty_setcolor (colors[WINDOW_COLOR_NORMAL]);
                 tty_printf ("%*s] %3d%%", gauge_len - columns, "", percentage);
             }
             else
             {
-                tty_setcolor (colors[DLG_COLOR_NORMAL]);
+                tty_setcolor (colors[WINDOW_COLOR_NORMAL]);
                 tty_printf ("%*s", gauge_len - columns, "");
                 tty_setcolor (GAUGE_COLOR);
                 tty_printf ("%*s", columns, "");
-                tty_setcolor (colors[DLG_COLOR_NORMAL]);
+                tty_setcolor (colors[WINDOW_COLOR_NORMAL]);
                 tty_printf ("] %3d%%", percentage);
             }
         }

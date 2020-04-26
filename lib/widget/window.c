@@ -29,9 +29,18 @@
 
 #include <config.h>
 
+#include <stdlib.h>
+
+#include "lib/global.h"
+#include "lib/skin.h"
+
 #include "lib/widget.h"
 
 /*** global variables ****************************************************************************/
+
+/* Color styles */
+window_colors_t window_colors;
+window_colors_t listbox_colors;
 
 /*** file scope macro definitions ****************************************************************/
 
@@ -47,6 +56,7 @@
 /*** public functions ****************************************************************************/
 /* --------------------------------------------------------------------------------------------- */
 
+<<<<<<< HEAD
 WWindow *
 window_new (int y, int x, int lines, int cols, widget_pos_flags_t pos_flags, gboolean compact,
             const int *colors, widget_cb_fn callback, widget_mouse_cb_fn mouse_callback,
@@ -68,6 +78,24 @@ window_init (WWindow * w, int y, int x, int lines, int cols, widget_pos_flags_t 
 void
 window_destroy (WWindow * w)
 {
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+void
+window_set_default_colors (void)
+{
+    window_colors[WINDOW_COLOR_NORMAL] = COLOR_NORMAL;
+    window_colors[WINDOW_COLOR_FOCUS] = COLOR_FOCUS;
+    window_colors[WINDOW_COLOR_HOT_NORMAL] = COLOR_HOT_NORMAL;
+    window_colors[WINDOW_COLOR_HOT_FOCUS] = COLOR_HOT_FOCUS;
+    window_colors[WINDOW_COLOR_TITLE] = COLOR_TITLE;
+
+    listbox_colors[WINDOW_COLOR_NORMAL] = PMENU_ENTRY_COLOR;
+    listbox_colors[WINDOW_COLOR_FOCUS] = PMENU_SELECTED_COLOR;
+    listbox_colors[WINDOW_COLOR_HOT_NORMAL] = PMENU_ENTRY_COLOR;
+    listbox_colors[WINDOW_COLOR_HOT_FOCUS] = PMENU_SELECTED_COLOR;
+    listbox_colors[WINDOW_COLOR_TITLE] = PMENU_TITLE_COLOR;
 }
 
 /* --------------------------------------------------------------------------------------------- */

@@ -276,7 +276,7 @@ init_learn (void)
     do_refresh ();
 
     learn_dlg =
-        dlg_create (TRUE, 0, 0, dlg_height, dlg_width, WPOS_CENTER, FALSE, dialog_colors,
+        dlg_create (TRUE, 0, 0, dlg_height, dlg_width, WPOS_CENTER, FALSE, window_colors,
                     learn_callback, NULL, "[Learn keys]", learn_title);
     g = GROUP (learn_dlg);
 

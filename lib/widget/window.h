@@ -13,7 +13,20 @@
 
 /*** enums ***************************************************************************************/
 
+/* Window color constants */
+typedef enum
+{
+    WINDOW_COLOR_NORMAL,
+    WINDOW_COLOR_FOCUS,
+    WINDOW_COLOR_HOT_NORMAL,
+    WINDOW_COLOR_HOT_FOCUS,
+    WINDOW_COLOR_TITLE,
+    WINDOW_COLOR_COUNT
+} window_colors_enum_t;
+
 /*** typedefs(not structures) ********************************************************************/
+
+typedef int window_colors_t[WINDOW_COLOR_COUNT];
 
 /*** structures declarations (and typedefs of structures)*****************************************/
 
@@ -31,6 +44,10 @@ typedef struct
 
 /*** global variables defined in .c file *********************************************************/
 
+/* Color styles */
+extern window_colors_t window_colors;
+extern window_colors_t listbox_colors;
+
 /*** declarations of public functions ************************************************************/
 
 WWindow *window_new (int y, int x, int lines, int cols, widget_pos_flags_t pos_flags,
@@ -40,6 +57,8 @@ void window_init (WWindow * w, int y, int x, int lines, int cols, widget_pos_fla
                   gboolean compact, const int *colors, widget_cb_fn callback,
                   widget_mouse_cb_fn mouse_callback, const char *help_ctx);
 void window_destroy (WWindow * w);
+
+void window_set_default_colors (void);
 
 /*** inline functions ****************************************************************************/
 

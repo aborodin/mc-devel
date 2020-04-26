@@ -464,9 +464,9 @@ widget_selectcolor (Widget * w, gboolean focused, gboolean hotkey)
     if (widget_get_state (w, WST_DISABLED))
         color = DISABLED_COLOR;
     else if (hotkey)
-        color = colors[focused ? DLG_COLOR_HOT_FOCUS : DLG_COLOR_HOT_NORMAL];
+        color = colors[focused ? WINDOW_COLOR_HOT_FOCUS : WINDOW_COLOR_HOT_NORMAL];
     else
-        color = colors[focused ? DLG_COLOR_FOCUS : DLG_COLOR_NORMAL];
+        color = colors[focused ? WINDOW_COLOR_FOCUS : WINDOW_COLOR_NORMAL];
 
     tty_setcolor (color);
 }

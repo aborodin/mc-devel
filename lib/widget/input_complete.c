@@ -1265,7 +1265,7 @@ complete_engine (WInput * in, int what_to_do)
 
             complete_dlg =
                 dlg_create (TRUE, y, x, complete_height, complete_width, WPOS_KEEP_DEFAULT, TRUE,
-                            dialog_colors, complete_callback, NULL, "[Completion]", NULL);
+                            window_colors, complete_callback, NULL, "[Completion]", NULL);
             complete_list = listbox_new (1, 1, h - 2, w - 2, FALSE, NULL);
             group_add_widget (GROUP (complete_dlg), complete_list);
 

@@ -667,7 +667,7 @@ find_parameters (char **start_dir, ssize_t * start_dir_len,
         in_start_dir = g_strdup (".");
 
     find_dlg =
-        dlg_create (TRUE, 0, 0, lines, cols, WPOS_CENTER, FALSE, dialog_colors, find_parm_callback,
+        dlg_create (TRUE, 0, 0, lines, cols, WPOS_CENTER, FALSE, window_colors, find_parm_callback,
                     NULL, "[Find File]", _("Find File"));
     g = GROUP (find_dlg);
 
@@ -1250,7 +1250,7 @@ find_rotate_dash (const WDialog * h, gboolean show)
     const int *colors;
 
     colors = widget_get_colors (w);
-    tty_setcolor (colors[DLG_COLOR_NORMAL]);
+    tty_setcolor (colors[WINDOW_COLOR_NORMAL]);
     widget_gotoyx (h, w->lines - 7, w->cols - 4);
     tty_print_char (show ? rotating_dash[pos] : ' ');
     pos = (pos + 1) % sizeof (rotating_dash);
@@ -1672,7 +1672,7 @@ setup_gui (void)
     cols = COLS - 16;
 
     find_dlg =
-        dlg_create (TRUE, 0, 0, lines, cols, WPOS_CENTER, FALSE, dialog_colors, find_callback, NULL,
+        dlg_create (TRUE, 0, 0, lines, cols, WPOS_CENTER, FALSE, window_colors, find_callback, NULL,
                     "[Find File]", NULL);
     g = GROUP (find_dlg);
 

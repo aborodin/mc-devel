@@ -556,7 +556,7 @@ layout_dlg_create (void)
     width = max (l1 * 2 + 7, b);
 
     layout_dlg =
-        dlg_create (TRUE, 0, 0, 15, width, WPOS_CENTER, FALSE, dialog_colors, layout_callback, NULL,
+        dlg_create (TRUE, 0, 0, 15, width, WPOS_CENTER, FALSE, window_colors, layout_callback, NULL,
                     "[Layout]", _("Layout"));
     g = GROUP (layout_dlg);
 
