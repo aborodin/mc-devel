@@ -29,10 +29,19 @@
 
 #include <config.h>
 
+#include <errno.h>
+#include <fcntl.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "lib/global.h"
 #include "lib/skin.h"
+#include "lib/fileloc.h"        /* MC_HISTORY_FILE */
+#include "lib/mcconfig.h"
+#include "lib/event.h"          /* mc_event_raise() */
+#include "lib/event-types.h"
 
 #include "lib/widget.h"
 
@@ -96,6 +105,70 @@ window_set_default_colors (void)
     listbox_colors[WINDOW_COLOR_HOT_NORMAL] = PMENU_ENTRY_COLOR;
     listbox_colors[WINDOW_COLOR_HOT_FOCUS] = PMENU_SELECTED_COLOR;
     listbox_colors[WINDOW_COLOR_TITLE] = PMENU_TITLE_COLOR;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/**
+  * Read histories from the ${XDG_CACHE_HOME}/mc/history file.
+  */
+void
+window_read_history (const WWindow * w)
+{
+    char *profile;
+    ev_history_load_save_t event_data;
+
+    /* Is history save disabled? */
+    if (num_history_items_recorded == 0)
+        return;
+
+    profile = mc_config_get_full_path (MC_HISTORY_FILE);
+    event_data.cfg = mc_config_init (profile, TRUE);
+    event_data.receiver = NULL;
+
+    /* create all histories in dialog */
+    mc_event_raise (w->event_group, MCEVENT_HISTORY_LOAD, &event_data);
+
+    mc_config_deinit (event_data.cfg);
+    g_free (profile);
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/**
+  * Write history to the ${XDG_CACHE_HOME}/mc/history file.
+  */
+void
+window_save_history (const WWindow * w)
+{
+    char *profile;
+    int fd;
+
+    /* Is history save disabled? */
+    if (num_history_items_recorded == 0)
+        return;
+
+    profile = mc_config_get_full_path (MC_HISTORY_FILE);
+    fd = open (profile, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
+    if (fd != -1)
+        close (fd);
+
+    /* Make sure the history is only readable by the user */
+    if (chmod (profile, S_IRUSR | S_IWUSR) != -1 || errno == ENOENT)
+    {
+        ev_history_load_save_t event_data;
+
+        event_data.cfg = mc_config_init (profile, FALSE);
+        event_data.receiver = NULL;
+
+        /* get all histories in dialog */
+        mc_event_raise (w->event_group, MCEVENT_HISTORY_SAVE, &event_data);
+
+        mc_config_save_file (event_data.cfg, NULL);
+        mc_config_deinit (event_data.cfg);
+    }
+
+    g_free (profile);
 }
 
 /* --------------------------------------------------------------------------------------------- */

@@ -1199,7 +1199,7 @@ create_panel (int num, panel_view_mode_t type)
         {
             /* save and write directory history of panel
              * ... and other histories of midnight_dlg  */
-            dlg_save_history (midnight_dlg);
+            window_save_history (WINDOW (midnight_dlg));
         }
 
         widget_replace (old_widget, new_widget);

@@ -60,6 +60,9 @@ void window_destroy (WWindow * w);
 
 void window_set_default_colors (void);
 
+void window_read_history (const WWindow * w);
+void window_save_history (const WWindow * w);
+
 /*** inline functions ****************************************************************************/
 
 #endif /* MC__WIDGET_WINDOW_H */
