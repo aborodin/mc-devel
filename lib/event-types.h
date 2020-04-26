@@ -7,7 +7,7 @@
 
 /* Event groups for main modules */
 #define MCEVENT_GROUP_CORE "Core"
-#define MCEVENT_GROUP_DIALOG "Dialog"
+#define MCEVENT_GROUP_WINDOW "Window"
 #define MCEVENT_GROUP_DIFFVIEWER "DiffViewer"
 #define MCEVENT_GROUP_EDITOR "Editor"
 #define MCEVENT_GROUP_FILEMANAGER "FileManager"
@@ -65,8 +65,8 @@ typedef struct
     } ret;
 } ev_background_parent_call_t;
 
-/* MCEVENT_GROUP_DIALOG:history_load */
-/* MCEVENT_GROUP_DIALOG:history_save */
+/* MCEVENT_GROUP_WINDOW:history_load */
+/* MCEVENT_GROUP_WINDOW:history_save */
 struct mc_config_t;
 struct Widget;
 typedef struct

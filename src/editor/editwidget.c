@@ -1244,10 +1244,10 @@ edit_files (const GList * files)
 
     g = GROUP (edit_dlg);
 
-    edit_dlg->bg =
+    WINDOW (edit_dlg)->bg =
         WIDGET (background_new
                 (1, 0, wd->lines - 2, wd->cols, EDITOR_BACKGROUND, ' ', edit_dialog_bg_callback));
-    group_add_widget (g, edit_dlg->bg);
+    group_add_widget (g, WINDOW (edit_dlg)->bg);
 
     menubar = menubar_new (NULL, TRUE);
     w = WIDGET (menubar);

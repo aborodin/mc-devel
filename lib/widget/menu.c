@@ -305,6 +305,7 @@ static void
 menubar_finish (WMenuBar * menubar)
 {
     Widget *w = WIDGET (menubar);
+    WWindow *owner = WINDOW (w->owner);
 
     widget_set_state (w, WST_FOCUSED, FALSE);
     menubar->is_dropped = FALSE;
@@ -316,8 +317,8 @@ menubar_finish (WMenuBar * menubar)
      * an "invisible" menubar get the first chance to respond to mouse events. */
     widget_set_bottom (w);
     /* background must be bottom */
-    if (DIALOG (w->owner)->bg != NULL)
-        widget_set_bottom (WIDGET (DIALOG (w->owner)->bg));
+    if (owner->bg != NULL)
+        widget_set_bottom (WIDGET (owner->bg));
 
     group_select_widget_by_id (w->owner, menubar->previous_widget);
     do_refresh ();

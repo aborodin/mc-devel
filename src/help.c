@@ -1141,7 +1141,7 @@ help_interactive_display (const gchar * event_group_name, const gchar * event_na
     wh->keymap = help_map;
     widget_want_tab (wh, TRUE);
     /* draw background */
-    whelp->bg->callback = help_bg_callback;
+    WINDOW (whelp)->bg->callback = help_bg_callback;
 
     selected_item = search_string_node (main_node, STRING_LINK_START) - 1;
     currentpoint = main_node + 1;       /* Skip the newline following the start of the node */

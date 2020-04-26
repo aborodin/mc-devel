@@ -561,7 +561,7 @@ layout_dlg_create (void)
     g = GROUP (layout_dlg);
 
     /* draw background */
-    layout_dlg->bg->callback = layout_bg_callback;
+    WINDOW (layout_dlg)->bg->callback = layout_bg_callback;
 
 #define XTRACT(i) (*check_options[i].variable != 0), check_options[i].text
 
@@ -1214,7 +1214,7 @@ create_panel (int num, panel_view_mode_t type)
         {
             ev_history_load_save_t event_data = { NULL, new_widget };
 
-            mc_event_raise (midnight_dlg->event_group, MCEVENT_HISTORY_LOAD, &event_data);
+            mc_event_raise (WINDOW (midnight_dlg)->event_group, MCEVENT_HISTORY_LOAD, &event_data);
         }
 
         if (num == 0)

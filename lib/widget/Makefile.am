@@ -25,6 +25,7 @@ libmcwidget_la_SOURCES = \
 	radio.c radio.h \
 	rect.c rect.h \
 	widget-common.c widget-common.h \
+	window.h \
 	wtools.c wtools.h
 
 AM_CPPFLAGS = -I$(top_srcdir) $(GLIB_CFLAGS)

@@ -64,7 +64,7 @@ hline_adjust_cols (WHLine * l)
         Widget *w = WIDGET (l);
         Widget *wo = WIDGET (w->owner);
 
-        if (DIALOG (wo)->compact)
+        if (WINDOW (wo)->compact)
         {
             w->x = wo->x;
             w->cols = wo->cols;

@@ -84,7 +84,7 @@ const global_keymap_t *dialog_map = NULL;
 static const int *
 dlg_default_get_colors (const Widget * w)
 {
-    return CONST_DIALOG (w)->colors;
+    return CONST_WINDOW (w)->colors;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -105,7 +105,7 @@ dlg_read_history (WDialog * h)
     event_data.receiver = NULL;
 
     /* create all histories in dialog */
-    mc_event_raise (h->event_group, MCEVENT_HISTORY_LOAD, &event_data);
+    mc_event_raise (WINDOW (h)->event_group, MCEVENT_HISTORY_LOAD, &event_data);
 
     mc_config_deinit (event_data.cfg);
     g_free (profile);
@@ -159,7 +159,7 @@ dlg_execute_cmd (WDialog * h, long command)
 
     case CK_Help:
         {
-            ev_help_t event_data = { NULL, h->help_ctx };
+            ev_help_t event_data = { NULL, WINDOW (h)->help_ctx };
             mc_event_raise (MCEVENT_GROUP_CORE, "help", &event_data);
         }
         break;
@@ -374,10 +374,12 @@ dlg_create (gboolean modal, int y1, int x1, int lines, int cols, widget_pos_flag
     WDialog *new_d;
     Widget *w;
     WGroup *g;
+    WWindow *win;
 
     new_d = g_new0 (WDialog, 1);
     w = WIDGET (new_d);
     g = GROUP (new_d);
+    win = WINDOW (new_d);
     widget_adjust_position (pos_flags, &y1, &x1, &lines, &cols);
     group_init (g, y1, x1, lines, cols, callback != NULL ? callback : dlg_default_callback,
                 mouse_callback != NULL ? mouse_callback : dlg_default_mouse_callback);
@@ -395,22 +397,21 @@ dlg_create (gboolean modal, int y1, int x1, int lines, int cols, widget_pos_flag
 
     w->get_colors = dlg_default_get_colors;
 
-    new_d->colors = colors;
-    new_d->help_ctx = help_ctx;
-    new_d->compact = compact;
-    new_d->data = NULL;
+    win->colors = colors;
+    win->help_ctx = help_ctx;
+    win->compact = compact;
 
     if (modal)
     {
         w->state |= WST_MODAL;
 
-        new_d->bg = WIDGET (frame_new (0, 0, w->lines, w->cols, title, FALSE, new_d->compact));
-        group_add_widget (g, new_d->bg);
-        frame_set_title (FRAME (new_d->bg), title);
+        win->bg = WIDGET (frame_new (0, 0, w->lines, w->cols, title, FALSE, win->compact));
+        group_add_widget (g, win->bg);
+        frame_set_title (FRAME (win->bg), title);
     }
 
     /* unique name of event group for this dialog */
-    new_d->event_group = g_strdup_printf ("%s_%p", MCEVENT_GROUP_DIALOG, (void *) new_d);
+    win->event_group = g_strdup_printf ("%s_%p", MCEVENT_GROUP_WINDOW, (void *) win);
 
     return new_d;
 }
@@ -580,11 +581,13 @@ dlg_run (WDialog * h)
 void
 dlg_destroy (WDialog * h)
 {
+    WWindow *w = WINDOW (h);
+
     /* if some widgets have history, save all history at one moment here */
     dlg_save_history (h);
     group_default_callback (WIDGET (h), NULL, MSG_DESTROY, 0, NULL);
-    mc_event_group_del (h->event_group);
-    g_free (h->event_group);
+    mc_event_group_del (w->event_group);
+    g_free (w->event_group);
     g_free (h);
 
     do_refresh ();
@@ -598,6 +601,7 @@ dlg_destroy (WDialog * h)
 void
 dlg_save_history (WDialog * h)
 {
+    WWindow *w = WINDOW (h);
     char *profile;
     int i;
 
@@ -618,7 +622,7 @@ dlg_save_history (WDialog * h)
         event_data.receiver = NULL;
 
         /* get all histories in dialog */
-        mc_event_raise (h->event_group, MCEVENT_HISTORY_SAVE, &event_data);
+        mc_event_raise (w->event_group, MCEVENT_HISTORY_SAVE, &event_data);
 
         mc_config_save_file (event_data.cfg, NULL);
         mc_config_deinit (event_data.cfg);

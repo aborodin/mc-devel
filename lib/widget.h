@@ -20,6 +20,7 @@ typedef struct WGroup WGroup;
 #include "lib/widget/group.h"
 #include "lib/widget/background.h"
 #include "lib/widget/frame.h"
+#include "lib/widget/window.h"
 #include "lib/widget/dialog.h"
 #include "lib/widget/history.h"
 #include "lib/widget/button.h"

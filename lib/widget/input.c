@@ -1040,16 +1040,16 @@ cb_ret_t
 input_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm, void *data)
 {
     WInput *in = INPUT (w);
-    WDialog *h = DIALOG (w->owner);
+    WWindow *win = WINDOW (w->owner);
     cb_ret_t v;
 
     switch (msg)
     {
     case MSG_INIT:
         /* subscribe to "history_load" event */
-        mc_event_add (h->event_group, MCEVENT_HISTORY_LOAD, input_load_history, w, NULL);
+        mc_event_add (win->event_group, MCEVENT_HISTORY_LOAD, input_load_history, w, NULL);
         /* subscribe to "history_save" event */
-        mc_event_add (h->event_group, MCEVENT_HISTORY_SAVE, input_save_history, w, NULL);
+        mc_event_add (win->event_group, MCEVENT_HISTORY_SAVE, input_save_history, w, NULL);
         if (in->label != NULL)
             widget_set_state (WIDGET (in->label), WST_DISABLED, widget_get_state (w, WST_DISABLED));
         return MSG_HANDLED;
@@ -1098,9 +1098,9 @@ input_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm, void *d
 
     case MSG_DESTROY:
         /* unsubscribe from "history_load" event */
-        mc_event_del (h->event_group, MCEVENT_HISTORY_LOAD, input_load_history, w);
+        mc_event_del (win->event_group, MCEVENT_HISTORY_LOAD, input_load_history, w);
         /* unsubscribe from "history_save" event */
-        mc_event_del (h->event_group, MCEVENT_HISTORY_SAVE, input_save_history, w);
+        mc_event_del (win->event_group, MCEVENT_HISTORY_SAVE, input_save_history, w);
         input_destroy (in);
         return MSG_HANDLED;
 

@@ -57,20 +57,12 @@ typedef int dlg_colors_t[DLG_COLOR_COUNT];
 
 struct WDialog
 {
-    WGroup group;               /* base class */
-
-    /* Set by the user */
-    gboolean compact;           /* Suppress spaces around the frame */
-    const char *help_ctx;       /* Name of the help entry */
-    const int *colors;          /* Color set. Unused in viewer and editor */
+    WWindow base;               /* base class */
 
     /* Set and received by the user */
     int ret_value;              /* Result of dlg_run() */
 
-    /* Internal variables */
     void *data;                 /* Data can be passed to dialog */
-    char *event_group;          /* Name of event group for this dialog */
-    Widget *bg;                 /* WFrame or WBackground */
 
     dlg_shortcut_str get_shortcut;      /* Shortcut string */
     dlg_title_str get_title;    /* useless for modal dialogs */
