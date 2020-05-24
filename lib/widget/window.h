@@ -33,6 +33,14 @@ typedef struct
 
 /*** declarations of public functions ************************************************************/
 
+WWindow *window_new (int y, int x, int lines, int cols, widget_pos_flags_t pos_flags,
+                     gboolean compact, const int *colors, widget_cb_fn callback,
+                     widget_mouse_cb_fn mouse_callback,  const char *help_ctx, const char *title);
+void window_init (WWindow * w, int y, int x, int lines, int cols, widget_pos_flags_t pos_flags,
+                  gboolean compact, const int *colors, widget_cb_fn callback,
+                  widget_mouse_cb_fn mouse_callback, const char *help_ctx);
+void window_destroy (WWindow * w);
+
 /*** inline functions ****************************************************************************/
 
 #endif /* MC__WIDGET_WINDOW_H */
