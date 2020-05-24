@@ -51,6 +51,8 @@
 window_colors_t window_colors;
 window_colors_t listbox_colors;
 
+const global_keymap_t *window_map = NULL;
+
 /*** file scope macro definitions ****************************************************************/
 
 /*** file scope type declarations ****************************************************************/

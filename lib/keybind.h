@@ -12,6 +12,7 @@
 #define KEYMAP_SECTION_MAIN "main"
 #define KEYMAP_SECTION_MAIN_EXT "main:xmap"
 #define KEYMAP_SECTION_PANEL "panel"
+#define KEYMAP_SECTION_WINDOW "window"
 #define KEYMAP_SECTION_DIALOG "dialog"
 #define KEYMAP_SECTION_MENU "menu"
 #define KEYMAP_SECTION_INPUT "input"

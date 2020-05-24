@@ -1357,6 +1357,7 @@ load_keymap_defs (gboolean load_from_file)
         LOAD_KEYMAP (MAIN, main);
         LOAD_KEYMAP (MAIN_EXT, main_x);
         LOAD_KEYMAP (PANEL, panel);
+        LOAD_KEYMAP (WINDOW, window);
         LOAD_KEYMAP (DIALOG, dialog);
         LOAD_KEYMAP (MENU, menu);
         LOAD_KEYMAP (INPUT, input);
@@ -1387,6 +1388,7 @@ load_keymap_defs (gboolean load_from_file)
     SET_MAP (main);
     SET_MAP (main_x);
     SET_MAP (panel);
+    SET_MAP (window);
     SET_MAP (dialog);
     SET_MAP (menu);
     SET_MAP (input);
@@ -1422,6 +1424,7 @@ free_keymap_defs (void)
     FREE_KEYMAP (main);
     FREE_KEYMAP (main_x);
     FREE_KEYMAP (panel);
+    FREE_KEYMAP (window);
     FREE_KEYMAP (dialog);
     FREE_KEYMAP (menu);
     FREE_KEYMAP (input);

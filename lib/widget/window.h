@@ -48,6 +48,8 @@ typedef struct
 extern window_colors_t window_colors;
 extern window_colors_t listbox_colors;
 
+extern const global_keymap_t *window_map;
+
 /*** declarations of public functions ************************************************************/
 
 WWindow *window_new (int y, int x, int lines, int cols, widget_pos_flags_t pos_flags,

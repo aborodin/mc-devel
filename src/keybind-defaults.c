@@ -28,7 +28,7 @@
 #include <config.h>
 
 #include "lib/global.h"
-#include "lib/widget.h"         /* dialog_map, input_map, listbox_map, menu_map, radio_map */
+#include "lib/widget.h"         /* window_map, dialog_map, input_map, listbox_map, menu_map, radio_map */
 
 #include "keybind-defaults.h"
 
@@ -37,6 +37,7 @@
 GArray *main_keymap = NULL;
 GArray *main_x_keymap = NULL;
 GArray *panel_keymap = NULL;
+GArray *window_keymap = NULL;
 GArray *dialog_keymap = NULL;
 GArray *menu_keymap = NULL;
 GArray *input_keymap = NULL;
@@ -214,6 +215,11 @@ static const global_keymap_ini_t default_panel_keymap[] = {
 #endif
     {"Search", "ctrl-s; alt-s"},
     {"PanelOtherSync", "alt-i"},
+    {NULL, NULL}
+};
+
+/* window */
+static const global_keymap_ini_t default_window_keymap[] = {
     {NULL, NULL}
 };
 
@@ -644,6 +650,7 @@ create_default_keymap (void)
     create_default_keymap_section (keymap, KEYMAP_SECTION_MAIN, default_main_keymap);
     create_default_keymap_section (keymap, KEYMAP_SECTION_MAIN_EXT, default_main_x_keymap);
     create_default_keymap_section (keymap, KEYMAP_SECTION_PANEL, default_panel_keymap);
+    create_default_keymap_section (keymap, KEYMAP_SECTION_WINDOW, default_window_keymap);
     create_default_keymap_section (keymap, KEYMAP_SECTION_DIALOG, default_dialog_keymap);
     create_default_keymap_section (keymap, KEYMAP_SECTION_MENU, default_menu_keymap);
     create_default_keymap_section (keymap, KEYMAP_SECTION_INPUT, default_input_keymap);

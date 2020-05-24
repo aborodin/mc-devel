@@ -16,6 +16,7 @@
 extern GArray *main_keymap;
 extern GArray *main_x_keymap;
 extern GArray *panel_keymap;
+extern GArray *window_keymap;
 extern GArray *dialog_keymap;
 extern GArray *menu_keymap;
 extern GArray *input_keymap;
