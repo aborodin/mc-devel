@@ -376,7 +376,8 @@ tar_decode_header (union block *header, tar_super_t * arch)
             else
                 arch->type = TAR_USTAR;
         }
-        else if (strcmp (header->header.magic, OLDGNU_MAGIC) == 0)
+        else if (strcmp (header->header.magic + offsetof (struct posix_header, magic), OLDGNU_MAGIC)
+                 == 0)
             arch->type = TAR_GNU;
     }
 
