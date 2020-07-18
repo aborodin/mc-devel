@@ -42,8 +42,6 @@
 #include <inttypes.h>           /* uintmax_t */
 #include <limits.h>             /* CHAR_BIT, INT_MAX, etc */
 #include <stdint.h>             /* UINTMAX_MAX, etc */
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <string.h>             /* memset() */
 
 #ifdef hpux
@@ -58,10 +56,9 @@
 
 #include "lib/vfs/vfs.h"
 #include "lib/vfs/utilvfs.h"
-#include "lib/vfs/xdirentry.h"
 #include "lib/vfs/gc.h"         /* vfs_rmstamp */
 
-#include "tar.h"
+#include "tar-internal.h"
 
 /*** global variables ****************************************************************************/
 
@@ -100,19 +97,6 @@
    fields to overflow, alternate solutions have to be sought for this.  */
 
 
-/* Sparse files are not supported in POSIX ustar format.  For sparse files
-   with a POSIX header, a GNU extra header is provided which holds overall
-   sparse information and a few sparse descriptors.  When an old GNU header
-   replaces both the POSIX header and the GNU extra header, it holds some
-   sparse descriptors too.  Whether POSIX or not, if more sparse descriptors
-   are still needed, they are put into as many successive sparse headers as
-   necessary.  The following constants tell how many sparse descriptors fit
-   in each kind of header able to hold them.  */
-
-#define SPARSES_IN_EXTRA_HEADER  16
-#define SPARSES_IN_OLDGNU_HEADER 4
-#define SPARSES_IN_SPARSE_HEADER 21
-
 /* OLDGNU_MAGIC uses both magic and version fields, which are contiguous.
    Found in an archive, it indicates an old GNU header format, which will be
    hopefully become obsolescent.  With OLDGNU_MAGIC, uname and gname are
@@ -131,11 +115,6 @@
 /* Identifies the *next* file on the tape as having a long name.  */
 #define GNUTYPE_LONGNAME 'L'
 
-
-/* tar Header Block, overall structure.  */
-
-/* tar files are made in basic blocks of this size.  */
-#define BLOCKSIZE 512
 
 #define DEFAULT_BLOCKING 20
 
@@ -178,95 +157,6 @@
 
 /*** file scope type declarations ****************************************************************/
 
-/* *INDENT-OFF* */
-
-/* POSIX header */
-struct posix_header
-{                               /* byte offset */
-    char name[100];             /*   0 */
-    char mode[8];               /* 100 */
-    char uid[8];                /* 108 */
-    char gid[8];                /* 116 */
-    char size[12];              /* 124 */
-    char mtime[12];             /* 136 */
-    char chksum[8];             /* 148 */
-    char typeflag;              /* 156 */
-    char linkname[100];         /* 157 */
-    char magic[6];              /* 257 */
-    char version[2];            /* 263 */
-    char uname[32];             /* 265 */
-    char gname[32];             /* 297 */
-    char devmajor[8];           /* 329 */
-    char devminor[8];           /* 337 */
-    char prefix[155];           /* 345 */
-                                /* 500 */
-};
-
-/* Descriptor for a single file hole */
-struct sparse
-{                               /* byte offset */
-    /* cppcheck-suppress unusedStructMember */
-    char offset[12];            /*   0 */
-    /* cppcheck-suppress unusedStructMember */
-    char numbytes[12];          /*  12 */
-                                /*  24 */
-};
-
-/* Extension header for sparse files, used immediately after the GNU extra
-   header, and used only if all sparse information cannot fit into that
-   extra header.  There might even be many such extension headers, one after
-   the other, until all sparse information has been recorded.  */
-struct sparse_header
-{                               /* byte offset */
-    struct sparse sp[SPARSES_IN_SPARSE_HEADER];
-                                /*   0 */
-    char isextended;            /* 504 */
-                                /* 505 */
-};
-
-/* The old GNU format header conflicts with POSIX format in such a way that
-   POSIX archives may fool old GNU tar's, and POSIX tar's might well be
-   fooled by old GNU tar archives.  An old GNU format header uses the space
-   used by the prefix field in a POSIX header, and cumulates information
-   normally found in a GNU extra header.  With an old GNU tar header, we
-   never see any POSIX header nor GNU extra header.  Supplementary sparse
-   headers are allowed, however.  */
-struct oldgnu_header
-{                               /* byte offset */
-    char unused_pad1[345];      /*   0 */
-    char atime[12];             /* 345 */
-    char ctime[12];             /* 357 */
-    char offset[12];            /* 369 */
-    char longnames[4];          /* 381 */
-    char unused_pad2;           /* 385 */
-    struct sparse sp[SPARSES_IN_OLDGNU_HEADER];
-                                /* 386 */
-    char isextended;            /* 482 */
-    char realsize[12];          /* 483 */
-                                /* 495 */
-};
-
-/* *INDENT-ON* */
-
-/* tar Header Block, overall structure */
-union block
-{
-    char buffer[BLOCKSIZE];
-    struct posix_header header;
-    struct oldgnu_header oldgnu_header;
-    struct sparse_header sparse_header;
-};
-
-enum archive_format
-{
-    TAR_UNKNOWN = 0,            /* format to be decided later */
-    TAR_V7,                     /* old V7 tar format */
-    TAR_OLDGNU,                 /* GNU format as per before tar 1.12 */
-    TAR_USTAR,                  /* POSIX.1-1988 (ustar) format */
-    TAR_POSIX,                  /* POSIX.1-2001 format */
-    TAR_GNU                     /* Almost same as OLDGNU_FORMAT */
-};
-
 typedef enum
 {
     HEADER_STILL_UNREAD,        /* for when read_header has not been called */
@@ -275,30 +165,6 @@ typedef enum
     HEADER_END_OF_FILE,         /* true end of file while header expected */
     HEADER_FAILURE              /* ill-formed header, or bad checksum */
 } read_header;
-
-struct tar_stat_info
-{
-    char *orig_file_name;       /* name of file read from the archive header */
-#if 0
-    char *file_name;            /* name of file for the current archive entry after being normalized */
-#endif
-    char *link_name;            /* name of link for the current archive entry  */
-#if 0
-    char *uname;                /* user name of owner */
-    char *gname;                /* group name of owner */
-#endif
-    struct stat stat;           /* regular filesystem stat */
-};
-
-typedef struct
-{
-    struct vfs_s_super base;    /* base class */
-
-    int fd;
-    struct stat st;
-    enum archive_format type;   /* Type of the archive */
-    union block *record_start;  /* Start of record of archive */
-} tar_super_t;
 
 /*** file scope variables ************************************************************************/
 
@@ -366,24 +232,6 @@ tar_stat_destroy (struct tar_stat_info *st)
     g_free (st->gname);
 #endif
     memset (st, 0, sizeof (*st));
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-static void
-tar_assign_string (char **string, const char *value)
-{
-    g_free (*string);
-    *string = g_strdup (value);
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-static void
-tar_assign_string_n (char **string, const char *value, size_t n)
-{
-    g_free (*string);
-    *string = g_strndup (value, n);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -737,54 +585,6 @@ tar_flush_archive (tar_super_t * archive)
 /* --------------------------------------------------------------------------------------------- */
 
 /**
- * Return the location of the next available input or output block.
- * Return NULL for EOF.
- */
-static union block *
-tar_find_next_block (tar_super_t * archive)
-{
-    if (current_block == record_end)
-    {
-        if (hit_eof)
-            return NULL;
-
-        if (!tar_flush_archive (archive))
-        {
-            message (D_ERROR, MSG_ERROR, _("Inconsistent tar archive"));
-            return NULL;
-        }
-
-        if (current_block == record_end)
-        {
-            hit_eof = TRUE;
-            return NULL;
-        }
-    }
-
-    return current_block;
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-/**
- * Indicate that we have used all blocks up thru @block.
- */
-static gboolean
-tar_set_next_block_after (union block *block)
-{
-    while (block >= current_block)
-        current_block++;
-
-    /* Do *not* flush the archive here. If we do, the same argument to tar_set_next_block_after()
-       could mean the next block (if the input record is exactly one block long), which is not
-       what is intended.  */
-
-    return !(current_block > record_end);
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-/**
  * Compute and return the block ordinal at current_block.
  */
 static off_t
@@ -973,7 +773,11 @@ tar_get_type (union block *header, tar_super_t * arch, struct tar_stat_info *sta
     {
         if (strcmp (header->header.magic, TMAGIC) == 0)
         {
-            if (header->header.typeflag == XGLTYPE)
+            if (header->star_header.prefix[130] == '\0' && isodigit (header->star_header.atime[0])
+                && header->star_header.atime[11] == ' ' && isodigit (header->star_header.ctime[0])
+                && header->star_header.ctime[11] == ' ')
+                arch->type = TAR_STAR;
+            else if (arch->extended_header != NULL && arch->extended_header->len != 0)
                 arch->type = TAR_POSIX;
             else
                 arch->type = TAR_USTAR;
@@ -1085,6 +889,11 @@ tar_fill_stat (struct vfs_s_super *archive, union block *header, struct tar_stat
         stat_info->stat.st_atime = TIME_FROM_HEADER (header->oldgnu_header.atime);
         stat_info->stat.st_ctime = TIME_FROM_HEADER (header->oldgnu_header.ctime);
     }
+    else if (arch->type == TAR_STAR)
+    {
+        stat_info->stat.st_atime = TIME_FROM_HEADER (header->star_header.atime);
+        stat_info->stat.st_ctime = TIME_FROM_HEADER (header->star_header.ctime);
+    }
 
 #ifdef HAVE_STRUCT_STAT_ST_BLKSIZE
     stat_info->stat.st_blksize = 8 * 1024;      /* FIXME */
@@ -1131,15 +940,6 @@ tar_read_header (struct vfs_class *me, struct vfs_s_super *archive)
         }
 
         tar_fill_stat (archive, header, &current_stat_info);
-
-        /* Skip over pax extended header and global extended header records. */
-        if (header->header.typeflag == XHDTYPE || header->header.typeflag == XGLTYPE)
-        {
-            if (arch->type == TAR_UNKNOWN)
-                arch->type = TAR_POSIX;
-            status = HEADER_SUCCESS;
-            goto ret;
-        }
 
         if (header->header.typeflag == GNUTYPE_LONGNAME
             || header->header.typeflag == GNUTYPE_LONGLINK)
@@ -1206,6 +1006,12 @@ tar_read_header (struct vfs_class *me, struct vfs_s_super *archive)
 
             *bp = '\0';
         }
+        else if (header->header.typeflag == XHDTYPE || header->header.typeflag == XGLTYPE)
+        {
+            if (arch->type == TAR_UNKNOWN)
+                arch->type = TAR_POSIX;
+            xheader_read (arch, header, OFF_FROM_HEADER (header->header.size));
+        }
         else
             break;
     }
@@ -1219,6 +1025,13 @@ tar_read_header (struct vfs_class *me, struct vfs_s_super *archive)
         off_t data_position;
         char *p, *q;
         size_t len;
+
+        if (arch->extended_header != NULL && arch->extended_header->len != 0
+            && !xheader_decode (arch->extended_header, &current_stat_info))
+        {
+            status = HEADER_FAILURE;
+            goto ret;
+        }
 
         g_free (recent_long_name);
 
@@ -1413,6 +1226,8 @@ tar_free_archive (struct vfs_class *me, struct vfs_s_super *archive)
     }
 
     g_free (arch->record_start);
+    if (arch->extended_header != NULL)
+        g_array_free (arch->extended_header, TRUE);
     tar_stat_destroy (&current_stat_info);
 }
 
@@ -1651,6 +1466,71 @@ tar_fh_open (struct vfs_class *me, vfs_file_handler_t * fh, int flags, mode_t mo
 
 /* --------------------------------------------------------------------------------------------- */
 /*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
+
+void
+tar_assign_string (char **string, const char *value)
+{
+    g_free (*string);
+    *string = g_strdup (value);
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+void
+tar_assign_string_n (char **string, const char *value, size_t n)
+{
+    g_free (*string);
+    *string = g_strndup (value, n);
+}
+
+/* --------------------------------------------------------------------------------------------- */
+/**
+ * Return the location of the next available input or output block.
+ * Return NULL for EOF.
+ */
+union block *
+tar_find_next_block (tar_super_t * archive)
+{
+    if (current_block == record_end)
+    {
+        if (hit_eof)
+            return NULL;
+
+        if (!tar_flush_archive (archive))
+        {
+            message (D_ERROR, MSG_ERROR, _("Inconsistent tar archive"));
+            return NULL;
+        }
+
+        if (current_block == record_end)
+        {
+            hit_eof = TRUE;
+            return NULL;
+        }
+    }
+
+    return current_block;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/**
+ * Indicate that we have used all blocks up thru @block.
+ */
+gboolean
+tar_set_next_block_after (union block * block)
+{
+    while (block >= current_block)
+        current_block++;
+
+    /* Do *not* flush the archive here. If we do, the same argument to tar_set_next_block_after()
+       could mean the next block (if the input record is exactly one block long), which is not
+       what is intended.  */
+
+    return !(current_block > record_end);
+}
+
 /* --------------------------------------------------------------------------------------------- */
 
 void
