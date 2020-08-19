@@ -41,6 +41,7 @@
 
 /*** global variables ****************************************************************************/
 
+GArray *main_keymap = NULL;
 GArray *filemanager_keymap = NULL;
 GArray *filemanager_x_keymap = NULL;
 GArray *panel_keymap = NULL;
@@ -95,7 +96,16 @@ typedef struct global_keymap_ini_t
 
 /*** file scope variables ************************************************************************/
 
-/* midnight */
+/* main */
+static const global_keymap_ini_t default_main_keymap[] = {
+    {"Refresh", "ctrl-l"},
+    {"ScreenList", "alt-prime"},
+    {"ScreenNext", "alt-rbrace"},
+    {"ScreenPrev", "alt-lbrace"},
+    {NULL, NULL}
+};
+
+/* file manager */
 static const global_keymap_ini_t default_filemanager_keymap[] = {
     {"ChangePanel", "tab; ctrl-i"},
     {"Help", "f1"},
@@ -647,6 +657,7 @@ create_default_keymap (void)
 
     keymap = mc_config_init (NULL, TRUE);
 
+    create_default_keymap_section (keymap, KEYMAP_SECTION_MAIN, default_main_keymap);
     create_default_keymap_section (keymap, KEYMAP_SECTION_FILEMANAGER, default_filemanager_keymap);
     create_default_keymap_section (keymap, KEYMAP_SECTION_FILEMANAGER_EXT,
                                    default_filemanager_x_keymap);
@@ -895,6 +906,7 @@ keymap_load (gboolean load_from_file)
     km##_keymap = g_array_new (TRUE, FALSE, sizeof (global_keymap_t)); \
     load_keymap_from_section (KEYMAP_SECTION_##s, km##_keymap, mc_global_keymap)
 
+        LOAD_KEYMAP (MAIN, main);
         LOAD_KEYMAP (FILEMANAGER, filemanager);
         LOAD_KEYMAP (FILEMANAGER_EXT, filemanager_x);
         LOAD_KEYMAP (PANEL, panel);
@@ -925,6 +937,7 @@ keymap_load (gboolean load_from_file)
 #define SET_MAP(m) \
     m##_map = (global_keymap_t *) m##_keymap->data
 
+    SET_MAP (main);
     SET_MAP (filemanager);
     SET_MAP (filemanager_x);
     SET_MAP (panel);
@@ -960,6 +973,7 @@ keymap_free (void)
     if (km##_keymap != NULL) \
         g_array_free (km##_keymap, TRUE)
 
+    FREE_KEYMAP (main);
     FREE_KEYMAP (filemanager);
     FREE_KEYMAP (filemanager_x);
     FREE_KEYMAP (panel);
