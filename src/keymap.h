@@ -13,6 +13,7 @@
 
 /*** global variables defined in .c file *********************************************************/
 
+extern GArray *main_keymap;
 extern GArray *filemanager_keymap;
 extern GArray *filemanager_x_keymap;
 extern GArray *panel_keymap;

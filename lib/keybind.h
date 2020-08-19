@@ -9,6 +9,7 @@
 /*** typedefs(not structures) and defined constants **********************************************/
 
 /* keymap sections */
+#define KEYMAP_SECTION_MAIN "main"
 #define KEYMAP_SECTION_FILEMANAGER "filemanager"
 #define KEYMAP_SECTION_FILEMANAGER_EXT "filemanager:xmap"
 #define KEYMAP_SECTION_PANEL "panel"
