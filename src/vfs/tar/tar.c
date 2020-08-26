@@ -807,12 +807,11 @@ tar_fill_stat (struct vfs_s_super *archive, struct stat *st, union block *header
 /* --------------------------------------------------------------------------------------------- */
 
 static read_header
-tar_read_header (struct vfs_class *me, struct vfs_s_super *archive, int tard, size_t * h_size)
+tar_read_header (struct vfs_class *me, struct vfs_s_super *archive, int tard, struct stat *st)
 {
     tar_super_t *arch = TAR_SUPER (archive);
     read_header checksum_status;
     union block *header;
-    struct stat st;
     static char *next_long_name = NULL, *next_long_link = NULL;
 
     while (TRUE)
@@ -826,14 +825,12 @@ tar_read_header (struct vfs_class *me, struct vfs_s_super *archive, int tard, si
             return checksum_status;
 
         if (header->header.typeflag == LNKTYPE || header->header.typeflag == DIRTYPE)
-            *h_size = 0;        /* Links 0 size on tape */
+            st->st_size = 0;    /* Links 0 size on tape */
         else
-            *h_size = OFF_FROM_HEADER (header->header.size);
+            st->st_size = OFF_FROM_HEADER (header->header.size);
 
-        memset (&st, 0, sizeof (st));
-        st.st_size = *h_size;
-        tar_decode_header (header, arch, &st);
-        tar_fill_stat (archive, &st, header);
+        tar_decode_header (header, arch, st);
+        tar_fill_stat (archive, st, header);
 
         /* Skip over pax extended header and global extended header records. */
         if (header->header.typeflag == XHDTYPE || header->header.typeflag == XGLTYPE)
@@ -854,7 +851,7 @@ tar_read_header (struct vfs_class *me, struct vfs_s_super *archive, int tard, si
             if (arch->type == TAR_UNKNOWN)
                 arch->type = TAR_GNU;
 
-            if (*h_size > MC_MAXPATHLEN)
+            if (st->st_size > MC_MAXPATHLEN)
             {
                 message (D_ERROR, MSG_ERROR, _("Inconsistent tar archive"));
                 return HEADER_FAILURE;
@@ -863,9 +860,9 @@ tar_read_header (struct vfs_class *me, struct vfs_s_super *archive, int tard, si
             longp = header->header.typeflag == GNUTYPE_LONGNAME ? &next_long_name : &next_long_link;
 
             g_free (*longp);
-            bp = *longp = g_malloc (*h_size + 1);
+            bp = *longp = g_malloc (st->st_size + 1);
 
-            for (size = *h_size; size > 0; size -= written)
+            for (size = st->st_size; size > 0; size -= written)
             {
                 data = tar_get_next_block (archive, tard)->buffer;
                 if (data == NULL)
@@ -992,14 +989,14 @@ tar_read_header (struct vfs_class *me, struct vfs_s_super *archive, int tard, si
             }
         }
 
-        if (S_ISDIR (st.st_mode))
+        if (S_ISDIR (st->st_mode))
         {
             entry = VFS_SUBCLASS (me)->find_entry (me, parent, p, LINK_NO_FOLLOW, FL_NONE);
             if (entry != NULL)
                 goto done;
         }
 
-        inode = vfs_s_new_inode (me, archive, &st);
+        inode = vfs_s_new_inode (me, archive, st);
         inode->data_offset = data_position;
 
         if (*current_link_name != '\0')
@@ -1145,11 +1142,12 @@ tar_open_archive (struct vfs_s_super *archive, const vfs_path_t * vpath,
 
     while (TRUE)
     {
-        size_t h_size = 0;
+        struct stat st;
         read_header prev_status;
 
         prev_status = status;
-        status = tar_read_header (vpath_element->class, archive, tard, &h_size);
+        memset (&st, 0, sizeof (st));
+        status = tar_read_header (vpath_element->class, archive, tard, &st);
 
         switch (status)
         {
@@ -1159,7 +1157,7 @@ tar_open_archive (struct vfs_s_super *archive, const vfs_path_t * vpath,
             return -1;
 
         case HEADER_SUCCESS:
-            tar_skip_n_records (archive, tard, (h_size + BLOCKSIZE - 1) / BLOCKSIZE);
+            tar_skip_n_records (archive, tard, (st.st_size + BLOCKSIZE - 1) / BLOCKSIZE);
             continue;
 
             /*
