@@ -600,13 +600,11 @@ uintmax_from_header (const char *p, size_t s)
 /* --------------------------------------------------------------------------------------------- */
 
 static union block *
-tar_get_next_block (struct vfs_s_super *archive, int tard)
+tar_get_next_block (tar_super_t * archive)
 {
     int n;
 
-    (void) archive;
-
-    n = mc_read (tard, block_buf.buffer, sizeof (block_buf.buffer));
+    n = mc_read (archive->fd, block_buf.buffer, sizeof (block_buf.buffer));
     if (n != sizeof (block_buf.buffer))
         return NULL;            /* An error has occurred */
     current_tar_position += sizeof (block_buf.buffer);
@@ -616,11 +614,9 @@ tar_get_next_block (struct vfs_s_super *archive, int tard)
 /* --------------------------------------------------------------------------------------------- */
 
 static void
-tar_skip_n_records (struct vfs_s_super *archive, int tard, off_t n)
+tar_skip_n_records (tar_super_t * archive, off_t n)
 {
-    (void) archive;
-
-    mc_lseek (tard, n * sizeof (block_buf.buffer), SEEK_CUR);
+    mc_lseek (archive->fd, n * sizeof (block_buf.buffer), SEEK_CUR);
     current_tar_position += n * sizeof (block_buf.buffer);
 }
 
@@ -807,7 +803,7 @@ tar_fill_stat (struct vfs_s_super *archive, struct stat *st, union block *header
 /* --------------------------------------------------------------------------------------------- */
 
 static read_header
-tar_read_header (struct vfs_class *me, struct vfs_s_super *archive, int tard, struct stat *st)
+tar_read_header (struct vfs_class *me, struct vfs_s_super *archive, struct stat *st)
 {
     tar_super_t *arch = TAR_SUPER (archive);
     read_header checksum_status;
@@ -816,7 +812,7 @@ tar_read_header (struct vfs_class *me, struct vfs_s_super *archive, int tard, st
 
     while (TRUE)
     {
-        header = tar_get_next_block (archive, tard);
+        header = tar_get_next_block (arch);
         if (header == NULL)
             return HEADER_END_OF_FILE;
 
@@ -865,7 +861,7 @@ tar_read_header (struct vfs_class *me, struct vfs_s_super *archive, int tard, st
 
             for (size = st->st_size; size > 0; size -= written)
             {
-                data = tar_get_next_block (archive, tard)->buffer;
+                data = tar_get_next_block (arch)->buffer;
                 if (data == NULL)
                 {
                     MC_PTR_FREE (*longp);
@@ -1014,7 +1010,7 @@ tar_read_header (struct vfs_class *me, struct vfs_s_super *archive, int tard, st
 
         if (arch->type == TAR_GNU && header->oldgnu_header.isextended)
         {
-            while (tar_get_next_block (archive, tard)->sparse_header.isextended != 0)
+            while (tar_get_next_block (arch)->sparse_header.isextended != 0)
                 ;
 
             if (inode != NULL)
@@ -1146,7 +1142,7 @@ tar_open_archive (struct vfs_s_super *archive, const vfs_path_t * vpath,
 
         prev_status = status;
         memset (&st, 0, sizeof (st));
-        status = tar_read_header (vpath_element->class, archive, arch->fd, &st);
+        status = tar_read_header (vpath_element->class, archive, &st);
 
         switch (status)
         {
@@ -1156,7 +1152,7 @@ tar_open_archive (struct vfs_s_super *archive, const vfs_path_t * vpath,
             return -1;
 
         case HEADER_SUCCESS:
-            tar_skip_n_records (archive, arch->fd, (st.st_size + BLOCKSIZE - 1) / BLOCKSIZE);
+            tar_skip_n_records (arch, (st.st_size + BLOCKSIZE - 1) / BLOCKSIZE);
             continue;
 
             /*
