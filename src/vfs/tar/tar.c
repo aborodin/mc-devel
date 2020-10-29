@@ -674,7 +674,7 @@ tar_checksum (const union block *header)
 /* --------------------------------------------------------------------------------------------- */
 
 static void
-tar_decode_header (union block *header, tar_super_t * arch, struct stat *st)
+tar_get_type (union block *header, tar_super_t * arch, struct stat *st)
 {
     gboolean hbits = FALSE;
 
@@ -824,12 +824,13 @@ tar_read_header (struct vfs_class *me, struct vfs_s_super *archive, int tard, st
         if (checksum_status != HEADER_SUCCESS)
             return checksum_status;
 
+        tar_get_type (header, arch, st);
+
         if (header->header.typeflag == LNKTYPE || header->header.typeflag == DIRTYPE)
             st->st_size = 0;    /* Links 0 size on tape */
         else
             st->st_size = OFF_FROM_HEADER (header->header.size);
 
-        tar_decode_header (header, arch, st);
         tar_fill_stat (archive, st, header);
 
         /* Skip over pax extended header and global extended header records. */
