@@ -276,6 +276,20 @@ typedef enum
     HEADER_FAILURE              /* ill-formed header, or bad checksum */
 } read_header;
 
+struct tar_stat_info
+{
+    char *orig_file_name;       /* name of file read from the archive header */
+#if 0
+    char *file_name;            /* name of file for the current archive entry after being normalized */
+#endif
+    char *link_name;            /* name of link for the current archive entry  */
+#if 0
+    char *uname;                /* user name of owner */
+    char *gname;                /* group name of owner */
+#endif
+    struct stat stat;           /* regular filesystem stat */
+};
+
 typedef struct
 {
     struct vfs_s_super base;    /* base class */
@@ -321,6 +335,8 @@ static off_t record_start_block;        /* block ordinal at record_start */
 /* Have we hit EOF yet?  */
 static gboolean hit_eof;
 
+static struct tar_stat_info current_stat_info;
+
 /* --------------------------------------------------------------------------------------------- */
 /*** file scope functions ************************************************************************/
 /* --------------------------------------------------------------------------------------------- */
@@ -333,6 +349,23 @@ tar_base64_init (void)
     memset (base64_map, 64, sizeof base64_map);
     for (i = 0; i < 64; i++)
         base64_map[(int) base_64_digits[i]] = i;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+static void
+tar_stat_destroy (struct tar_stat_info *st)
+{
+    g_free (st->orig_file_name);
+#if 0
+    g_free (st->file_name);
+#endif
+    g_free (st->link_name);
+#if 0
+    g_free (st->uname);
+    g_free (st->gname);
+#endif
+    memset (st, 0, sizeof (*st));
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -909,11 +942,11 @@ tar_checksum (const union block *header)
 /* --------------------------------------------------------------------------------------------- */
 
 static void
-tar_get_type (union block *header, tar_super_t * arch, struct stat *st)
+tar_get_type (union block *header, tar_super_t * arch, struct tar_stat_info *stat_info)
 {
     gboolean hbits = FALSE;
 
-    st->st_mode = MODE_FROM_HEADER (header->header.mode, &hbits);
+    stat_info->stat.st_mode = MODE_FROM_HEADER (header->header.mode, &hbits);
 
     /*
      * Try to determine the archive format.
@@ -958,31 +991,31 @@ tar_get_type (union block *header, tar_super_t * arch, struct stat *st)
 /* --------------------------------------------------------------------------------------------- */
 
 static void
-tar_fill_stat (struct vfs_s_super *archive, struct stat *st, union block *header)
+tar_fill_stat (struct vfs_s_super *archive, union block *header, struct tar_stat_info *stat_info)
 {
     tar_super_t *arch = TAR_SUPER (archive);
 
-    /* Adjust st->st_mode because there are tar-files with
+    /* Adjust stat_info->stat.st_mode because there are tar-files with
      * typeflag==SYMTYPE and S_ISLNK(mod)==0. I don't
      * know about the other modes but I think I cause no new
      * problem when I adjust them, too. -- Norbert.
      */
     if (header->header.typeflag == DIRTYPE || header->header.typeflag == GNUTYPE_DUMPDIR)
-        st->st_mode |= S_IFDIR;
+        stat_info->stat.st_mode |= S_IFDIR;
     else if (header->header.typeflag == SYMTYPE)
-        st->st_mode |= S_IFLNK;
+        stat_info->stat.st_mode |= S_IFLNK;
     else if (header->header.typeflag == CHRTYPE)
-        st->st_mode |= S_IFCHR;
+        stat_info->stat.st_mode |= S_IFCHR;
     else if (header->header.typeflag == BLKTYPE)
-        st->st_mode |= S_IFBLK;
+        stat_info->stat.st_mode |= S_IFBLK;
     else if (header->header.typeflag == FIFOTYPE)
-        st->st_mode |= S_IFIFO;
+        stat_info->stat.st_mode |= S_IFIFO;
     else
-        st->st_mode |= S_IFREG;
+        stat_info->stat.st_mode |= S_IFREG;
 
-    st->st_dev = 0;
+    stat_info->stat.st_dev = 0;
 #ifdef HAVE_STRUCT_STAT_ST_RDEV
-    st->st_rdev = 0;
+    stat_info->stat.st_rdev = 0;
 #endif
 
     switch (arch->type)
@@ -992,10 +1025,10 @@ tar_fill_stat (struct vfs_s_super *archive, struct stat *st, union block *header
     case TAR_GNU:
     case TAR_OLDGNU:
         /* *INDENT-OFF* */
-        st->st_uid = *header->header.uname != '\0'
+        stat_info->stat.st_uid = *header->header.uname != '\0'
             ? (uid_t) vfs_finduid (header->header.uname)
             : UID_FROM_HEADER (header->header.uid);
-        st->st_gid = *header->header.gname != '\0'
+        stat_info->stat.st_gid = *header->header.gname != '\0'
             ? (gid_t) vfs_findgid (header->header.gname)
             : GID_FROM_HEADER (header->header.gid);
         /* *INDENT-ON* */
@@ -1005,7 +1038,7 @@ tar_fill_stat (struct vfs_s_super *archive, struct stat *st, union block *header
         case BLKTYPE:
         case CHRTYPE:
 #ifdef HAVE_STRUCT_STAT_ST_RDEV
-            st->st_rdev =
+            stat_info->stat.st_rdev =
                 makedev (MAJOR_FROM_HEADER (header->header.devmajor),
                          MINOR_FROM_HEADER (header->header.devminor));
 #endif
@@ -1016,33 +1049,35 @@ tar_fill_stat (struct vfs_s_super *archive, struct stat *st, union block *header
         break;
 
     default:
-        st->st_uid = UID_FROM_HEADER (header->header.uid);
-        st->st_gid = GID_FROM_HEADER (header->header.gid);
+        stat_info->stat.st_uid = UID_FROM_HEADER (header->header.uid);
+        stat_info->stat.st_gid = GID_FROM_HEADER (header->header.gid);
         break;
     }
 
 #ifdef HAVE_STRUCT_STAT_ST_MTIM
-    st->st_atim.tv_nsec = st->st_mtim.tv_nsec = st->st_ctim.tv_nsec = 0;
+    stat_info->stat.st_atim.tv_nsec = 0;
+    stat_info->stat.st_mtim.tv_nsec = 0;
+    stat_info->stat.st_ctim.tv_nsec = 0;
 #endif
-    st->st_mtime = TIME_FROM_HEADER (header->header.mtime);
-    st->st_atime = 0;
-    st->st_ctime = 0;
+    stat_info->stat.st_mtime = TIME_FROM_HEADER (header->header.mtime);
+    stat_info->stat.st_atime = 0;
+    stat_info->stat.st_ctime = 0;
     if (arch->type == TAR_GNU || arch->type == TAR_OLDGNU)
     {
-        st->st_atime = TIME_FROM_HEADER (header->oldgnu_header.atime);
-        st->st_ctime = TIME_FROM_HEADER (header->oldgnu_header.ctime);
+        stat_info->stat.st_atime = TIME_FROM_HEADER (header->oldgnu_header.atime);
+        stat_info->stat.st_ctime = TIME_FROM_HEADER (header->oldgnu_header.ctime);
     }
 
 #ifdef HAVE_STRUCT_STAT_ST_BLKSIZE
-    st->st_blksize = 8 * 1024;  /* FIXME */
+    stat_info->stat.st_blksize = 8 * 1024;      /* FIXME */
 #endif
-    vfs_adjust_stat (st);
+    vfs_adjust_stat (&stat_info->stat);
 }
 
 /* --------------------------------------------------------------------------------------------- */
 
 static read_header
-tar_read_header (struct vfs_class *me, struct vfs_s_super *archive, struct stat *st)
+tar_read_header (struct vfs_class *me, struct vfs_s_super *archive)
 {
     tar_super_t *arch = TAR_SUPER (archive);
     union block *header;
@@ -1063,21 +1098,21 @@ tar_read_header (struct vfs_class *me, struct vfs_s_super *archive, struct stat 
         if (status != HEADER_SUCCESS)
             goto ret;
 
-        tar_get_type (header, arch, st);
+        tar_get_type (header, arch, &current_stat_info);
 
         if (header->header.typeflag == LNKTYPE || header->header.typeflag == DIRTYPE)
-            st->st_size = 0;    /* Links 0 size on tape */
+            current_stat_info.stat.st_size = 0; /* Links 0 size on tape */
         else
         {
-            st->st_size = OFF_FROM_HEADER (header->header.size);
-            if (st->st_size < 0)
+            current_stat_info.stat.st_size = OFF_FROM_HEADER (header->header.size);
+            if (current_stat_info.stat.st_size < 0)
             {
                 status = HEADER_FAILURE;
                 goto ret;
             }
         }
 
-        tar_fill_stat (archive, st, header);
+        tar_fill_stat (archive, header, &current_stat_info);
 
         /* Skip over pax extended header and global extended header records. */
         if (header->header.typeflag == XHDTYPE || header->header.typeflag == XGLTYPE)
@@ -1091,7 +1126,7 @@ tar_read_header (struct vfs_class *me, struct vfs_s_super *archive, struct stat 
         if (header->header.typeflag == GNUTYPE_LONGNAME
             || header->header.typeflag == GNUTYPE_LONGLINK)
         {
-            size_t name_size = st->st_size;
+            size_t name_size = current_stat_info.stat.st_size;
             size_t n;
             off_t size;
             union block *header_copy;
@@ -1105,7 +1140,7 @@ tar_read_header (struct vfs_class *me, struct vfs_s_super *archive, struct stat 
             size = name_size + BLOCKSIZE;
             if (n != 0)
                 size += BLOCKSIZE - n;
-            if ((off_t) name_size != st->st_size || size < (off_t) name_size)
+            if ((off_t) name_size != current_stat_info.stat.st_size || size < (off_t) name_size)
             {
                 message (D_ERROR, MSG_ERROR, _("Inconsistent tar archive"));
                 status = HEADER_FAILURE;
@@ -1198,6 +1233,8 @@ tar_read_header (struct vfs_class *me, struct vfs_s_super *archive, struct stat 
             recent_long_name = NULL;
         }
 
+        current_stat_info.orig_file_name = g_strdup (file_name);
+
         g_free (recent_long_link);
 
         if (next_long_link != NULL)
@@ -1211,11 +1248,16 @@ tar_read_header (struct vfs_class *me, struct vfs_s_super *archive, struct stat 
             recent_long_link = NULL;
         }
 
+        current_stat_info.link_name = g_strdup (link_name);
+
         canonicalize_pathname (file_name);
         len = strlen (file_name);
 
         tar_set_next_block_after (current_block);
         data_position = BLOCKSIZE * tar_current_block_ordinal (arch);
+#if 0
+        current_stat_info.file_name = g_strndup (file_name, len);
+#endif
 
         p = strrchr (file_name, PATH_SEP);
         if (p == NULL)
@@ -1255,14 +1297,14 @@ tar_read_header (struct vfs_class *me, struct vfs_s_super *archive, struct stat 
         }
         else
         {
-            if (S_ISDIR (st->st_mode))
+            if (S_ISDIR (current_stat_info.stat.st_mode))
             {
                 entry = VFS_SUBCLASS (me)->find_entry (me, parent, p, LINK_NO_FOLLOW, FL_NONE);
                 if (entry != NULL)
                     goto done;
             }
 
-            inode = vfs_s_new_inode (me, archive, st);
+            inode = vfs_s_new_inode (me, archive, &current_stat_info.stat);
             inode->data_offset = data_position;
 
             if (link_name != NULL && *link_name != '\0')
@@ -1353,6 +1395,7 @@ tar_free_archive (struct vfs_class *me, struct vfs_s_super *archive)
     }
 
     g_free (arch->record_start);
+    tar_stat_destroy (&current_stat_info);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -1437,18 +1480,18 @@ tar_open_archive (struct vfs_s_super *archive, const vfs_path_t * vpath,
     /* Initial status at start of archive */
     read_header status = HEADER_STILL_UNREAD;
 
+    tar_stat_destroy (&current_stat_info);
+
     /* Open for reading */
     if (!tar_open_archive_int (vpath_element->class, vpath, archive))
         return -1;
 
     while (TRUE)
     {
-        struct stat st;
         read_header prev_status;
 
         prev_status = status;
-        memset (&st, 0, sizeof (st));
-        status = tar_read_header (vpath_element->class, archive, &st);
+        status = tar_read_header (vpath_element->class, archive);
 
         switch (status)
         {
@@ -1458,7 +1501,7 @@ tar_open_archive (struct vfs_s_super *archive, const vfs_path_t * vpath,
             return -1;
 
         case HEADER_SUCCESS:
-            if (!tar_skip_member (arch, &st))
+            if (!tar_skip_member (arch, &current_stat_info.stat))
             {
                 message (D_ERROR, MSG_ERROR, "%s", _("Unexpected EOF in tar archive"));
                 return -1;
@@ -1608,6 +1651,7 @@ vfs_init_tarfs (void)
     vfs_register_class (vfs_tarfs_ops);
 
     tar_base64_init ();
+    memset (&current_stat_info, 0, sizeof (current_stat_info));
 }
 
 /* --------------------------------------------------------------------------------------------- */
