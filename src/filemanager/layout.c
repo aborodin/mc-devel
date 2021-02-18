@@ -888,8 +888,8 @@ setup_panels (void)
     else
     {
         /* make invisible */
-        widget_set_size (WIDGET (cmdline), 0, 0, 0, 0);
-        widget_set_size (WIDGET (the_prompt), mw->lines, mw->cols, 0, 0);
+        widget_hide (WIDGET (cmdline));
+        widget_hide (WIDGET (the_prompt));
     }
 
     widget_set_size (WIDGET (the_bar), mw->lines - 1, mw->x, 1, mw->cols);
@@ -992,11 +992,16 @@ setup_cmdline (void)
     }
 #endif
 
-    y = mw->lines - 1 - (mc_global.keybar_visible ? 1 : 0);
+    y = mw->lines - 1;
+    if (widget_get_state (WIDGET (the_bar), WST_VISIBLE))
+        y--;
 
     widget_set_size (WIDGET (the_prompt), y, mw->x, 1, prompt_width);
     label_set_text (the_prompt, mc_prompt);
     widget_set_size (WIDGET (cmdline), y, mw->x + prompt_width, 1, mw->cols - prompt_width);
+
+    widget_show (WIDGET (the_prompt));
+    widget_show (WIDGET (cmdline));
 }
 
 /* --------------------------------------------------------------------------------------------- */
