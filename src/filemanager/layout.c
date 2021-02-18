@@ -1010,7 +1010,9 @@ setup_cmdline (void)
     }
 #endif
 
-    y = mw->lines - 1 - (mc_global.keybar_visible ? 1 : 0);
+    y = mw->lines - 1;
+    if (widget_get_state (WIDGET (the_bar), WST_VISIBLE))
+        y--;
 
     widget_set_size (WIDGET (the_prompt), y, mw->x, 1, prompt_width);
     label_set_text (the_prompt, mc_prompt);
