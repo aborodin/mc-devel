@@ -773,14 +773,36 @@ listbox_is_empty (const WListbox * l)
  *
  * @param l WListbox object
  * @param list list of WLEntry objects
+ * @param free_old_list if TRUE, free the current list before set new one.
+ *
+ * @return old list if @free_old_list is FALSE, NULL otherwise
  */
-void
-listbox_set_list (WListbox * l, GQueue * list)
+GQueue *
+listbox_set_list (WListbox * l, GQueue * list, gboolean free_old_list)
 {
-    listbox_remove_list (l);
+    GQueue *old_list = NULL;
 
     if (l != NULL)
+    {
+        if (free_old_list)
+            listbox_free_list (l->list);
+        else
+            old_list = l->list;
+
         l->list = list;
+        l->pos = l->top = 0;
+    }
+
+    return old_list;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+void
+listbox_free_list (GQueue * list)
+{
+    if (list != NULL)
+        g_queue_free_full (list, (GDestroyNotify) listbox_entry_free);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -790,12 +812,8 @@ listbox_remove_list (WListbox * l)
 {
     if (l != NULL)
     {
-        if (l->list != NULL)
-        {
-            g_queue_free_full (l->list, (GDestroyNotify) listbox_entry_free);
-            l->list = NULL;
-        }
-
+        listbox_free_list (l->list);
+        l->list = NULL;
         l->pos = l->top = 0;
     }
 }
