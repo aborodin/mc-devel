@@ -34,6 +34,7 @@ typedef struct WGroup WGroup;
 #include "lib/widget/radio.h"
 #include "lib/widget/input.h"
 #include "lib/widget/listbox-window.h"
+#include "lib/widget/grepping-listbox.h"
 #include "lib/widget/quick.h"
 #include "lib/widget/wtools.h"
 #include "lib/widget/dialog-switch.h"

@@ -198,6 +198,10 @@ View = f3
 Edit = f4
 Enter = enter
 
+[grepping-listbox]
+Filter = ctrl-f
+Search = ctrl-s
+
 [radio]
 Up = up; ctrl-p
 Down = down; ctrl-n

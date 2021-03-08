@@ -33,8 +33,8 @@
 #include "lib/keybind.h"
 #include "lib/mcconfig.h"       /* mc_config_t */
 #include "lib/util.h"
-#include "lib/widget.h"         /* dialog_map, input_map, listbox_map, menu_map, radio_map */
-
+#include "lib/widget.h"         /* dialog_map, input_map, listbox_map, grepping_listbox_map,
+                                   menu_map, radio_map */
 #include "args.h"               /* mc_args__keymap_file */
 
 #include "keymap.h"
@@ -48,6 +48,7 @@ GArray *dialog_keymap = NULL;
 GArray *menu_keymap = NULL;
 GArray *input_keymap = NULL;
 GArray *listbox_keymap = NULL;
+GArray *grepping_listbox_keymap = NULL;
 GArray *radio_keymap = NULL;
 GArray *tree_keymap = NULL;
 GArray *help_keymap = NULL;
@@ -305,6 +306,13 @@ static const global_keymap_ini_t default_listbox_keymap[] = {
     {"View", "f3"},
     {"Edit", "f4"},
     {"Enter", "enter"},
+    {NULL, NULL}
+};
+
+/* grepping listbox */
+static const global_keymap_ini_t default_grepping_listbox_keymap[] = {
+    {"Filter", "ctrl-f"},
+    {"Search", "ctrl-s"},
     {NULL, NULL}
 };
 
@@ -655,6 +663,8 @@ create_default_keymap (void)
     create_default_keymap_section (keymap, KEYMAP_SECTION_MENU, default_menu_keymap);
     create_default_keymap_section (keymap, KEYMAP_SECTION_INPUT, default_input_keymap);
     create_default_keymap_section (keymap, KEYMAP_SECTION_LISTBOX, default_listbox_keymap);
+    create_default_keymap_section (keymap, KEYMAP_SECTION_GREPPING_LISTBOX,
+                                   default_grepping_listbox_keymap);
     create_default_keymap_section (keymap, KEYMAP_SECTION_RADIO, default_radio_keymap);
     create_default_keymap_section (keymap, KEYMAP_SECTION_TREE, default_tree_keymap);
     create_default_keymap_section (keymap, KEYMAP_SECTION_HELP, default_help_keymap);
@@ -902,6 +912,7 @@ keymap_load (gboolean load_from_file)
         LOAD_KEYMAP (MENU, menu);
         LOAD_KEYMAP (INPUT, input);
         LOAD_KEYMAP (LISTBOX, listbox);
+        LOAD_KEYMAP (GREPPING_LISTBOX, grepping_listbox);
         LOAD_KEYMAP (RADIO, radio);
         LOAD_KEYMAP (TREE, tree);
         LOAD_KEYMAP (HELP, help);
@@ -932,6 +943,7 @@ keymap_load (gboolean load_from_file)
     SET_MAP (menu);
     SET_MAP (input);
     SET_MAP (listbox);
+    SET_MAP (grepping_listbox);
     SET_MAP (radio);
     SET_MAP (tree);
     SET_MAP (help);
@@ -966,6 +978,7 @@ keymap_free (void)
     FREE_KEYMAP (dialog);
     FREE_KEYMAP (menu);
     FREE_KEYMAP (input);
+    FREE_KEYMAP (grepping_listbox);
     FREE_KEYMAP (listbox);
     FREE_KEYMAP (radio);
     FREE_KEYMAP (tree);

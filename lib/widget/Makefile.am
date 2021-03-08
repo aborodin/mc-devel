@@ -10,6 +10,7 @@ libmcwidget_la_SOURCES = \
 	dialog-switch.c dialog-switch.h \
 	frame.c frame.h \
 	gauge.c gauge.h \
+	grepping-listbox.c grepping-listbox.h \
 	group.c group.h \
 	groupbox.c groupbox.h \
 	hline.c hline.h \

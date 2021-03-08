@@ -16,6 +16,7 @@
 #define KEYMAP_SECTION_MENU "menu"
 #define KEYMAP_SECTION_INPUT "input"
 #define KEYMAP_SECTION_LISTBOX "listbox"
+#define KEYMAP_SECTION_GREPPING_LISTBOX "grepping-listbox"
 #define KEYMAP_SECTION_RADIO "radio"
 #define KEYMAP_SECTION_TREE "tree"
 #define KEYMAP_SECTION_HELP "help"
@@ -125,6 +126,7 @@ enum
     CK_MarkToEnd,
     CK_ToggleNavigation,
     CK_Sort,
+    CK_Filter,
     CK_Options,
     CK_LearnKeys,
     CK_Bookmark,
@@ -153,7 +155,6 @@ enum
     CK_EditFileHighlightFile,
     CK_LinkSymbolicEdit,
     CK_ExternalPanelize,
-    CK_Filter,
     CK_ConnectFish,
     CK_ConnectFtp,
     CK_ConnectSftp,
