@@ -72,7 +72,8 @@ WLEntry *listbox_get_nth_item (const WListbox * l, int pos);
 GList *listbox_get_first_link (const WListbox * l);
 void listbox_remove_current (WListbox * l);
 gboolean listbox_is_empty (const WListbox * l);
-void listbox_set_list (WListbox * l, GQueue * list);
+GQueue *listbox_set_list (WListbox * l, GQueue * list, gboolean free_old_list);
+void listbox_free_list (GQueue * list);
 void listbox_remove_list (WListbox * l);
 char *listbox_add_item (WListbox * l, listbox_append_t pos, int hotkey, const char *text,
                         void *data, gboolean free_data);
