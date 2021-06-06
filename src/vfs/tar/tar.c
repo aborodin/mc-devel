@@ -370,6 +370,24 @@ tar_stat_destroy (struct tar_stat_info *st)
 
 /* --------------------------------------------------------------------------------------------- */
 
+static void
+tar_assign_string (char **string, const char *value)
+{
+    g_free (*string);
+    *string = g_strdup (value);
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+static void
+tar_assign_string_n (char **string, const char *value, size_t n)
+{
+    g_free (*string);
+    *string = g_strndup (value, n);
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Represent @n using a signed integer I such that (uintmax_t) I == @n.
    With a good optimizing compiler, this is equivalent to (intmax_t) i
@@ -1233,22 +1251,20 @@ tar_read_header (struct vfs_class *me, struct vfs_s_super *archive)
             recent_long_name = NULL;
         }
 
-        current_stat_info.orig_file_name = g_strdup (file_name);
+        tar_assign_string (&current_stat_info.orig_file_name, file_name);
 
         g_free (recent_long_link);
 
         if (next_long_link != NULL)
         {
-            link_name = g_strdup (next_long_link->buffer + BLOCKSIZE);
+            tar_assign_string (&current_stat_info.link_name, next_long_link->buffer + BLOCKSIZE);
             recent_long_link = next_long_link;
         }
         else
         {
-            link_name = g_strndup (h->linkname, sizeof (h->linkname));
+            tar_assign_string_n (&current_stat_info.link_name, h->linkname, sizeof (h->linkname));
             recent_long_link = NULL;
         }
-
-        current_stat_info.link_name = g_strdup (link_name);
 
         canonicalize_pathname (file_name);
         len = strlen (file_name);
@@ -1256,7 +1272,7 @@ tar_read_header (struct vfs_class *me, struct vfs_s_super *archive)
         tar_set_next_block_after (current_block);
         data_position = BLOCKSIZE * tar_current_block_ordinal (arch);
 #if 0
-        current_stat_info.file_name = g_strndup (file_name, len);
+        tar_assign_string_n (&current_stat_info.file_name, file_name, len);
 #endif
 
         p = strrchr (file_name, PATH_SEP);
@@ -1276,10 +1292,11 @@ tar_read_header (struct vfs_class *me, struct vfs_s_super *archive)
         {
             message (D_ERROR, MSG_ERROR, _("Inconsistent tar archive"));
             g_free (file_name);
-            g_free (link_name);
             status = HEADER_FAILURE;
             goto ret;
         }
+
+        link_name = g_strdup (current_stat_info.link_name);
 
         if (header->header.typeflag == LNKTYPE)
         {
@@ -1290,6 +1307,7 @@ tar_read_header (struct vfs_class *me, struct vfs_s_super *archive)
             inode = vfs_s_find_inode (me, archive, link_name, LINK_NO_FOLLOW, FL_NONE);
             if (inode == NULL)
             {
+                g_free (link_name);
                 message (D_ERROR, MSG_ERROR, _("Inconsistent tar archive"));
                 status = HEADER_FAILURE;
                 goto ret;
