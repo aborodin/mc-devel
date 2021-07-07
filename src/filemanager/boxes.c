@@ -167,7 +167,7 @@ skin_apply (const gchar * skin_override)
         command_set_default_colors ();
     panel_deinit ();
     panel_init ();
-    repaint_screen ();
+    widget_draw (midnight);
 
     mc_error_message (&mcerror, NULL);
 }
@@ -294,7 +294,7 @@ appearance_box_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm
         if (sender != NULL && sender->id == shadows_id)
         {
             mc_global.tty.shadows = CHECK (sender)->state;
-            repaint_screen ();
+            widget_draw (midnight);
             return MSG_HANDLED;
         }
         return MSG_NOT_HANDLED;
@@ -1052,7 +1052,7 @@ display_bits_box (void)
 #endif
             use_8th_bit_as_meta = !new_meta;
 
-            repaint_screen ();
+            widget_draw (midnight);
         }
     }
 }

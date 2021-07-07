@@ -785,7 +785,7 @@ void
 edit_refresh_cmd (void)
 {
     tty_clear_screen ();
-    repaint_screen ();
+    widget_draw (midnight);
     tty_keypad (TRUE);
 }
 

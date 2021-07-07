@@ -836,7 +836,7 @@ real_warn_same_file (enum OperationMode mode, const char *fmt, const char *a, co
     msg = g_strdup_printf (fmt, a, b);
     result = query_dialog (head_msg, msg, D_ERROR, 2, _("&Skip"), _("&Abort"));
     g_free (msg);
-    do_refresh ();
+    widget_draw (midnight);
 
     return (result == 1) ? FILE_ABORT : FILE_SKIP;
 }
@@ -915,17 +915,17 @@ real_do_file_error (enum OperationMode mode, gboolean allow_retry, const char *e
     switch (result)
     {
     case 0:
-        do_refresh ();
+        widget_draw (midnight);
         return FILE_SKIP;
 
     case 1:
-        do_refresh ();
+        widget_draw (midnight);
         return FILE_SKIPALL;
 
     case 2:
         if (allow_retry)
         {
-            do_refresh ();
+            widget_draw (midnight);
             return FILE_RETRY;
         }
         MC_FALLTHROUGH;
@@ -960,7 +960,7 @@ real_query_recursive (file_op_context_t * ctx, enum OperationMode mode, const ch
         g_free (text);
 
         if (ctx->recursive_result != RECURSIVE_ABORT)
-            do_refresh ();
+            widget_draw (midnight);
     }
 
     switch (ctx->recursive_result)
@@ -1204,7 +1204,7 @@ move_file_file (const WPanel * panel, file_op_total_context_t * tctx, file_op_co
         goto ret;
     }
 
-    mc_refresh ();
+    program_refresh (midnight);
 
     while (mc_lstat (src_vpath, &src_stat) != 0)
     {
@@ -1230,7 +1230,7 @@ move_file_file (const WPanel * panel, file_op_total_context_t * tctx, file_op_co
         if (S_ISDIR (dst_stat.st_mode))
         {
             message (D_ERROR, MSG_ERROR, _("Cannot overwrite directory \"%s\""), d);
-            do_refresh ();
+            widget_draw (midnight);
             return_status = FILE_SKIP;
             goto ret;
         }
@@ -1328,7 +1328,7 @@ move_file_file (const WPanel * panel, file_op_total_context_t * tctx, file_op_co
             goto ret;
     }
 
-    mc_refresh ();
+    program_refresh (midnight);
 
   retry_src_remove:
     if (!try_remove_file (ctx, src_vpath, &return_status) && panel == NULL)
@@ -1363,7 +1363,7 @@ erase_file (file_op_total_context_t * tctx, file_op_context_t * ctx, const vfs_p
         if (check_progress_buttons (ctx) == FILE_ABORT)
             return FILE_ABORT;
 
-        mc_refresh ();
+        program_refresh (midnight);
     }
 
     if (tctx->progress_count != 0 && mc_lstat (vpath, &buf) != 0)
@@ -1453,7 +1453,7 @@ recursive_erase (file_op_total_context_t * tctx, file_op_context_t * ctx, const 
     if (check_progress_buttons (ctx) == FILE_ABORT)
         return FILE_ABORT;
 
-    mc_refresh ();
+    program_refresh (midnight);
 
     return try_erase_dir (ctx, s);
 }
@@ -1496,7 +1496,7 @@ erase_dir_iff_empty (file_op_context_t * ctx, const vfs_path_t * vpath, size_t c
     if (check_progress_buttons (ctx) == FILE_ABORT)
         return FILE_ABORT;
 
-    mc_refresh ();
+    program_refresh (midnight);
 
     if (check_dir_is_empty (vpath) != 1)
         return FILE_CONT;
@@ -1575,7 +1575,7 @@ do_move_dir_dir (const WPanel * panel, file_op_total_context_t * tctx, file_op_c
         goto ret_fast;
     }
 
-    mc_refresh ();
+    program_refresh (midnight);
 
     mc_stat (src_vpath, &src_stat);
 
@@ -1690,7 +1690,7 @@ do_move_dir_dir (const WPanel * panel, file_op_total_context_t * tctx, file_op_c
             goto ret;
     }
 
-    mc_refresh ();
+    program_refresh (midnight);
 
     erase_dir_after_copy (tctx, ctx, src_vpath, &return_status);
 
@@ -2234,7 +2234,7 @@ copy_file_file (file_op_total_context_t * tctx, file_op_context_t * ctx,
         goto ret_fast;
     }
 
-    mc_refresh ();
+    program_refresh (midnight);
 
     while (mc_stat (dst_vpath, &dst_stat) == 0)
     {
@@ -2522,7 +2522,7 @@ copy_file_file (file_op_total_context_t * tctx, file_op_context_t * ctx,
     else
         file_progress_show (ctx, 1, 1, "", TRUE);
     return_status = check_progress_buttons (ctx);
-    mc_refresh ();
+    program_refresh (midnight);
 
     if (return_status == FILE_CONT)
     {
@@ -2635,13 +2635,13 @@ copy_file_file (file_op_total_context_t * tctx, file_op_context_t * ctx,
 
             file_progress_show (ctx, n_read_total + ctx->do_reget, file_size, stalled_msg,
                                 force_update);
-            mc_refresh ();
+            program_refresh (midnight);
 
             return_status = check_progress_buttons (ctx);
 
             if (return_status != FILE_CONT)
             {
-                mc_refresh ();
+                program_refresh (midnight);
                 goto ret;
             }
         }
@@ -3047,7 +3047,7 @@ erase_dir (file_op_total_context_t * tctx, file_op_context_t * ctx, const vfs_pa
     if (check_progress_buttons (ctx) == FILE_ABORT)
         return FILE_ABORT;
 
-    mc_refresh ();
+    program_refresh (midnight);
 
     /* The old way to detect a non empty directory was:
        error = my_rmdir (s);
@@ -3396,7 +3396,7 @@ panel_operate (void *source_panel, FileOperation operation, gboolean force_singl
                 if (check_progress_buttons (ctx) == FILE_ABORT)
                     break;
 
-                mc_refresh ();
+                program_refresh (midnight);
             }                   /* Loop for every file */
         }
     }                           /* Many entries */

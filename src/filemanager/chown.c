@@ -278,7 +278,7 @@ chown_done (gboolean need_update)
 {
     if (need_update)
         update_panels (UP_OPTIMIZE, UP_KEEPSEL);
-    repaint_screen ();
+    widget_draw (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -412,7 +412,7 @@ chown_cmd (WPanel * panel)
         uid_t new_user = (uid_t) (-1);
         gid_t new_group = (gid_t) (-1);
 
-        do_refresh ();
+        widget_draw (midnight);
 
         need_update = FALSE;
         end_chown = FALSE;

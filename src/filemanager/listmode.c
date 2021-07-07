@@ -195,7 +195,7 @@ init_listmode (char *oldlistformat)
         {B_MINUS, NARROW_BUTTON, UY + 13, UX + 34, "&-", bminus_cback},
     };
 
-    do_refresh ();
+    widget_draw (midnight);
 
     listmode_dlg =
         dlg_create (TRUE, 0, 0, 22, 74, WPOS_CENTER, FALSE, dialog_colors, NULL, NULL,
@@ -276,7 +276,7 @@ listmode_done (WDialog * h)
     widget_destroy (WIDGET (h));
     if (0)
         update_panels (UP_OPTIMIZE, UP_KEEPSEL);
-    repaint_screen ();
+    widget_draw (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */

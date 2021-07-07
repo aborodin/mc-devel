@@ -12,7 +12,10 @@
 
 /*** global variables defined in .c file *********************************************************/
 
-extern WDialog *filemanager;
+/* main object */
+extern WProgram *midnight;
+/* file manager wich is single in midnight->widgets */
+extern WScreen *filemanager;
 
 /*** declarations of public functions ************************************************************/
 
@@ -25,12 +28,7 @@ void dialog_switch_prev (void);
 void dialog_switch_list (void);
 
 int dialog_switch_process_pending (void);
-void dialog_switch_got_winch (void);
 void dialog_switch_shutdown (void);
-
-void repaint_screen (void);
-void mc_refresh (void);
-void dialog_change_screen_size (void);
 
 /*** inline functions ****************************************************************************/
 

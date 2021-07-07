@@ -154,7 +154,7 @@ init_panelize (void)
 
     last_listitem = 0;
 
-    do_refresh ();
+    widget_draw (midnight);
 
     i = G_N_ELEMENTS (panelize_but);
     blen = i - 1;               /* gaps between buttons */
@@ -218,7 +218,7 @@ static void
 panelize_done (void)
 {
     widget_destroy (WIDGET (panelize_dlg));
-    repaint_screen ();
+    widget_draw (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -626,7 +626,7 @@ external_panelize (void)
             widget_destroy (WIDGET (panelize_dlg));
             do_external_panelize (cmd);
             g_free (cmd);
-            repaint_screen ();
+            widget_draw (midnight);
             return;
         }
         break;

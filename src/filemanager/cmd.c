@@ -156,7 +156,7 @@ do_view_cmd (WPanel * panel, gboolean plain_view)
         vfs_path_free (filename_vpath, TRUE);
     }
 
-    repaint_screen ();
+    widget_draw (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -409,7 +409,7 @@ do_link (link_type_t link_type, const char *fname)
     }
 
     update_panels (UP_OPTIMIZE, UP_KEEPSEL);
-    repaint_screen ();
+    widget_draw (midnight);
 
   cleanup:
     vfs_path_free (dest_vpath, TRUE);
@@ -505,7 +505,7 @@ configure_panel_listing (WPanel * p, int list_format, int brief_cols, gboolean u
     }
 
     set_panel_formats (p);
-    do_refresh ();
+    widget_draw (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -708,7 +708,7 @@ edit_file_at_line (const vfs_path_t * what_vpath, gboolean internal, long start_
         dialog_switch_process_pending ();
     else
 #endif /* USE_INTERNAL_EDIT */
-        repaint_screen ();
+        widget_draw (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -780,7 +780,7 @@ copy_cmd (WPanel * panel)
     if (panel_operate (panel, OP_COPY, FALSE))
     {
         update_panels (UP_OPTIMIZE, UP_KEEPSEL);
-        repaint_screen ();
+        widget_draw (midnight);
     }
 }
 
@@ -795,7 +795,7 @@ rename_cmd (WPanel * panel)
     if (panel_operate (panel, OP_MOVE, FALSE))
     {
         update_panels (UP_OPTIMIZE, UP_KEEPSEL);
-        repaint_screen ();
+        widget_draw (midnight);
     }
 }
 
@@ -810,7 +810,7 @@ copy_cmd_local (WPanel * panel)
     if (panel_operate (panel, OP_COPY, TRUE))
     {
         update_panels (UP_OPTIMIZE, UP_KEEPSEL);
-        repaint_screen ();
+        widget_draw (midnight);
     }
 }
 
@@ -825,7 +825,7 @@ rename_cmd_local (WPanel * panel)
     if (panel_operate (panel, OP_MOVE, TRUE))
     {
         update_panels (UP_OPTIMIZE, UP_KEEPSEL);
-        repaint_screen ();
+        widget_draw (midnight);
     }
 }
 
@@ -871,7 +871,7 @@ mkdir_cmd (WPanel * panel)
         else
         {
             update_panels (UP_OPTIMIZE, dir);
-            repaint_screen ();
+            widget_draw (midnight);
             select_item (panel);
         }
 
@@ -890,7 +890,7 @@ delete_cmd (WPanel * panel)
     if (panel_operate (panel, OP_DELETE, FALSE))
     {
         update_panels (UP_OPTIMIZE, UP_KEEPSEL);
-        repaint_screen ();
+        widget_draw (midnight);
     }
 }
 
@@ -905,7 +905,7 @@ delete_cmd_local (WPanel * panel)
     if (panel_operate (panel, OP_DELETE, TRUE))
     {
         update_panels (UP_OPTIMIZE, UP_KEEPSEL);
-        repaint_screen ();
+        widget_draw (midnight);
     }
 }
 
@@ -936,7 +936,7 @@ reread_cmd (void)
         flag = UP_OPTIMIZE;
 
     update_panels (UP_RELOAD | flag, UP_KEEPSEL);
-    repaint_screen ();
+    widget_draw (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -1191,7 +1191,7 @@ swap_cmd (void)
 {
     swap_panels ();
     tty_touch_screen ();
-    repaint_screen ();
+    widget_draw (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -1261,7 +1261,7 @@ edit_symlink_cmd (void)
                 vfs_path_free (p_vpath, TRUE);
 
                 update_panels (UP_OPTIMIZE, UP_KEEPSEL);
-                repaint_screen ();
+                widget_draw (midnight);
             }
 
             g_free (dest);

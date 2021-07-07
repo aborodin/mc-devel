@@ -1350,7 +1350,7 @@ adjust_top_file (WPanel * panel)
 
     /* Update panel->selected to avoid out of range in panel->dir.list[panel->selected]
      * when panel is redrawing when directory is reloading, for example in path:
-     * dir_list_reload() -> mc_refresh() -> dialog_change_screen_size() ->
+     * dir_list_reload() -> program_refresh() -> dialog_change_screen_size() ->
      * midnight_callback (MSG_RESIZE) -> setup_panels() -> panel_callback(MSG_DRAW) ->
      * display_mini_info()
      */
@@ -2762,7 +2762,7 @@ start_search (WPanel * panel)
         panel->quick_search.ch[0] = '\0';
         panel->quick_search.chpoint = 0;
         display_mini_info (panel);
-        mc_refresh ();
+        program_refresh (midnight);
     }
 }
 
@@ -2872,7 +2872,7 @@ panel_cycle_listing_format (WPanel * panel)
     panel->list_format = (panel->list_format + 1) % LIST_FORMATS;
 
     if (set_panel_formats (panel) == 0)
-        do_refresh ();
+        widget_draw (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */

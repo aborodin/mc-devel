@@ -570,7 +570,7 @@ execute_menu_command (const WEdit * edit_widget, const char *commands, gboolean 
 
         /* Redraw the original screen's contents. */
         tty_clear_screen ();
-        repaint_screen ();
+        widget_draw (midnight);
 
         if (!ok)
             message (D_ERROR, MSG_ERROR, "%s", _("Error calling program"));
@@ -1146,7 +1146,7 @@ user_menu_cmd (const WEdit * edit_widget, const char *menu_file, int selected_en
             res = TRUE;
         }
 
-        do_refresh ();
+        widget_draw (midnight);
     }
 
     easy_patterns = old_patterns;

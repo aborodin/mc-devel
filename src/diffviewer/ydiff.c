@@ -2344,7 +2344,7 @@ dview_select_encoding (WDiff * dview)
         dview_set_codeset (dview);
     dview_reread (dview);
     tty_touch_screen ();
-    repaint_screen ();
+    widget_draw (midnight);
 }
 #endif /* HAVE_CHARSET */
 

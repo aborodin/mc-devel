@@ -585,7 +585,7 @@ status_msg_init (status_msg_t * sm, const char *title, double delay, status_msg_
     gint64 start;
 
     /* repaint screen to remove previous finished dialog */
-    mc_refresh ();
+    program_refresh (midnight);
 
     start = g_get_real_time ();
 

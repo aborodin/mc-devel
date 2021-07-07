@@ -281,7 +281,7 @@ b_left_right_cback (WButton * button, int action)
 
     update_split (DIALOG (WIDGET (button)->owner));
     layout_change ();
-    do_refresh ();
+    widget_draw (midnight);
     return 0;
 }
 
@@ -420,7 +420,7 @@ layout_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm, void *
 
                 update_split (h);
                 layout_change ();
-                do_refresh ();
+                widget_draw (midnight);
             }
 
             return MSG_HANDLED;
@@ -446,7 +446,7 @@ layout_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm, void *
 
             update_split (h);
             layout_change ();
-            do_refresh ();
+            widget_draw (midnight);
 
             return MSG_HANDLED;
         }
@@ -473,7 +473,7 @@ layout_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm, void *
             {
                 update_split (h);
                 layout_change ();
-                do_refresh ();
+                widget_draw (midnight);
                 return MSG_HANDLED;
             }
         }
@@ -742,7 +742,7 @@ layout_box (void)
 
     widget_destroy (WIDGET (layout_dlg));
     layout_change ();
-    do_refresh ();
+    widget_draw (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -923,7 +923,7 @@ panels_split_equal (void)
         panels_layout.vertical_equal = TRUE;
 
     layout_change ();
-    do_refresh ();
+    widget_draw (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -1038,7 +1038,7 @@ set_hintbar (const char *str)
 {
     label_set_text (the_hint, str);
     if (ok_to_refresh > 0)
-        mc_refresh ();
+        program_refresh (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -1072,7 +1072,7 @@ rotate_dash (gboolean show)
         pos = (pos + 1) % sizeof (rotating_dash);
     }
 
-    mc_refresh ();
+    program_refresh (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -1502,7 +1502,7 @@ do_load_prompt (void)
          * automatically: force a cursor update and a screen refresh
          */
         widget_update_cursor (WIDGET (filemanager));
-        mc_refresh ();
+        program_refresh (midnight);
         ret = TRUE;
     }
     update_subshell_prompt = TRUE;

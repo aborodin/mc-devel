@@ -373,7 +373,7 @@ do_executev (const char *shell, int flags, char *const argv[])
         update_xterm_title_path ();
     }
 
-    do_refresh ();
+    widget_draw (midnight);
     use_dash (TRUE);
 }
 
@@ -411,7 +411,7 @@ post_exec (void)
 {
     edition_post_exec ();
     use_dash (TRUE);
-    repaint_screen ();
+    widget_draw (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -540,7 +540,7 @@ toggle_subshell (void)
         application_keypad_mode ();
 
     /* HACK:
-     * Save sigwinch flag that will be reset in mc_refresh() called via update_panels().
+     * Save sigwinch flag that will be reset in program_refresh() called via update_panels().
      * There is some problem with screen redraw in ncurses-based mc in this situation.
      */
     was_sigwinch = tty_got_winch ();
@@ -570,7 +570,7 @@ toggle_subshell (void)
     if (was_sigwinch != 0 || tty_got_winch ())
         dialog_change_screen_size ();
     else
-        repaint_screen ();
+        widget_draw (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -590,7 +590,7 @@ execute_suspend (const gchar * event_group_name, const gchar * event_name,
     do_suspend_cmd ();
     if (mc_global.mc_run_mode == MC_RUN_FULL)
         update_panels (UP_OPTIMIZE, UP_KEEPSEL);
-    do_refresh ();
+    widget_draw (midnight);
 
     return TRUE;
 }

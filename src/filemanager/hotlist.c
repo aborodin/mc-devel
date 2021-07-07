@@ -397,7 +397,7 @@ hotlist_run_cmd (int action)
             }
             listbox_remove_list (l_hotlist);
             fill_listbox (l_hotlist);
-            repaint_screen ();
+            widget_draw (midnight);
             hotlist_state.modified = TRUE;
             return 0;
         }
@@ -759,7 +759,7 @@ init_hotlist (hotlist_t list_type)
     WGroupbox *path_box;
     Widget *hotlist_widget;
 
-    do_refresh ();
+    widget_draw (midnight);
 
     lines = LINES - 2;
     cols = init_i18n_stuff (list_type, COLS - 6);
@@ -841,7 +841,7 @@ init_movelist (struct hotlist *item)
     WGroup *g;
     Widget *movelist_widget;
 
-    do_refresh ();
+    widget_draw (midnight);
 
     lines = LINES - 6;
     cols = init_i18n_stuff (LIST_MOVELIST, COLS - 6);
@@ -896,7 +896,7 @@ hotlist_done (void)
 #if 0
     update_panels (UP_OPTIMIZE, UP_KEEPSEL);
 #endif
-    repaint_screen ();
+    widget_draw (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */

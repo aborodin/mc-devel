@@ -1075,7 +1075,7 @@ chattr_done (gboolean need_update)
 {
     if (need_update)
         update_panels (UP_OPTIMIZE, UP_KEEPSEL);
-    repaint_screen ();
+    widget_draw (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -1218,7 +1218,7 @@ chattr_cmd (WPanel * panel)
             break;
         }
 
-        do_refresh ();
+        widget_draw (midnight);
 
         need_update = FALSE;
         end_chattr = FALSE;

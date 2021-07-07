@@ -405,7 +405,7 @@ chmod_done (gboolean need_update)
 {
     if (need_update)
         update_panels (UP_OPTIMIZE, UP_KEEPSEL);
-    repaint_screen ();
+    widget_draw (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -542,7 +542,7 @@ chmod_cmd (WPanel * panel)
         const GString *fname;
         int i, result;
 
-        do_refresh ();
+        widget_draw (midnight);
 
         need_update = FALSE;
         end_chmod = FALSE;

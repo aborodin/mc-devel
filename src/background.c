@@ -383,7 +383,7 @@ background_attention (int fd, void *closure)
     for (i = 0; i < argc; i++)
         g_free (data[i]);
 
-    repaint_screen ();
+    widget_draw (midnight);
 
     (void) ret;
 

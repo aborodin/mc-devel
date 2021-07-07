@@ -8,7 +8,7 @@
    Miguel de Icaza, 1994, 1995, 1996, 1997
    Janne Kukonlehto, 1994, 1995
    Norbert Warmuth, 1997
-   Andrew Borodin <aborodin@vmail.ru>, 2009, 2010, 2012, 2013, 2020
+   Andrew Borodin <aborodin@vmail.ru>, 2009-2021
    Slava Zanko <slavazanko@gmail.com>, 2013
 
    This file is part of the Midnight Commander.
@@ -180,7 +180,7 @@ listmode_cmd (void)
     current_panel->user_format = newmode;
     set_panel_formats (current_panel);
 
-    do_refresh ();
+    widget_draw (midnight);
 }
 #endif /* LISTMODE_EDITOR */
 
@@ -461,7 +461,7 @@ toggle_panels_split (void)
 {
     panels_layout.horizontal_split = !panels_layout.horizontal_split;
     layout_change ();
-    do_refresh ();
+    widget_draw (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -557,7 +557,7 @@ print_vfs_message (const gchar * event_group_name, const gchar * event_name,
 
         /* Restore cursor position */
         tty_gotoyx (row, col);
-        mc_refresh ();
+        program_refresh (midnight);
         goto ret;
     }
 

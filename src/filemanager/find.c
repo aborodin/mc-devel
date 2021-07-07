@@ -1034,7 +1034,7 @@ search_content (WDialog * h, const char *directory, const char *filename)
     {
         g_snprintf (buffer, sizeof (buffer), _("Grepping in %s"), filename);
         status_update (str_trunc (buffer, WIDGET (h)->cols - 8));
-        mc_refresh ();
+        program_refresh (midnight);
         last_refresh = tv;
         status_updated = TRUE;
     }
@@ -1128,7 +1128,7 @@ search_content (WDialog * h, const char *directory, const char *filename)
                        name of this file is shown in status bar */
                     g_snprintf (result, sizeof (result), _("Grepping in %s"), filename);
                     status_update (str_trunc (result, WIDGET (h)->cols - 8));
-                    mc_refresh ();
+                    program_refresh (midnight);
                     last_refresh = tv;
                     status_updated = TRUE;
                 }
@@ -1258,7 +1258,7 @@ find_rotate_dash (const WDialog * h, gboolean show)
     widget_gotoyx (h, w->lines - 7, w->cols - 4);
     tty_print_char (show ? rotating_dash[pos] : ' ');
     pos = (pos + 1) % sizeof (rotating_dash);
-    mc_refresh ();
+    program_refresh (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */

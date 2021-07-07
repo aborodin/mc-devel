@@ -93,7 +93,7 @@ learn_button (WButton * button, int action)
                           "next to its button.\n\n"
                           "If you want to escape, press a single Escape key\n"
                           "and wait as well."), _(key_name_conv_tab[action - B_USER].longname));
-    mc_refresh ();
+    program_refresh (midnight);
     if (learnkeys[action - B_USER].sequence != NULL)
         MC_PTR_FREE (learnkeys[action - B_USER].sequence);
 
@@ -273,7 +273,7 @@ init_learn (void)
     b1 = _(b1);
 #endif /* ENABLE_NLS */
 
-    do_refresh ();
+    widget_draw (midnight);
 
     learn_dlg =
         dlg_create (TRUE, 0, 0, dlg_height, dlg_width, WPOS_CENTER, FALSE, dialog_colors,
@@ -344,7 +344,7 @@ static void
 learn_done (void)
 {
     widget_destroy (WIDGET (learn_dlg));
-    repaint_screen ();
+    widget_draw (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */

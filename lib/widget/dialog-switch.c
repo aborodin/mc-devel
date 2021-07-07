@@ -40,7 +40,8 @@
 
 /*** global variables ****************************************************************************/
 
-WDialog *filemanager = NULL;
+WProgram *midnight = NULL;
+WScreen *filemanager = NULL;
 
 /*** file scope macro definitions ****************************************************************/
 
@@ -48,13 +49,7 @@ WDialog *filemanager = NULL;
 
 /*** file scope variables ************************************************************************/
 
-/* List of dialogs: filemanagers, editors, viewers */
-static GList *mc_dialogs = NULL;
-/* Currently active dialog */
-static GList *mc_current = NULL;
-/* Is there any dialogs that we have to run after returning to the manager from another dialog */
-static gboolean dialog_switch_pending = FALSE;
-
+/* --------------------------------------------------------------------------------------------- */
 /*** file scope functions ************************************************************************/
 /* --------------------------------------------------------------------------------------------- */
 
@@ -105,21 +100,10 @@ dialog_switch_goto (GList * dlg)
             {
                 /* switch to panels */
                 widget_set_state (WIDGET (filemanager), WST_ACTIVE, TRUE);
-                do_refresh ();
+                widget_draw (midnight);
             }
         }
     }
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-static void
-dialog_switch_resize (WDialog * d)
-{
-    if (widget_get_state (WIDGET (d), WST_ACTIVE))
-        send_message (d, NULL, MSG_RESIZE, 0, NULL);
-    else
-        GROUP (d)->winch_pending = TRUE;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -279,21 +263,9 @@ dialog_switch_process_pending (void)
         }
     }
 
-    repaint_screen ();
+    widget_draw (midnight);
 
     return ret;
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-void
-dialog_switch_got_winch (void)
-{
-    GList *dlg;
-
-    for (dlg = mc_dialogs; dlg != NULL; dlg = g_list_next (dlg))
-        if (dlg != mc_current)
-            GROUP (dlg->data)->winch_pending = TRUE;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -308,61 +280,6 @@ dialog_switch_shutdown (void)
         dlg_run (dlg);
         widget_destroy (WIDGET (dlg));
     }
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-void
-repaint_screen (void)
-{
-    do_refresh ();
-    tty_refresh ();
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-void
-mc_refresh (void)
-{
-#ifdef ENABLE_BACKGROUND
-    if (mc_global.we_are_background)
-        return;
-#endif /* ENABLE_BACKGROUND */
-
-    if (!tty_got_winch ())
-        tty_refresh ();
-    else
-    {
-        /* if winch was caugth, we should do not only redraw screen, but
-           reposition/resize all */
-        dialog_change_screen_size ();
-    }
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-void
-dialog_change_screen_size (void)
-{
-    GList *d;
-
-    tty_flush_winch ();
-    tty_change_screen_size ();
-
-#ifdef HAVE_SLANG
-    tty_keypad (TRUE);
-    tty_nodelay (FALSE);
-#endif
-
-    /* Inform all suspending dialogs */
-    dialog_switch_got_winch ();
-
-    /* Inform all running dialogs from first to last */
-    for (d = g_list_last (top_dlg); d != NULL; d = g_list_previous (d))
-        dialog_switch_resize (DIALOG (d->data));
-
-    /* Now, force the redraw */
-    repaint_screen ();
 }
 
 /* --------------------------------------------------------------------------------------------- */

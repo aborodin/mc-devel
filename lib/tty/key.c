@@ -57,7 +57,7 @@
 #include "mouse.h"
 #include "key.h"
 
-#include "lib/widget.h"         /* mc_refresh() */
+#include "lib/widget.h"         /* program_refresh() */
 
 #ifdef HAVE_TEXTMODE_X11_SUPPORT
 #include "x11conn.h"
@@ -1942,7 +1942,7 @@ tty_get_event (struct Gpm_Event *event, gboolean redo_event, gboolean block)
 
     if ((dirty == 3) || is_idle ())
     {
-        mc_refresh ();
+        program_refresh (midnight);
         dirty = 1;
     }
     else

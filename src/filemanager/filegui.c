@@ -1219,28 +1219,28 @@ file_progress_real_query_replace (file_op_context_t * ctx, enum OperationMode mo
     switch (ui->replace_result)
     {
     case REPLACE_OLDER:
-        do_refresh ();
+        widget_draw (midnight);
         if (src_stat->st_mtime > dst_stat->st_mtime)
             return replace_with_zero;
         else
             return FILE_SKIP;
 
     case REPLACE_SIZE:
-        do_refresh ();
+        widget_draw (midnight);
         if (src_stat->st_size == dst_stat->st_size)
             return FILE_SKIP;
         else
             return replace_with_zero;
 
     case REPLACE_SMALLER:
-        do_refresh ();
+        widget_draw (midnight);
         if (src_stat->st_size > dst_stat->st_size)
             return FILE_CONT;
         else
             return FILE_SKIP;
 
     case REPLACE_ALL:
-        do_refresh ();
+        widget_draw (midnight);
         return replace_with_zero;
 
     case REPLACE_REGET:
@@ -1253,12 +1253,12 @@ file_progress_real_query_replace (file_op_context_t * ctx, enum OperationMode mo
         MC_FALLTHROUGH;
 
     case REPLACE_YES:
-        do_refresh ();
+        widget_draw (midnight);
         return FILE_CONT;
 
     case REPLACE_NO:
     case REPLACE_NONE:
-        do_refresh ();
+        widget_draw (midnight);
         return FILE_SKIP;
 
     case REPLACE_ABORT:

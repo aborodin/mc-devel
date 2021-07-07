@@ -824,7 +824,7 @@ advanced_chown_done (gboolean need_update)
 {
     if (need_update)
         update_panels (UP_OPTIMIZE, UP_KEEPSEL);
-    repaint_screen ();
+    widget_draw (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -1008,7 +1008,7 @@ advanced_chown_cmd (WPanel * panel)
         int result;
         int file_idx;
 
-        do_refresh ();
+        widget_draw (midnight);
 
         need_update = FALSE;
         end_chown = FALSE;

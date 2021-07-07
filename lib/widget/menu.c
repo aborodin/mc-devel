@@ -273,7 +273,7 @@ menubar_remove (WMenuBar * menubar)
     GROUP (g)->current = widget_find (g, widget_find_by_id (g, menubar->previous_widget));
 
     menubar->is_dropped = FALSE;
-    do_refresh ();
+    widget_draw (g);
     menubar->is_dropped = TRUE;
 
     /* restore current widget */
@@ -329,7 +329,7 @@ menubar_finish (WMenuBar * menubar)
         widget_set_bottom (WIDGET (DIALOG (w->owner)->bg));
 
     group_select_widget_by_id (w->owner, menubar->previous_widget);
-    do_refresh ();
+    widget_draw (WIDGET (w->owner));
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -356,8 +356,8 @@ menubar_execute (WMenuBar * menubar)
 
         mc_global.widget.is_right = (menubar->selected != 0);
         menubar_finish (menubar);
+        widget_draw (WIDGET (w)->owner));
         send_message (w->owner, w, MSG_ACTION, entry->command, NULL);
-        do_refresh ();
     }
 }
 

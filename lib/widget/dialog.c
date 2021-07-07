@@ -118,11 +118,11 @@ refresh_cmd (void)
 {
 #ifdef HAVE_SLANG
     tty_touch_screen ();
-    mc_refresh ();
+    program_refresh (midnight);
 #else
     /* Use this if the refreshes fail */
     tty_clear_screen ();
-    repaint_screen ();
+    widget_draw (midnight);
 #endif /* HAVE_SLANG */
 }
 
@@ -338,7 +338,7 @@ dlg_default_destroy (Widget * w)
     g_free (h->event_group);
     g_free (h);
 
-    do_refresh ();
+    widget_draw (midnight);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -465,36 +465,6 @@ dlg_set_default_colors (void)
     listbox_colors[DLG_COLOR_HOT_NORMAL] = PMENU_ENTRY_COLOR;
     listbox_colors[DLG_COLOR_HOT_FOCUS] = PMENU_SELECTED_COLOR;
     listbox_colors[DLG_COLOR_TITLE] = PMENU_TITLE_COLOR;
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-void
-do_refresh (void)
-{
-    GList *d = top_dlg;
-
-    if (fast_refresh)
-    {
-        if (d != NULL)
-            widget_draw (WIDGET (d->data));
-    }
-    else
-    {
-        /* Search first fullscreen dialog */
-        for (; d != NULL; d = g_list_next (d))
-            if ((WIDGET (d->data)->pos_flags & WPOS_FULLSCREEN) != 0)
-                break;
-
-        /* when small dialog (i.e. error message) is created first,
-           there is no fullscreen dialog in the stack */
-        if (d == NULL)
-            d = g_list_last (top_dlg);
-
-        /* back to top dialog */
-        for (; d != NULL; d = g_list_previous (d))
-            widget_draw (WIDGET (d->data));
-    }
 }
 
 /* --------------------------------------------------------------------------------------------- */
