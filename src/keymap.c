@@ -33,7 +33,7 @@
 #include "lib/keybind.h"
 #include "lib/mcconfig.h"       /* mc_config_t */
 #include "lib/util.h"
-#include "lib/widget.h"         /* dialog_map, input_map, listbox_map, menu_map, radio_map */
+#include "lib/widget.h"         /* dialog_map, input_map, listbox_map, menu_map, radio_map, scrollbar_map */
 
 #include "args.h"               /* mc_args__keymap_file */
 
@@ -49,6 +49,7 @@ GArray *menu_keymap = NULL;
 GArray *input_keymap = NULL;
 GArray *listbox_keymap = NULL;
 GArray *radio_keymap = NULL;
+GArray *scrollbar_keymap = NULL;
 GArray *tree_keymap = NULL;
 GArray *help_keymap = NULL;
 #ifdef ENABLE_EXT2FS_ATTR
@@ -315,6 +316,17 @@ static const global_keymap_ini_t default_radio_keymap[] = {
     {"Top", "home; alt-lt; a1"},
     {"Bottom", "end; alt-gt; c1"},
     {"Select", "space"},
+    {NULL, NULL}
+};
+
+/* scrollbar */
+static const global_keymap_ini_t default_scrollbar_keymap[] = {
+    {"Up", "up; ctrl-p"},
+    {"Down", "down; ctrl-n"},
+    {"Top", "home; alt-lt; a1"},
+    {"Bottom", "end; alt-gt; c1"},
+    {"PageUp", "pgup; alt-v"},
+    {"PageDown", "pgdn; ctrl-v"},
     {NULL, NULL}
 };
 
@@ -656,6 +668,7 @@ create_default_keymap (void)
     create_default_keymap_section (keymap, KEYMAP_SECTION_INPUT, default_input_keymap);
     create_default_keymap_section (keymap, KEYMAP_SECTION_LISTBOX, default_listbox_keymap);
     create_default_keymap_section (keymap, KEYMAP_SECTION_RADIO, default_radio_keymap);
+    create_default_keymap_section (keymap, KEYMAP_SECTION_SCROLLBAR, default_scrollbar_keymap);
     create_default_keymap_section (keymap, KEYMAP_SECTION_TREE, default_tree_keymap);
     create_default_keymap_section (keymap, KEYMAP_SECTION_HELP, default_help_keymap);
 #ifdef ENABLE_EXT2FS_ATTR
@@ -903,6 +916,7 @@ keymap_load (gboolean load_from_file)
         LOAD_KEYMAP (INPUT, input);
         LOAD_KEYMAP (LISTBOX, listbox);
         LOAD_KEYMAP (RADIO, radio);
+        LOAD_KEYMAP (SCROLLBAR, scrollbar);
         LOAD_KEYMAP (TREE, tree);
         LOAD_KEYMAP (HELP, help);
 #ifdef ENABLE_EXT2FS_ATTR
@@ -968,6 +982,7 @@ keymap_free (void)
     FREE_KEYMAP (input);
     FREE_KEYMAP (listbox);
     FREE_KEYMAP (radio);
+    FREE_KEYMAP (scrollbar);
     FREE_KEYMAP (tree);
     FREE_KEYMAP (help);
 #ifdef ENABLE_EXT2FS_ATTR
