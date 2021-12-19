@@ -7,6 +7,7 @@ libmcskin_la_SOURCES = \
 	hc-skins.c \
 	ini-file.c \
 	lines.c \
+	scrollbar.c \
 	internal.h
 
 AM_CPPFLAGS = -I$(top_srcdir) $(GLIB_CFLAGS)

@@ -144,3 +144,14 @@ mc_skin_hardcoded_ugly_lines (mc_skin_t * mc_skin)
 }
 
 /* --------------------------------------------------------------------------------------------- */
+
+void
+mc_skin_hardcoded_ugly_scrollbar (mc_skin_t * mc_skin)
+{
+    mc_config_set_string (mc_skin->config, "widget-scrollbar", "up-char", "^");
+    mc_config_set_string (mc_skin->config, "widget-scrollbar", "down-char", "v");
+    mc_config_set_string (mc_skin->config, "widget-scrollbar", "thumb-vert-char", "*");
+    mc_config_set_string (mc_skin->config, "widget-scrollbar", "track-vert-char", "|");
+}
+
+/* --------------------------------------------------------------------------------------------- */
