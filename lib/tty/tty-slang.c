@@ -224,7 +224,7 @@ load_terminfo_keys (void)
 /* --------------------------------------------------------------------------------------------- */
 
 int
-mc_tty_normalize_lines_char (const char *str)
+mc_tty_normalize_skin_char (const char *str)
 {
     char *str2;
     int res;

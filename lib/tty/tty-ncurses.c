@@ -170,7 +170,7 @@ tty_clip (int *y, int *x, int *rows, int *cols)
 /* --------------------------------------------------------------------------------------------- */
 
 int
-mc_tty_normalize_lines_char (const char *ch)
+mc_tty_normalize_skin_char (const char *ch)
 {
     char *str2;
     int res;
