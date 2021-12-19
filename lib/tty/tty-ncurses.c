@@ -687,6 +687,18 @@ tty_print_alt_char (int c, gboolean single)
             c = mc_tty_frm[single ? MC_TTY_FRM_RIGHTBOTTOM : MC_TTY_FRM_DRIGHTBOTTOM];
         else if ((chtype) c == ACS_PLUS)
             c = mc_tty_frm[MC_TTY_FRM_CROSS];
+        else if ((chtype) c == ACS_UARROW)
+            c = mc_tty_scrollbar[MC_TTY_SB_UP]);
+        else if ((chtype) c == ACS_DARROW)
+            c = mc_tty_scrollbar[MC_TTY_SB_DOWN]);
+        else if ((chtype) c == ACS_LARROW)
+            c = mc_tty_scrollbar[MC_TTY_SB_LEFT]);
+        else if ((chtype) c == ACS_RARROW)
+            c = mc_tty_scrollbar[MC_TTY_SB_RIGHT]);
+        else if ((chtype) c == ACS_BLOCK)
+            c = mc_tty_scrollbar[MC_TTY_SB_THUMB]);
+        else if ((chtype) c == ACS_BOARD)
+            c = mc_tty_scrollbar[MC_TTY_SB_TRACK]);
 
         addch (c);
     }

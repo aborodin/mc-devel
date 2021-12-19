@@ -696,6 +696,24 @@ tty_print_alt_char (int c, gboolean single)
     case ACS_PLUS:
         DRAW (c, mc_tty_frm[MC_TTY_FRM_CROSS]);
         break;
+    case ACS_UARROW:
+        DRAW (c, mc_tty_scrollbar[MC_TTY_SB_UP]);
+        break;
+    case ACS_DARROW:
+        DRAW (c, mc_tty_scrollbar[MC_TTY_SB_DOWN]);
+        break;
+    case ACS_LARROW:
+        DRAW (c, mc_tty_scrollbar[MC_TTY_SB_LEFT]);
+        break;
+    case ACS_RARROW:
+        DRAW (c, mc_tty_scrollbar[MC_TTY_SB_RIGHT]);
+        break;
+    case ACS_BLOCK:
+        DRAW (c, mc_tty_scrollbar[MC_TTY_SB_THUMB]);
+        break;
+    case ACS_BOARD:
+        DRAW (c, mc_tty_scrollbar[MC_TTY_SB_TRACK]);
+        break;
     default:
         SLsmg_write_char ((unsigned int) c);
     }

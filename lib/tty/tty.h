@@ -57,11 +57,25 @@ typedef enum
     MC_TTY_FRM_MAX
 } mc_tty_frm_t;
 
+/* scroll bar elements */
+typedef enum
+{
+    MC_TTY_SB_UP,
+    MC_TTY_SB_DOWN,
+    MC_TTY_SB_LEFT,
+    MC_TTY_SB_RIGHT,
+    MC_TTY_SB_THUMB,
+    MC_TTY_SB_TRACK,
+
+    MC_TTY_SB_MAX
+} mc_tty_scrollbar_t;
+
 /*** structures declarations (and typedefs of structures)*****************************************/
 
 /*** global variables defined in .c file *********************************************************/
 
 extern int mc_tty_frm[];
+extern int mc_tty_scrollbar[];
 
 extern char *tty_tgetstr (const char *name);
 

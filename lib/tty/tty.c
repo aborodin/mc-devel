@@ -63,6 +63,7 @@
 /*** global variables ****************************************************************************/
 
 int mc_tty_frm[MC_TTY_FRM_MAX];
+int mc_tty_scrollbar[MC_TTY_SB_MAX];
 
 /*** file scope macro definitions ****************************************************************/
 
