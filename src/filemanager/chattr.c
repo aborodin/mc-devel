@@ -86,6 +86,16 @@ struct WChattrBoxes
     int top;                    /* The first flag displayed */
 };
 
+typedef struct WChattrGroup WChattrGroup;
+
+struct WChattrGroup
+{
+    WGroup base;                /* base class */
+
+    WChattrBoxes *boxes;
+    WScrollBar *scrollbar;
+};
+
 /*** file scope variables ************************************************************************/
 
 /* see /usr/include/ext2fs/ext2_fs.h
@@ -405,45 +415,6 @@ chattr_toggle_select (const WChattrBoxes * cb, int Id)
 
 /* --------------------------------------------------------------------------------------------- */
 
-static inline void
-chattrboxes_draw_scrollbar (const WChattrBoxes * cb)
-{
-    const Widget *w = CONST_WIDGET (cb);
-    int max_line;
-    int line;
-    int i;
-
-    /* Are we at the top? */
-    widget_gotoyx (w, 0, w->rect.cols);
-    if (cb->top == 0)
-        tty_print_one_vline (TRUE);
-    else
-        tty_print_char ('^');
-
-    max_line = w->rect.lines - 1;
-
-    /* Are we at the bottom? */
-    widget_gotoyx (w, max_line, w->rect.cols);
-    if (cb->top + w->rect.lines == check_attr_mod_num || w->rect.lines >= check_attr_mod_num)
-        tty_print_one_vline (TRUE);
-    else
-        tty_print_char ('v');
-
-    /* Now draw the nice relative pointer */
-    line = 1 + (cb->pos * (w->rect.lines - 2)) / check_attr_mod_num;
-
-    for (i = 1; i < max_line; i++)
-    {
-        widget_gotoyx (w, i, w->rect.cols);
-        if (i != line)
-            tty_print_one_vline (TRUE);
-        else
-            tty_print_char ('*');
-    }
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
 static void
 chattrboxes_draw (WChattrBoxes * cb)
 {
@@ -458,11 +429,6 @@ chattrboxes_draw (WChattrBoxes * cb)
 
     /* redraw checkboxes */
     group_default_callback (w, NULL, MSG_DRAW, 0, NULL);
-
-    /* draw scrollbar */
-    tty_setcolor (colors[DLG_COLOR_NORMAL]);
-    if (!mc_global.tty.slow_terminal && check_attr_mod_num > w->rect.lines)
-        chattrboxes_draw_scrollbar (cb);
 
     /* mark selected checkboxes */
     for (i = cb->top, l = GROUP (cb)->widgets; l != NULL; i++, l = g_list_next (l))
@@ -954,6 +920,28 @@ chattr_init (void)
         chattr_but[i].width = str_term_width1 (chattr_but[i].text) + 3; /* [], spaces and w/o & */
         if (chattr_but[i].flags == DEFPUSH_BUTTON)
             chattr_but[i].width += 2;   /* <> */
+    }
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+static cb_ret_t
+chattr_group_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm, void *data)
+{
+    WChattrGroup *g = (WChattrGroup *) w;
+
+    switch (msg)
+    {
+    case MSG_NOTIFY:
+        if (sender == WIDGET (g->scrollbar))
+        {
+
+            return MSG_HANDLED;
+        }
+        return MSG_NOT_HANDLED;
+
+    default:
+        return dlg_default_callback (w, sender, msg, parm, data);
     }
 }
 
