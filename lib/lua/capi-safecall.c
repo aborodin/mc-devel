@@ -82,7 +82,7 @@ display_error (lua_State * L)
 static void
 record_first_error (lua_State * L)
 {
-    if (!first_error)
+    if (first_error == NULL)
         first_error = g_strdup (lua_tostring (L, -1));
 }
 
@@ -175,7 +175,7 @@ luaMC_safe_dofile (lua_State * L, const char *dirname, const char *basename)
 void
 mc_lua_replay_first_error (void)
 {
-    if (first_error)
+    if (first_error != NULL)
     {
         lua_pushstring (Lg, first_error);
         handle_error (Lg);
