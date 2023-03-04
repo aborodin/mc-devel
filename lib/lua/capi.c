@@ -1,3 +1,28 @@
+/*
+   Mini-library of utility functions (and macros) for Lua.
+
+   Copyright (C) 2016-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2016
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 /**
  * This is a mini-library of utility functions (and macros) for Lua.
  *
@@ -34,8 +59,58 @@
 
 #include "capi.h"
 
+/*** global variables ****************************************************************************/
 
 lua_State *Lg;                  /* the Lua VM */
+
+/*** file scope macro definitions ****************************************************************/
+
+/*** file scope type declarations ****************************************************************/
+
+/*** forward declarations (file scope functions) *************************************************/
+
+/*** file scope variables ************************************************************************/
+
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
+
+
+/*
+ * The following is equivalent to:
+ *
+ * function (msg)
+ *   return debug.traceback(msg, 2)
+ * end
+ */
+static int
+_luaMC_pcall__errfunc (lua_State * L)
+{
+    luaMC_getglobal2 (L, "debug", "traceback");
+    lua_insert (L, -2);
+    lua_pushinteger (L, 2);
+    lua_call (L, 2, 1);
+    return 1;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/*
+ * __gc support:
+ */
+#ifdef HAVE_LUA_GETFENV         /* detects Lua 5.1 */
+static int
+l_gcenabler_gc (lua_State * L)
+{
+    lua_getfenv (L, 1);
+    luaMC_pingmeta (L, -1, "__gc");
+    return 0;
+}
+#endif
+
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 /* ----------------------------- Scalars ---------------------------------- */
 
@@ -49,6 +124,8 @@ luaMC_pop_boolean (lua_State * L)
     return b;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 lua_Integer
 luaMC_pop_integer (lua_State * L)
 {
@@ -58,6 +135,8 @@ luaMC_pop_integer (lua_State * L)
     lua_pop (L, 1);
     return i;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * A sign() function.
@@ -87,6 +166,8 @@ luaMC_get_sign (lua_State * L, int idx)
     }
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Whether an element is a number equal to some integer.
  */
@@ -96,6 +177,8 @@ luaMC_is_int_eq (lua_State * L, int idx, int val)
     return (lua_type (L, idx) == LUA_TNUMBER && lua_tointeger (L, idx) == val);
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Used seldom, when 'nil' doesn't mean 'false' but really a missing value.
  */
@@ -104,6 +187,8 @@ luaMC_optboolean (lua_State * L, int idx, gboolean def_val)
 {
     return lua_isnoneornil (L, idx) ? def_val : lua_toboolean (L, idx);
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /* ------------------------------- Strings -------------------------------- */
 
@@ -116,6 +201,8 @@ luaMC_pushstring_and_free (lua_State * L, char *s)
     lua_pushstring (L, s);
     g_free (s);
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Pushes an "argv"-like array of strings onto the stack. Either as
@@ -143,6 +230,8 @@ luaMC_push_argv (lua_State * L, char **argv, gboolean as_table)
     return count;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /* Like luaL_tolstring(), but doesn't push a value onto the stack. */
 const char *
 luaMC_tolstring (lua_State * L, int idx, size_t * len)
@@ -161,6 +250,8 @@ luaMC_tolstring (lua_State * L, int idx, size_t * len)
 
     return lua_tolstring (L, idx, len);
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Like lua_pushlstring() but also converts the encoding of the string.
@@ -182,6 +273,8 @@ luaMC_pushlstring_conv (lua_State * L, const char *s, size_t len, GIConv conv)
     return conv_result;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /* ------------------------------- Tables --------------------------------- */
 
 /* Creates a weak table. */
@@ -195,19 +288,9 @@ luaMC_new_weak_table (lua_State * L, const char *what /* k, v, kv */ )
     lua_setmetatable (L, -2);
 }
 
-/*
- * __gc support:
- */
+/* --------------------------------------------------------------------------------------------- */
 
 #ifdef HAVE_LUA_GETFENV         /* detects Lua 5.1 */
-
-static int
-l_gcenabler_gc (lua_State * L)
-{
-    lua_getfenv (L, 1);
-    luaMC_pingmeta (L, -1, "__gc");
-    return 0;
-}
 
 /**
  * Enables __gc for a table, for Lua 5.1 (and LuaJIT)
@@ -242,6 +325,8 @@ luaMC_enable_table_gc (lua_State * L, int index)
 
 #else /* for Lua 5.2+ */
 
+/* --------------------------------------------------------------------------------------------- */
+
 void
 luaMC_enable_table_gc (lua_State * L, int index)
 {
@@ -253,7 +338,9 @@ luaMC_enable_table_gc (lua_State * L, int index)
         lua_setmetatable (L, index);
 }
 
-#endif
+#endif /* HAVE_LUA_GETFENV */
+
+/* --------------------------------------------------------------------------------------------- */
 
 /* ---------------------------- Table accessors --------------------------- */
 
@@ -268,6 +355,8 @@ luaMC_rawgetfield (lua_State * L, int index, const char *key)
     lua_rawget (L, index);
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Like lua_setfield() but raw.
  */
@@ -280,6 +369,8 @@ luaMC_rawsetfield (lua_State * L, int index, const char *key)
     lua_rawset (L, index);
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Appends the top element to a sequence.
  */
@@ -288,6 +379,8 @@ luaMC_raw_append (lua_State * L, int index)
 {
     lua_rawseti (L, index, lua_rawlen (L, index) + 1);
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Utility: Like lua_setfield(), but for booleans only.
@@ -299,6 +392,8 @@ luaMC_setflag (lua_State * L, int index, const char *fname, gboolean value)
     lua_pushboolean (L, value);
     lua_setfield (L, index, fname);
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * A utility function. Just like lua_gettable(), but accepts a table name
@@ -318,6 +413,8 @@ luaMC_registry_gettable (lua_State * L, const char *table_name)
     lua_remove (L, -2);
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * A utility function. Just like lua_settable(), but accepts a table name
  * instead of its index.
@@ -336,6 +433,8 @@ luaMC_registry_settable (lua_State * L, const char *table_name)
     lua_pop (L, 1);
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Like lua_getglobal() but works on two levels. E.g., to fetch `math.pow`
  * you do `luaMC_getglobal2 (L, "math", "pow")`.
@@ -351,6 +450,8 @@ luaMC_getglobal2 (lua_State * L, const char *name1, const char *name2)
     }
     return !lua_isnil (L, -1);
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Searches a table's values for an element. The element to search for is
@@ -387,6 +488,8 @@ luaMC_search_table (lua_State * L, int tindex)
     LUAMC_UNGUARD (L);
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /* ----------------------------- Userdata --------------------------------- */
 
 /**
@@ -413,6 +516,8 @@ luaMC_newuserdata (lua_State * L, size_t size, const char *tname)
     return p;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Like luaMC_newuserdata(), but also zeros all the bytes.
  */
@@ -426,6 +531,8 @@ luaMC_newuserdata0 (lua_State * L, size_t size, const char *tname)
     luaL_setmetatable (L, tname);
     return p;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Like luaL_checkudata() but doesn't check for the udata type. So it's faster.
@@ -445,6 +552,8 @@ luaMC_checkudata__unsafe (lua_State * L, int index, const char *tname)
     else
         return luaL_checkudata (L, index, tname);
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Gets a userdata's stash.
@@ -493,6 +602,8 @@ luaMC_get_stash (lua_State * L, int index)
     }
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /* ------------------------------ Functions ------------------------------- */
 
 /* like luaL_callmeta() but doesn't leave a value on the stack. */
@@ -502,6 +613,8 @@ luaMC_pingmeta (lua_State * L, int index, const char *method_name)
     if (luaL_callmeta (L, index, method_name))
         lua_pop (L, 1);
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /*
  * For the following two, see ldoc of 'internal.register_system_callback()'.
@@ -514,6 +627,8 @@ luaMC_register_system_callback (lua_State * L, const char *name, int idx)
     lua_pushvalue (L, idx);
     lua_settable (L, LUA_REGISTRYINDEX);
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 gboolean
 luaMC_get_system_callback (lua_State * L, const char *name)
@@ -528,6 +643,8 @@ luaMC_get_system_callback (lua_State * L, const char *name)
     else
         return TRUE;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Returns the name of the current function, or of the function 'level'th
@@ -551,26 +668,11 @@ luaMC_get_function_name (lua_State * L, int level, gboolean keep_underscore)
     return ar.name;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /*
  * lua_pcall() wrapper:
  */
-
-/*
- * The following is equivalent to:
- *
- * function (msg)
- *   return debug.traceback(msg, 2)
- * end
- */
-static int
-_luaMC_pcall__errfunc (lua_State * L)
-{
-    luaMC_getglobal2 (L, "debug", "traceback");
-    lua_insert (L, -2);
-    lua_pushinteger (L, 2);
-    lua_call (L, 2, 1);
-    return 1;
-}
 
 /**
  * Like lua_pcall() except that the message also contains the traceback.
@@ -595,6 +697,8 @@ luaMC_pcall (lua_State * L, int nargs, int nresults)
     return success;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /* ---------------------- Stuff missing from Lua 5.1 ---------------------- */
 
 #ifndef HAVE_LUA_ABSINDEX
@@ -609,6 +713,8 @@ lua_absindex (lua_State * L, int idx)
 }
 #endif
 
+/* --------------------------------------------------------------------------------------------- */
+
 #ifndef HAVE_LUAL_SETMETATABLE
 void
 luaL_setmetatable (lua_State * L, const char *tname)
@@ -617,6 +723,8 @@ luaL_setmetatable (lua_State * L, const char *tname)
     lua_setmetatable (L, -2);
 }
 #endif
+
+/* --------------------------------------------------------------------------------------------- */
 
 #ifndef HAVE_LUAL_GETSUBTABLE
 int
@@ -636,6 +744,8 @@ luaL_getsubtable (lua_State * L, int idx, const char *name)
         return TRUE;
 }
 #endif
+
+/* --------------------------------------------------------------------------------------------- */
 
 #ifndef HAVE_LUAL_TESTUDATA
 /* This triviality was copied from Lua 5.2 source code (we have no other code
@@ -659,6 +769,8 @@ luaL_testudata (lua_State * L, int ud, const char *tname)
 }
 #endif
 
+/* --------------------------------------------------------------------------------------------- */
+
 #ifndef luaL_newlib
 void
 luaL_newlib (lua_State * L, const luaL_Reg * l)
@@ -667,6 +779,8 @@ luaL_newlib (lua_State * L, const luaL_Reg * l)
     luaL_setfuncs (L, l, 0);
 }
 #endif
+
+/* --------------------------------------------------------------------------------------------- */
 
 /* --------------------- Borrowings from Lua 5.1 -------------------------- */
 
@@ -680,6 +794,8 @@ luaL_typerror (lua_State * L, int narg, const char *tname)
     return 0;                   /* We never reach here. */
 }
 #endif
+
+/* --------------------------------------------------------------------------------------------- */
 
 /* ---------------- Registering modules/functions/constants --------------- */
 
@@ -695,6 +811,8 @@ luaMC_register_constants (lua_State * L, const luaMC_constReg * l)
     }
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * like lua_register() but works for an array of functions.
  */
@@ -707,6 +825,8 @@ luaMC_register_globals (lua_State * L, const luaL_Reg * l)
         ++l;
     }
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Creates a metatable.
@@ -727,6 +847,8 @@ luaMC_register_metatable (lua_State * L, const char *tname, const luaL_Reg * l,
     }
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /* Like Lua 5.2's luaL_requiref() (but doesn't support its last parameter,
  * which sets a global var.) */
 void
@@ -746,6 +868,8 @@ luaMC_requiref (lua_State * L, const char *modname, lua_CFunction openf)
 
     LUAMC_UNGUARD (L);
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /* -------------------------- Programming aids ---------------------------- */
 
@@ -783,6 +907,8 @@ mc_lua_fixup_idx (off_t idx, off_t len, gboolean endpoint)
     return idx;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Ensures the function doesn't have more than 'count' arguments.
  *
@@ -800,3 +926,5 @@ luaMC_checkargcount (lua_State * L, int count, gboolean is_method)
             luaL_error (L, E_ ("Too many arguments for function; only %d expected"), count);
     }
 }
+
+/* --------------------------------------------------------------------------------------------- */

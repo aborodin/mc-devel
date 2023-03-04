@@ -1,6 +1,29 @@
 /*
- * Holds functions that plug Lua and MC together.
- *
+   Functions that plug Lua and MC together.
+
+   Copyright (C) 2016-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2016
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
  * This file contains only high-level functions. None of them accepts a
  * lua_State argument (if it does, it means it's low level and belongs in
  * capi[-safecall].c, not here).
@@ -23,9 +46,26 @@
 
 #include "plumbing.h"
 
+/*** global variables ****************************************************************************/
+
+/*** file scope macro definitions ****************************************************************/
 
 /* The path of the bootstrap file, relative to mc_lua_system_dir(). */
 #define BOOTSTRAP_FILE "modules/core/_bootstrap.lua"
+
+/*** file scope type declarations ****************************************************************/
+
+/*** forward declarations (file scope functions) *************************************************/
+
+/*** file scope variables ************************************************************************/
+
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
+
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 /* -------------------------- Meta information ---------------------------- */
 
@@ -38,6 +78,8 @@ mc_lua_engine_name (void)
     return LUA_RELEASE;
 #endif
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Where system scripts are stored.
@@ -58,6 +100,8 @@ mc_lua_system_dir (void)
     return dir;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Where user scripts are stored.
  */
@@ -75,6 +119,8 @@ mc_lua_user_dir (void)
     return dir;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /* ----------------------------- Start/stop ------------------------------- */
 
 /**
@@ -88,6 +134,8 @@ mc_lua_init (void)
     /* The following line causes code in the 'src' tree to open our C modules. */
     mc_event_raise (MCEVENT_GROUP_LUA, "init", NULL);
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Loads the core, and then the user scripts.
@@ -117,9 +165,13 @@ mc_lua_load (void)
     g_assert (lua_gettop (Lg) == 0);    /* sanity check */
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 void
 mc_lua_shutdown (void)
 {
     lua_close (Lg);
     Lg = NULL;                  /* For easier debugging, in case somebody tries to use Lua after shutdown. */
 }
+
+/* --------------------------------------------------------------------------------------------- */

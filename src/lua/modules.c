@@ -1,5 +1,26 @@
-/**
- * All C modules have to be registered here.
+/*
+   All C modules have to be registered here.
+
+   Copyright (C) 2016-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2016
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <config.h>
@@ -12,12 +33,26 @@
 #include "modules.h"
 #include "pre-init.h"
 
+/*** global variables ****************************************************************************/
+
+/*** file scope macro definitions ****************************************************************/
+
+/*** file scope type declarations ****************************************************************/
+
+/*** forward declarations (file scope functions) *************************************************/
+
+/*** file scope variables ************************************************************************/
+
 static const struct luaL_Reg mods[] = {
 /* *INDENT-OFF* */
     { "conf",         luaopen_conf },
     { NULL, NULL }
 /* *INDENT-ON* */
 };
+
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * "Loads" all our C modules.
@@ -44,6 +79,10 @@ mc_lua_open_c_modules (void)
     return TRUE;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Our Lua integration is split into the 'lib' and the 'src' trees. The
  * modules are here, in the 'src' tree.
@@ -66,3 +105,5 @@ mc_lua_pre_init (void)
      * signature all the parameters mc_event_raise() sends it: we have this
      * scenario when we pass g_free (and others) to g_list_foreach(). */
 }
+
+/* --------------------------------------------------------------------------------------------- */
