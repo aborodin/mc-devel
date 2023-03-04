@@ -51,7 +51,8 @@
 /*** file scope variables ************************************************************************/
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg conf_lib[] = {
+static const struct luaL_Reg conf_lib[] =
+{
     /* No functions are currently defined in this module. */
     { NULL, NULL }
 };

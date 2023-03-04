@@ -93,7 +93,8 @@ mc_lua_system_dir (void)
     {
         /* getenv()'s returned pointer may be overwritten (by next getenv) or
          * invalidated (by putenv), so we make a copy with strdup(). */
-        if ((dir = g_strdup (g_getenv (MC_LUA_SYSTEM_DIR__ENVAR))) == NULL)
+        dir = g_strdup (g_getenv (MC_LUA_SYSTEM_DIR__ENVAR));
+        if (dir == NULL)
             dir = MC_LUA_SYSTEM_DIR;    /* Defined in Makefile.am. It already has MC_LUA_API_VERSION embedded. */
     }
 
@@ -112,7 +113,8 @@ mc_lua_user_dir (void)
 
     if (dir == NULL)
     {
-        if ((dir = g_strdup (g_getenv (MC_LUA_USER_DIR__ENVAR))) == NULL)
+        dir = g_strdup (g_getenv (MC_LUA_USER_DIR__ENVAR));
+        if (dir == NULL)
             dir = g_build_filename (mc_config_get_data_path (), "lua-" MC_LUA_API_VERSION, NULL);
     }
 

@@ -43,12 +43,13 @@
 
 /*** file scope variables ************************************************************************/
 
-static const struct luaL_Reg mods[] = {
 /* *INDENT-OFF* */
+static const struct luaL_Reg mods[] =
+{
     { "conf",         luaopen_conf },
     { NULL, NULL }
-/* *INDENT-ON* */
 };
+/* *INDENT-ON* */
 
 /* --------------------------------------------------------------------------------------------- */
 /*** file scope functions ************************************************************************/
@@ -62,12 +63,10 @@ mc_lua_open_c_modules (void)
 {
     const luaL_Reg *mod = mods;
 
-    while (mod->func)
+    while (mod->func != NULL)
     {
-        if (mod->name)
-        {
+        if (mod->name != NULL)
             luaMC_requiref (Lg, mod->name, mod->func);
-        }
         else
         {
             lua_pushcfunction (Lg, mod->func);

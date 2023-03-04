@@ -45,16 +45,16 @@
  */
 #ifdef HAVE_LUA_ISINTEGER
 /* Lua 5.3+ */
-#  if SIZEOF_LUA_INTEGER <= 4   /* sanity check */
-#    error "Your Lua engine was compiled with integer type too small to represent huge numbers."
-#  endif
-#  define lua_pushi lua_pushinteger
+#if SIZEOF_LUA_INTEGER <= 4     /* sanity check */
+#error "Your Lua engine was compiled with integer type too small to represent huge numbers."
+#endif
+#define lua_pushi lua_pushinteger
 #else
 /* Older Luas */
-#  if SIZEOF_LUA_NUMBER <= 4    /* sanity check */
-#    error "Your Lua engine was compiled with number type too small to represent huge numbers."
-#  endif
-#  define lua_pushi lua_pushnumber
+#if SIZEOF_LUA_NUMBER <= 4      /* sanity check */
+#error "Your Lua engine was compiled with number type too small to represent huge numbers."
+#endif
+#define lua_pushi lua_pushnumber
 #endif
 
 /* -------------- Stuff potentially missing from Lua 5.3+ ----------------- */
@@ -112,7 +112,7 @@
         if (names[i] == NULL) \
             lua_pushstring (L, fallback); \
     } \
-    while (0)
+    while (FALSE)
 
 /*
  * Use LUAMC_GUARD() and LUAMC_UNGUARD() to make sure your code's pushes and
@@ -241,8 +241,8 @@ void luaMC_checkargcount (lua_State * L, int count, gboolean is_method);
 /* Lua 5.3+ */
 /* BTW, using these for reading small integers ('int's) doesn't have any
    performance penalty. */
-#  define luaL_checki luaL_checkinteger
-#  define luaL_opti luaL_optinteger
+#define luaL_checki luaL_checkinteger
+#define luaL_opti luaL_optinteger
 #else
 /* Older Luas */
 /*
@@ -264,8 +264,11 @@ void luaMC_checkargcount (lua_State * L, int count, gboolean is_method);
 static inline gint64
 luaL_checki (lua_State * L, int idx)
 {
-    lua_Number floating = luaL_checknumber (L, idx);
-    gint64 integral = (gint64) floating;
+    lua_Number floating;
+    gint64 integral;
+
+    floating = luaL_checknumber (L, idx);
+    integral = (gint64) floating;
 
 #pragma GCC diagnostic push
 #pragma clang diagnostic push
@@ -290,8 +293,11 @@ luaL_checki (lua_State * L, int idx)
 static inline gint64
 luaL_opti (lua_State * L, int idx, lua_Number d)
 {
-    lua_Number floating = luaL_optnumber (L, idx, d);
-    gint64 integral = (gint64) floating;
+    lua_Number floating;
+    gint64 integral;
+
+    floating = luaL_optnumber (L, idx, d);
+    integral = (gint64) floating;
     /* We skip the "educational tidbit" from above. It's not that important. */
     return integral;
 }

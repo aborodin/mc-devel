@@ -62,7 +62,7 @@ display_error (lua_State * L)
     const char *error_message;
 
     error_message = lua_tostring (L, -1);
-    if (error_message)
+    if (error_message != NULL)
         fprintf (stderr, E_ ("LUA EXCEPTION: %s\n"), error_message);
 }
 
@@ -73,7 +73,7 @@ display_error (lua_State * L)
 static void
 handle_error (lua_State * L)
 {
-    if (!lua_isstring (L, -1))
+    if (lua_isstring (L, -1) == 0)
     {
         /* We don't know how to display non-string exceptions. */
         lua_pop (L, 1);
@@ -139,11 +139,9 @@ luaMC_safe_dofile (lua_State * L, const char *dirname, const char *basename)
         handle_error (L);
         return error;
     }
-    else
-    {
-        /* Note: LUA_OK (0) isn't defined in Lua 5.1. So we use "0". */
-        return luaMC_safe_call (L, 0, 0) ? 0 : LUA_ERRRUN;
-    }
+
+    /* Note: LUA_OK (0) isn't defined in Lua 5.1. So we use "0". */
+    return luaMC_safe_call (L, 0, 0) ? 0 : LUA_ERRRUN;
 
     /* An alternative implementation is to have a Lua C function that does
      * `loadfile(#1)()`, push that function, and call it with luaMC_safe_call().

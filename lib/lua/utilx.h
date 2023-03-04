@@ -10,9 +10,9 @@
 
 /* Debugging aid. */
 #if 0
-#  define d_message(args) (printf args)
+#define d_message(args) (printf args)
 #else
-#  define d_message(args)
+#define d_message(args)
 #endif
 
 /*** enums ***************************************************************************************/

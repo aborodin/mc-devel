@@ -153,15 +153,19 @@ luaMC_get_sign (lua_State * L, int idx)
      * is an integer it may not have a precise 'double' representation
      * and our -1/0/1 conversion may not be correct. */
 
-    if (lua_isinteger (L, idx))
+    if (lua_isinteger (L, idx) != 0)
     {
-        lua_Integer num = lua_tointeger (L, idx);
+        lua_Integer num;
+
+        num = lua_tointeger (L, idx);
         return (num < 0) ? -1 : (num > 0);
     }
 #endif
 
     {
-        lua_Number num = lua_tonumber (L, idx);
+        lua_Number num;
+
+        num = lua_tonumber (L, idx);
         return (num < 0) ? -1 : (num > 0);
     }
 }
@@ -334,7 +338,7 @@ luaMC_enable_table_gc (lua_State * L, int index)
 
     /* Re-assign the meta, in case the __gc entry was added after
      * calling setmetatable(). */
-    if (lua_getmetatable (L, index))
+    if (lua_getmetatable (L, index) != 0)
         lua_setmetatable (L, index);
 }
 
@@ -466,11 +470,13 @@ luaMC_search_table (lua_State * L, int tindex)
 {
     LUAMC_GUARD (L);
 
-    int eindex = lua_gettop (L);
+    int eindex;
+
+    eindex = lua_gettop (L);
     tindex = lua_absindex (L, tindex);
 
     lua_pushnil (L);
-    while (lua_next (L, tindex))
+    while (lua_next (L, tindex) != 0)
     {
         if (lua_rawequal (L, eindex, -1))
         {
@@ -547,10 +553,7 @@ luaMC_checkudata__unsafe (lua_State * L, int index, const char *tname)
     void *p;
 
     p = lua_touserdata (L, index);
-    if (p)
-        return p;
-    else
-        return luaL_checkudata (L, index, tname);
+    return (p != NULL ? p : luaL_checkudata (L, index, tname));
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -588,18 +591,16 @@ luaMC_get_stash (lua_State * L, int index)
 #endif
         return FALSE;
     }
-    else
-    {
-        lua_newtable (L);
-        lua_pushvalue (L, -1);  /* duplicate the table */
+
+    lua_newtable (L);
+    lua_pushvalue (L, -1);  /* duplicate the table */
 #ifdef HAVE_LUA_GETFENV
-        lua_setfenv (L, index);
+    lua_setfenv (L, index);
 #else
-        lua_setuservalue (L, index);
+    lua_setuservalue (L, index);
 #endif
-        *userdata_has_stash = TRUE;
-        return TRUE;
-    }
+    *userdata_has_stash = TRUE;
+    return TRUE;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -610,7 +611,7 @@ luaMC_get_stash (lua_State * L, int index)
 void
 luaMC_pingmeta (lua_State * L, int index, const char *method_name)
 {
-    if (luaL_callmeta (L, index, method_name))
+    if (luaL_callmeta (L, index, method_name) != 0)
         lua_pop (L, 1);
 }
 
@@ -640,8 +641,8 @@ luaMC_get_system_callback (lua_State * L, const char *name)
         lua_pop (L, 1);
         return FALSE;
     }
-    else
-        return TRUE;
+
+    return TRUE;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -655,7 +656,7 @@ luaMC_get_function_name (lua_State * L, int level, gboolean keep_underscore)
 {
     lua_Debug ar;
 
-    if (!lua_getstack (L, level, &ar))
+    if (lua_getstack (L, level, &ar) == 0)
         return "?";
 
     lua_getinfo (L, "n", &ar);
@@ -680,8 +681,10 @@ luaMC_get_function_name (lua_State * L, int level, gboolean keep_underscore)
 gboolean
 luaMC_pcall (lua_State * L, int nargs, int nresults)
 {
-    int errfunc_idx = lua_gettop (L) - nargs;
+    int errfunc_idx;
     gboolean success;
+
+    errfunc_idx = lua_gettop (L) - nargs;
 
     lua_pushcfunction (L, _luaMC_pcall__errfunc);
     lua_insert (L, errfunc_idx);
@@ -705,11 +708,14 @@ luaMC_pcall (lua_State * L, int nargs, int nresults)
 int
 lua_absindex (lua_State * L, int idx)
 {
-    int top = lua_gettop (L);
+    int top;
+
+    top = lua_gettop (L);
+
     if (idx < 0 && -idx <= top)
         return top + idx + 1;
-    else
-        return idx;
+
+    return idx;
 }
 #endif
 
@@ -740,8 +746,8 @@ luaL_getsubtable (lua_State * L, int idx, const char *name)
         lua_setfield (L, idx, name);
         return FALSE;
     }
-    else
-        return TRUE;
+
+    return TRUE;
 }
 #endif
 
@@ -753,18 +759,21 @@ luaL_getsubtable (lua_State * L, int idx, const char *name)
 void *
 luaL_testudata (lua_State * L, int ud, const char *tname)
 {
-    void *p = lua_touserdata (L, ud);
+    void *p;
+
+    p = lua_touserdata (L, ud);
     if (p != NULL)
     {                           /* value is a userdata? */
-        if (lua_getmetatable (L, ud))
+        if (lua_getmetatable (L, ud) != 0)
         {                       /* does it have a metatable? */
             luaL_getmetatable (L, tname);       /* get correct metatable */
-            if (!lua_rawequal (L, -1, -2))      /* not the same? */
+            if (lua_rawequal (L, -1, -2) == 0)          /* not the same? */
                 p = NULL;       /* value is a userdata with wrong metatable */
             lua_pop (L, 2);     /* remove both metatables */
             return p;
         }
     }
+
     return NULL;                /* value is not a userdata with a metatable */
 }
 #endif
@@ -788,8 +797,9 @@ luaL_newlib (lua_State * L, const luaL_Reg * l)
 int
 luaL_typerror (lua_State * L, int narg, const char *tname)
 {
-    const char *info =
-        lua_pushfstring (L, E_ ("%s expected, got %s"), tname, luaL_typename (L, narg));
+    const char *info;
+
+    info = lua_pushfstring (L, E_ ("%s expected, got %s"), tname, luaL_typename (L, narg));
     luaL_argerror (L, narg, info);
     return 0;                   /* We never reach here. */
 }
@@ -803,7 +813,7 @@ luaL_typerror (lua_State * L, int narg, const char *tname)
 void
 luaMC_register_constants (lua_State * L, const luaMC_constReg * l)
 {
-    while (l->name)
+    while (l->name != NULL)
     {
         lua_pushinteger (L, l->value);
         lua_setfield (L, -2, l->name);
@@ -819,7 +829,7 @@ luaMC_register_constants (lua_State * L, const luaMC_constReg * l)
 void
 luaMC_register_globals (lua_State * L, const luaL_Reg * l)
 {
-    while (l->name)
+    while (l->name != NULL)
     {
         lua_register (L, l->name, l->func);
         ++l;
