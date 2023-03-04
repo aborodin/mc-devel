@@ -61,10 +61,9 @@ static const struct luaL_Reg mods[] =
 static gboolean
 mc_lua_open_c_modules (void)
 {
-    const luaL_Reg *mod = mods;
+    const luaL_Reg *mod;
 
-    while (mod->func != NULL)
-    {
+    for (mod = mods; mod->func != NULL; mod++)
         if (mod->name != NULL)
             luaMC_requiref (Lg, mod->name, mod->func);
         else
@@ -72,8 +71,6 @@ mc_lua_open_c_modules (void)
             lua_pushcfunction (Lg, mod->func);
             lua_call (Lg, 0, 0);
         }
-        ++mod;
-    }
 
     return TRUE;
 }

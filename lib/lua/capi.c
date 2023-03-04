@@ -219,12 +219,12 @@ luaMC_pushstring_and_free (lua_State * L, char *s)
 int
 luaMC_push_argv (lua_State * L, char **argv, gboolean as_table)
 {
-    int count = 0;
+    int count;
 
     if (as_table)
         lua_newtable (L);
 
-    for (; argv[count] != NULL; count++)
+    for (count = 0; argv[count] != NULL; count++)
     {
         lua_pushstring (L, argv[count]);
         if (as_table)
@@ -813,11 +813,10 @@ luaL_typerror (lua_State * L, int narg, const char *tname)
 void
 luaMC_register_constants (lua_State * L, const luaMC_constReg * l)
 {
-    while (l->name != NULL)
+    for (; l->name != NULL; l++)
     {
         lua_pushinteger (L, l->value);
         lua_setfield (L, -2, l->name);
-        ++l;
     }
 }
 
@@ -829,11 +828,8 @@ luaMC_register_constants (lua_State * L, const luaMC_constReg * l)
 void
 luaMC_register_globals (lua_State * L, const luaL_Reg * l)
 {
-    while (l->name != NULL)
-    {
+    for (; l->name != NULL; l++)
         lua_register (L, l->name, l->func);
-        ++l;
-    }
 }
 
 /* --------------------------------------------------------------------------------------------- */
