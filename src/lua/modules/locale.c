@@ -1,7 +1,29 @@
+/*
+   Localization.
+
+   Copyright (C) 2016-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2016
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 /**
-
-Localization.
-
 Use these facilities to enable the localization of your application.
 
 The main facility here is the `T` function. You should prepend a "`T`" to
@@ -25,6 +47,7 @@ later.
 @module locale
 
 */
+
 #include <config.h>
 
 #include <locale.h>
@@ -36,6 +59,42 @@ later.
 
 #include "../modules.h"
 
+/*** global variables ****************************************************************************/
+
+/*** file scope macro definitions ****************************************************************/
+
+/*** file scope type declarations ****************************************************************/
+
+/*** forward declarations (file scope functions) *************************************************/
+
+static int l_format_plural (lua_State * L);
+
+static int l_t (lua_State * L);
+static int l_n (lua_State * L);
+static int l_q (lua_State * L);
+
+/*** file scope variables ************************************************************************/
+
+/* *INDENT-OFF* */
+static const struct luaL_Reg locale_lib[] = {
+    /* We may expose the following as a global function PL() (for example) if
+     * our POT extractor would have some difficulty seeing it otherwise. */
+    { "format_plural", l_format_plural },
+    { NULL, NULL }
+};
+
+static const struct luaL_Reg locale_global_lib[] = {
+    { "T", l_t },
+    { "N", l_n },
+    { "Q", l_q },
+    { "E", l_n },
+    { NULL, NULL }
+};
+/* *INDENT-ON* */
+
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Global functions.
@@ -91,6 +150,8 @@ l_t (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Marks a string for translation.
  *
@@ -118,6 +179,8 @@ l_n (lua_State * L)
     lua_pushstring (L, luaL_checkstring (L, 1));
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Translates a string, with context.
@@ -149,6 +212,8 @@ l_q (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Marks programmer-facing error messages.
  *
@@ -174,6 +239,8 @@ l_q (lua_State * L)
 /**
  * @section end
  */
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Translates a string, plural version.
@@ -237,24 +304,9 @@ l_format_plural (lua_State * L)
     return 1;
 }
 
-/* ------------------------------------------------------------------------ */
-
-/* *INDENT-OFF* */
-static const struct luaL_Reg locale_lib[] = {
-    /* We may expose the following as a global function PL() (for example) if
-     * our POT extractor would have some difficulty seeing it otherwise. */
-    { "format_plural", l_format_plural },
-    { NULL, NULL }
-};
-
-static const struct luaL_Reg locale_global_lib[] = {
-    { "T", l_t },
-    { "N", l_n },
-    { "Q", l_q },
-    { "E", l_n },
-    { NULL, NULL }
-};
-/* *INDENT-ON* */
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 int
 luaopen_locale (lua_State * L)
@@ -263,3 +315,5 @@ luaopen_locale (lua_State * L)
     luaL_newlib (L, locale_lib);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
