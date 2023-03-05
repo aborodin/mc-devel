@@ -76,14 +76,16 @@ static int l_q (lua_State * L);
 /*** file scope variables ************************************************************************/
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg locale_lib[] = {
+static const struct luaL_Reg locale_lib[] =
+{
     /* We may expose the following as a global function PL() (for example) if
      * our POT extractor would have some difficulty seeing it otherwise. */
     { "format_plural", l_format_plural },
     { NULL, NULL }
 };
 
-static const struct luaL_Reg locale_global_lib[] = {
+static const struct luaL_Reg locale_global_lib[] =
+{
     { "T", l_t },
     { "N", l_n },
     { "Q", l_q },
@@ -274,7 +276,7 @@ l_format_plural (lua_State * L)
     singular = luaL_checkstring (L, 1);
     plural = luaL_checkstring (L, 2);
     n = luaL_checklong (L, 3);
-    translate_only = lua_toboolean (L, 4);
+    translate_only = lua_toboolean (L, 4) != 0;
 
     /*
      * Ensure the user isn't trying to execute code like:
@@ -290,9 +292,7 @@ l_format_plural (lua_State * L)
         luaL_checktype (L, 4, LUA_TBOOLEAN);
 
     if (translate_only)
-    {
         lua_pushstring (L, ngettext (singular, plural, n));
-    }
     else
     {
         lua_getfield (L, 1, "format");
