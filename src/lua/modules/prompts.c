@@ -1,3 +1,28 @@
+/*
+   Common dialog boxes.
+
+   Copyright (C) 2016-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2016
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 /**
  * Common dialog boxes.
  *
@@ -14,6 +39,35 @@
 #include "../modules.h"
 #include "tty.h"                /* luaTTY_assert_ui_is_ready() */
 
+/*** global variables ****************************************************************************/
+
+/*** file scope macro definitions ****************************************************************/
+
+/*** file scope type declarations ****************************************************************/
+
+/*** forward declarations (file scope functions) *************************************************/
+
+static int l_alert (lua_State * L);
+static int l_confirm (lua_State * L);
+
+/*** file scope variables ************************************************************************/
+
+/* *INDENT-OFF* */
+static const struct luaL_Reg prompts_lib[] = {
+    { "confirm", l_confirm },
+    { "alert", l_alert },
+    { NULL, NULL }
+};
+
+static const struct luaL_Reg prompts_global_lib[] = {
+    { "alert", l_alert },
+    { NULL, NULL }
+};
+/* *INDENT-ON* */
+
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Displays a message to the user.
@@ -57,6 +111,8 @@ l_alert (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Displays a yes/no question to the user.
  *
@@ -86,20 +142,9 @@ l_confirm (lua_State * L)
     return 1;
 }
 
-/* ------------------------------------------------------------------------ */
-
-/* *INDENT-OFF* */
-static const struct luaL_Reg prompts_lib[] = {
-    { "confirm", l_confirm },
-    { "alert", l_alert },
-    { NULL, NULL }
-};
-
-static const struct luaL_Reg prompts_global_lib[] = {
-    { "alert", l_alert },
-    { NULL, NULL }
-};
-/* *INDENT-ON* */
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 int
 luaopen_prompts (lua_State * L)
@@ -108,3 +153,5 @@ luaopen_prompts (lua_State * L)
     luaL_newlib (L, prompts_lib);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
