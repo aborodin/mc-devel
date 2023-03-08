@@ -1,3 +1,40 @@
+/*
+   The internal representation of a pathname.
+
+   Copyright (C) 2015-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2015
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+
+#include <config.h>
+
+#include "lib/global.h"
+#include "lib/vfs/vfs.h"
+#include "lib/lua/capi.h"
+#include "lib/lua/utilx.h"
+
+#include "../modules.h"
+
+#include "fs.h"
+
 /**
 
 The internal representation of a pathname.
@@ -98,17 +135,11 @@ can do either `fs.chdir("/")` or `fs.chdir(fs.VPath("/"))`.
 
 */
 
-#include <config.h>
+/*** global variables ****************************************************************************/
 
-#include "lib/global.h"
-#include "lib/vfs/vfs.h"
-#include "lib/lua/capi.h"
-#include "lib/lua/utilx.h"
+/*** file scope macro definitions ****************************************************************/
 
-#include "../modules.h"
-
-#include "fs.h"
-
+/*** file scope type declarations ****************************************************************/
 
 /*
  * The Lua userdata.
@@ -118,6 +149,37 @@ typedef struct
     gboolean has_stash;
     vfs_path_t *vpath;
 } lua_vpath_t;
+
+/*** forward declarations (file scope functions) *************************************************/
+
+static int l_vpath_index (lua_State * L);
+static int l_vpath_gc (lua_State * L);
+static int l_vpath_last (lua_State * L);
+static int l_vpath_tail (lua_State * L);
+static int l_vpath_extract (lua_State * L);
+static int l_vpath_is_local (lua_State * L);
+static int l_vpath_parent (lua_State * L);
+static int l_vpath_to_str (lua_State * L);
+
+/*** file scope variables ************************************************************************/
+
+/* *INDENT-OFF* */
+static const struct luaL_Reg fsvpathlib[] = {
+    { "__index", l_vpath_index },
+    { "__gc", l_vpath_gc },
+    { "last", l_vpath_last },
+    { "tail", l_vpath_tail },
+    { "extract", l_vpath_extract },
+    { "is_local", l_vpath_is_local },
+    { "parent", l_vpath_parent },
+    { "to_str", l_vpath_to_str },
+    { NULL, NULL }
+};
+/* *INDENT-ON* */
+
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 /* ------------------------- Pushing a vpath ------------------------------ */
 
@@ -135,63 +197,7 @@ luaFS_push_vpath__without_cloning (lua_State * L, vfs_path_t * vpath)
     userdata->vpath = vpath;
 }
 
-void
-luaFS_push_vpath (lua_State * L, const vfs_path_t * vpath)
-{
-    luaFS_push_vpath__without_cloning (L, vfs_path_clone (vpath));
-}
-
-/* ---------------------- Checking out a vpath ---------------------------- */
-
-vfs_path_t *
-luaFS_check_vpath_ex (lua_State * L, int index, gboolean relative)
-{
-    lua_vpath_t *userdata;
-
-    index = lua_absindex (L, index);
-
-    /* If the item is already a VPath, return it. */
-    if ((userdata = luaL_testudata (L, index, "fs.VPath")) != NULL)
-    {
-        return userdata->vpath;
-    }
-    /* Else: if the item is a string, convert it to VPath.
-     *
-     * Note: We don't use lua_isstring(). In the Lua world numbers are
-     * "strings" but we don't want to accept numbers as valid pathnames
-     * because they're more likely file descriptors (fed to us by error)
-     * than genuine file names.
-     */
-    else if (lua_type (L, index) == LUA_TSTRING)
-    {
-        /* We mimic the semantics of lua_tostring(): We replace the string
-         * on the Lua stack with a VPath object. Because the pointer is now
-         * on the Lua stack, the programmer won't need to handle it (free())
-         * himself: the garbage collector handles this.
-         */
-        const char *str = lua_tostring (L, index);
-        vfs_path_t *vpath;
-
-        vpath = vfs_path_from_str_flags (str, relative ? VPF_NO_CANON : VPF_NONE);
-        luaFS_push_vpath__without_cloning (L, vpath);
-        lua_replace (L, index);
-
-        return vpath;
-    }
-    else
-    {
-        luaL_typerror (L, index, "pathname");
-    }
-    return NULL;                /* We won't ever arrive here. */
-}
-
-vfs_path_t *
-luaFS_check_vpath (lua_State * L, int index)
-{
-    return luaFS_check_vpath_ex (L, index, FALSE);
-}
-
-/* ------------------------------------------------------------------------ */
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * An array of path elements.
@@ -287,6 +293,8 @@ extract_vpath_element (lua_State * L, const vfs_path_element_t * path_element)
 #endif
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Extracts a vpath into the table at the top of the stack.
  *
@@ -326,6 +334,8 @@ extract_vpath (lua_State * L, const vfs_path_t * vpath)
     lua_pop (L, 1);             /* Pop the "path" table. */
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static void
 luaFS_get_vpath_stash (lua_State * L, int index)
 {
@@ -341,6 +351,8 @@ luaFS_get_vpath_stash (lua_State * L, int index)
     }
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /*
  * Implements the __gc hook.
  */
@@ -353,6 +365,8 @@ l_vpath_gc (lua_State * L)
     vfs_path_free (vpath, TRUE);
     return 0;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Determines whether a vpath points to the local filesystem.
@@ -371,6 +385,8 @@ l_vpath_is_local (lua_State * L)
     lua_pushboolean (L, vfs_file_is_local (vpath));
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Returns the vpath with the last path element removed.
@@ -392,6 +408,8 @@ l_vpath_parent (lua_State * L)
     luaFS_push_vpath__without_cloning (L, parent);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /*
  * Implements the __index hook.
@@ -426,6 +444,8 @@ l_vpath_index (lua_State * L)
     }
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Returns the last path element.
  *
@@ -444,6 +464,8 @@ l_vpath_last (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Returns the path field of the last path element.
  *
@@ -458,6 +480,8 @@ l_vpath_tail (lua_State * L)
     lua_getfield (L, -1, "path");
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Converts a vpath to a string.
@@ -487,6 +511,8 @@ l_vpath_to_str (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Converts a vpath to a Lua table.
  *
@@ -503,21 +529,9 @@ l_vpath_extract (lua_State * L)
     return 1;
 }
 
-/* ------------------------------------------------------------------------ */
-
-/* *INDENT-OFF* */
-static const struct luaL_Reg fsvpathlib[] = {
-    { "__index", l_vpath_index },
-    { "__gc", l_vpath_gc },
-    { "last", l_vpath_last },
-    { "tail", l_vpath_tail },
-    { "extract", l_vpath_extract },
-    { "is_local", l_vpath_is_local },
-    { "parent", l_vpath_parent },
-    { "to_str", l_vpath_to_str },
-    { NULL, NULL }
-};
-/* *INDENT-ON* */
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 int
 luaopen_fs_vpath (lua_State * L)
@@ -525,6 +539,70 @@ luaopen_fs_vpath (lua_State * L)
     luaMC_register_metatable (L, "fs.VPath", fsvpathlib, FALSE);
     return 0;                   /* Nothing to return! */
 }
+
+/* --------------------------------------------------------------------------------------------- */
+
+void
+luaFS_push_vpath (lua_State * L, const vfs_path_t * vpath)
+{
+    luaFS_push_vpath__without_cloning (L, vfs_path_clone (vpath));
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/* ---------------------- Checking out a vpath ---------------------------- */
+
+vfs_path_t *
+luaFS_check_vpath_ex (lua_State * L, int index, gboolean relative)
+{
+    lua_vpath_t *userdata;
+
+    index = lua_absindex (L, index);
+
+    /* If the item is already a VPath, return it. */
+    if ((userdata = luaL_testudata (L, index, "fs.VPath")) != NULL)
+    {
+        return userdata->vpath;
+    }
+    /* Else: if the item is a string, convert it to VPath.
+     *
+     * Note: We don't use lua_isstring(). In the Lua world numbers are
+     * "strings" but we don't want to accept numbers as valid pathnames
+     * because they're more likely file descriptors (fed to us by error)
+     * than genuine file names.
+     */
+    else if (lua_type (L, index) == LUA_TSTRING)
+    {
+        /* We mimic the semantics of lua_tostring(): We replace the string
+         * on the Lua stack with a VPath object. Because the pointer is now
+         * on the Lua stack, the programmer won't need to handle it (free())
+         * himself: the garbage collector handles this.
+         */
+        const char *str = lua_tostring (L, index);
+        vfs_path_t *vpath;
+
+        vpath = vfs_path_from_str_flags (str, relative ? VPF_NO_CANON : VPF_NONE);
+        luaFS_push_vpath__without_cloning (L, vpath);
+        lua_replace (L, index);
+
+        return vpath;
+    }
+    else
+    {
+        luaL_typerror (L, index, "pathname");
+    }
+    return NULL;                /* We won't ever arrive here. */
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+vfs_path_t *
+luaFS_check_vpath (lua_State * L, int index)
+{
+    return luaFS_check_vpath_ex (L, index, FALSE);
+}
+
+/* --------------------------------------------------------------------------------------------- */
 
 /* --------------- Alternative handling of path arguments ----------------- */
 
@@ -574,6 +652,8 @@ get_vpath_argument (lua_State * L, int index)
     return arg;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 void
 destroy_vpath_argument (vpath_argument * arg)
 {
@@ -583,3 +663,5 @@ destroy_vpath_argument (vpath_argument * arg)
         g_free (arg);
     }
 }
+
+/* --------------------------------------------------------------------------------------------- */
