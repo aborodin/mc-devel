@@ -55,7 +55,8 @@ static int l_register_system_callback (lua_State * L);
 /*** file scope variables ************************************************************************/
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg internal_lib[] = {
+static const struct luaL_Reg internal_lib[] =
+{
     { "register_system_callback", l_register_system_callback },
     { NULL, NULL }
 };
