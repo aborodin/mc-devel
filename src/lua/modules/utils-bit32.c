@@ -58,7 +58,8 @@ static int l_band (lua_State * L);
 /*** file scope variables ************************************************************************/
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg utils_bit32_lib[] = {
+static const struct luaL_Reg utils_bit32_lib[] =
+{
     { "bor", l_bor },
     { "band", l_band },
     { NULL, NULL }
@@ -80,13 +81,12 @@ static const struct luaL_Reg utils_bit32_lib[] = {
 static int
 l_bor (lua_State * L)
 {
-    int i = lua_gettop (L);
+    int i;
     guint32 acc = 0;
-    while (i > 0)
-    {
+
+    for (i = lua_gettop (L); i > 0; i--)
         acc |= (guint32) luaL_checkunsigned (L, i);
-        --i;
-    }
+
     lua_pushunsigned (L, acc);
     return 1;
 }
@@ -104,15 +104,14 @@ l_bor (lua_State * L)
 static int
 l_band (lua_State * L)
 {
-    int i = lua_gettop (L);
+    int i;
     /* Note: Calling band() with no arguments returns 0xffffffff for
      * compatibility with Lua 5.2's standard library. */
     guint32 acc = ~(guint32) 0;
-    while (i > 0)
-    {
+
+    for (i = lua_gettop (L); i > 0; i--)
         acc &= (guint32) luaL_checkunsigned (L, i);
-        --i;
-    }
+
     lua_pushunsigned (L, acc);
     return 1;
 }
