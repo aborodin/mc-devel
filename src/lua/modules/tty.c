@@ -1,3 +1,28 @@
+/*
+   Terminal-related facilities.
+
+   Copyright (C) 2016-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2016
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 /**
  * Terminal-related facilities.
  *
@@ -13,6 +38,32 @@
 
 #include "../modules.h"
 
+/*** global variables ****************************************************************************/
+
+/*** file scope macro definitions ****************************************************************/
+
+/*** file scope type declarations ****************************************************************/
+
+/*** forward declarations (file scope functions) *************************************************/
+
+static int l_keyname_to_keycode (lua_State * L);
+static int l_keycode_to_keyname (lua_State * L);
+static int l_beep (lua_State * L);
+
+/*** file scope variables ************************************************************************/
+
+/* *INDENT-OFF* */
+static const struct luaL_Reg ttylib[] = {
+    { "keyname_to_keycode", l_keyname_to_keycode },
+    { "keycode_to_keyname", l_keycode_to_keyname },
+    { "beep", l_beep },
+    { NULL, NULL }
+};
+/* *INDENT-ON* */
+
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Keyboard keys.
@@ -111,6 +162,8 @@ emacs_to_mc (const char *name)
 
 #undef START
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * A wrapper around tty_keyname_to_keycode() to make it support Emacs-style keys.
  *
@@ -130,6 +183,8 @@ lookup_emacs_key (const char *name, char **label)
 
     return code;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Converts a keyname (the element at index 'name_index') to a keycode.
@@ -169,6 +224,8 @@ luaTTY_check_keycode (lua_State * L, int name_index, gboolean push_name_short)
     }
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Converts a keyname to a keycode.
  *
@@ -196,6 +253,8 @@ l_keyname_to_keycode (lua_State * L)
 
     return 2;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Converts a keycode to a keyname.
@@ -240,7 +299,7 @@ l_keycode_to_keyname (lua_State * L)
  * @section end
  */
 
-/* ------------------------------------------------------------------------ */
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Misc functions
@@ -266,16 +325,9 @@ l_beep (lua_State * L)
  * @section end
  */
 
-/* ------------------------------------------------------------------------ */
-
-/* *INDENT-OFF* */
-static const struct luaL_Reg ttylib[] = {
-    { "keyname_to_keycode", l_keyname_to_keycode },
-    { "keycode_to_keyname", l_keycode_to_keyname },
-    { "beep", l_beep },
-    { NULL, NULL }
-};
-/* *INDENT-ON* */
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 int
 luaopen_tty (lua_State * L)
@@ -283,3 +335,5 @@ luaopen_tty (lua_State * L)
     luaL_newlib (L, ttylib);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
