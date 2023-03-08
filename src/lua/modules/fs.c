@@ -185,12 +185,10 @@ l_chmod (lua_State * L)
 {
     const vfs_path_t *vpath;
     mode_t mode;
-
     int result;
 
     vpath = luaFS_check_vpath (L, 1);
     mode = luaL_checki (L, 2);
-
     result = mc_chmod (vpath, mode);
 
     return luaFS_push_result (L, result, vpath->str);
@@ -203,7 +201,6 @@ do_link (lua_State * L, gboolean symbolic)
 {
     const vfs_path_t *vpath1;
     const vfs_path_t *vpath2;
-
     int result;
 
     vpath1 = luaFS_check_vpath_ex (L, 1, TRUE);
@@ -259,11 +256,9 @@ static int
 l_unlink (lua_State * L)
 {
     const vfs_path_t *vpath;
-
     int result;
 
     vpath = luaFS_check_vpath (L, 1);
-
     result = mc_unlink (vpath);
 
     return luaFS_push_result (L, result, vpath->str);
@@ -281,12 +276,10 @@ static int
 l_readlink (lua_State * L)
 {
     const vfs_path_t *vpath;
-
     char link_target[MC_MAXPATHLEN];
     int len;
 
     vpath = luaFS_check_vpath (L, 1);
-
     len = mc_readlink (vpath, link_target, sizeof (link_target));       /* We don't need to do "- 1" */
 
     if (len > 0)
@@ -294,8 +287,8 @@ l_readlink (lua_State * L)
         lua_pushlstring (L, link_target, len);
         return 1;
     }
-    else
-        return luaFS_push_error (L, vpath->str);
+
+    return luaFS_push_error (L, vpath->str);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -313,12 +306,10 @@ l_rename (lua_State * L)
 {
     const vfs_path_t *vpath1;
     const vfs_path_t *vpath2;
-
     int result;
 
     vpath1 = luaFS_check_vpath (L, 1);
     vpath2 = luaFS_check_vpath (L, 2);
-
     result = mc_rename (vpath1, vpath2);
 
     return luaFS_push_result (L, result, vpath1->str);
@@ -340,12 +331,10 @@ l_mkdir (lua_State * L)
 {
     const vfs_path_t *vpath;
     mode_t mode;
-
     int result;
 
     vpath = luaFS_check_vpath (L, 1);
     mode = luaL_opti (L, 2, 0777);
-
     result = mc_mkdir (vpath, mode);
 
     return luaFS_push_result (L, result, vpath->str);
@@ -366,10 +355,10 @@ l_utime (lua_State * L)
 {
     const vfs_path_t *vpath;
     mc_timesbuf_t times;
-
-    time_t now = time (NULL);
+    time_t now;
     int result;
 
+    now = time (NULL);
     vpath = luaFS_check_vpath (L, 1);
 #ifdef HAVE_UTIMENSAT
     times[1].tv_sec = luaL_opti (L, 2, now);
@@ -384,7 +373,6 @@ l_utime (lua_State * L)
     /* Note: Libc's utime(2) does accept NULL as the second argument, but,
      * judging by FISH's fish_utime(), it's not safe to surprise a VFS
      * class with a NULL. */
-
     result = mc_utime (vpath, &times);
 
     return luaFS_push_result (L, result, vpath->str);
@@ -405,13 +393,11 @@ l_chown (lua_State * L)
     const vfs_path_t *vpath;
     uid_t owner;
     gid_t group;
-
     int result;
 
     vpath = luaFS_check_vpath (L, 1);
     owner = luaL_opti (L, 2, -1);
     group = luaL_opti (L, 3, -1);
-
     result = mc_chown (vpath, owner, group);
 
     return luaFS_push_result (L, result, vpath->str);
@@ -431,13 +417,11 @@ l_mknod (lua_State * L)
     const vfs_path_t *vpath;
     mode_t mode;
     dev_t dev;
-
     int result;
 
     vpath = luaFS_check_vpath (L, 1);
     mode = luaL_checki (L, 2);
     dev = luaL_checki (L, 3);
-
     result = mc_mknod (vpath, mode, dev);
 
     return luaFS_push_result (L, result, vpath->str);
@@ -458,11 +442,9 @@ static int
 l_rmdir (lua_State * L)
 {
     const vfs_path_t *vpath;
-
     int result;
 
     vpath = luaFS_check_vpath (L, 1);
-
     result = mc_rmdir (vpath);
 
     return luaFS_push_result (L, result, vpath->str);
@@ -505,17 +487,15 @@ l_getlocalcopy (lua_State * L)
     vfs_path_t *local;
 
     vpath = luaFS_check_vpath (L, 1);
-
     local = mc_getlocalcopy (vpath);
 
-    if (local)
-    {
-        lua_pushstring (L, local->str);
-        vfs_path_free (local, TRUE);
-        return 1;
-    }
-    else
+    if (local == NULL)
         return luaFS_push_error (L, vpath->str);
+
+    lua_pushstring (L, local->str);
+    vfs_path_free (local, TRUE);
+
+    return 1;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -544,14 +524,12 @@ l_ungetlocalcopy (lua_State * L)
     const vfs_path_t *vpath;
     const vfs_path_t *local;
     gboolean has_changed;
-
     int result;
 
     vpath = luaFS_check_vpath (L, 1);
     local = luaFS_check_vpath (L, 2);
     luaL_checktype (L, 3, LUA_TBOOLEAN);        /* Make it mandatory. */
-    has_changed = lua_toboolean (L, 3);
-
+    has_changed = lua_toboolean (L, 3) != 0;
     result = mc_ungetlocalcopy (vpath, local, has_changed);
 
     return luaFS_push_result (L, result, vpath->str);
@@ -579,11 +557,9 @@ static int
 l_chdir (lua_State * L)
 {
     const vfs_path_t *vpath;
-
     int result;
 
     vpath = luaFS_check_vpath (L, 1);
-
     result = mc_chdir (vpath);
 
     return luaFS_push_result (L, result, vpath->str);
@@ -622,8 +598,8 @@ l_nonvfs_realpath (lua_State * L)
         lua_pushstring (L, resolved_path);
         return 1;
     }
-    else
-        return 0;
+
+    return 0;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -644,7 +620,7 @@ l_nonvfs_realpath (lua_State * L)
 static int
 l_vfs_expire (lua_State * L)
 {
-    vfs_expire (lua_toboolean (L, 1));
+    vfs_expire (lua_toboolean (L, 1) != 0);
     return 0;
 }
 
@@ -688,7 +664,6 @@ l_mkstemps (lua_State * L)
 {
     const char *prefix;
     const char *suffix;
-
     vfs_path_t *tmp_vpath = NULL;
     int tmp_fd = -1;
 
@@ -711,6 +686,7 @@ l_mkstemps (lua_State * L)
 
     lua_pushstring (L, tmp_vpath->str);
     vfs_path_free (tmp_vpath, TRUE);
+
     return 1;
 }
 
@@ -747,10 +723,8 @@ l_nonvfs_access (lua_State * L)
 {
     static const char *const mode_names[] = { "r", "w", "x", "", NULL };
     static int mode_values[] = { R_OK, W_OK, X_OK, F_OK };
-
     vpath_argument *vpath;
     int mode;
-
     struct stat sb;
     int result;
 
@@ -763,11 +737,10 @@ l_nonvfs_access (lua_State * L)
 
     if (result == -1)
         return luaFS_push_error__by_idx (L, 1);
-    else
-    {
-        lua_pushboolean (L, TRUE);
-        return 1;
-    }
+
+    lua_pushboolean (L, TRUE);
+
+    return 1;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -793,6 +766,7 @@ l_file_exists (lua_State * L)
 {
     lua_settop (L, 1);
     lua_pushliteral (L, "");
+
     return l_nonvfs_access (L);
 }
 
@@ -821,12 +795,10 @@ l_nonvfs_mkdir_p (lua_State * L)
 {
     const vfs_path_t *vpath;
     mode_t mode;
-
     int result;
 
     vpath = luaFS_check_vpath (L, 1);
     mode = luaL_opti (L, 2, 0777);
-
     result = my_mkdir (vpath, mode);
 
     return luaFS_push_result (L, result, vpath->str);
@@ -873,8 +845,7 @@ l_vpath_new (lua_State * L)
 {
     gboolean relative;
 
-    relative = lua_toboolean (L, 2);
-
+    relative = lua_toboolean (L, 2) != 0;
     if (relative)
         (void) luaFS_check_vpath_ex (L, 1, TRUE);
     else
@@ -919,7 +890,6 @@ luaFS_push_error__by_idx (lua_State * L, int filename_index)
     const vfs_path_t *vpath;
 
     vpath = luaFS_check_vpath (L, filename_index);
-
     lua_pushnil (L);
     luaFS_push_error_message (L, errno, vpath->str);
     lua_pushinteger (L, errno);
@@ -935,14 +905,12 @@ luaFS_push_error__by_idx (lua_State * L, int filename_index)
 int
 luaFS_push_result (lua_State * L, int result, const char *filename)
 {
-    if (result != -1)
-    {
-        /* Indicate success. */
-        lua_pushboolean (L, TRUE);
-        return 1;
-    }
-    else
+    if (result == -1)
         return luaFS_push_error (L, filename);
+
+    /* Indicate success. */
+    lua_pushboolean (L, TRUE);
+    return 1;
 }
 
 /* --------------------------------------------------------------------------------------------- */
