@@ -53,13 +53,15 @@ static int l_confirm (lua_State * L);
 /*** file scope variables ************************************************************************/
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg prompts_lib[] = {
+static const struct luaL_Reg prompts_lib[] =
+{
     { "confirm", l_confirm },
     { "alert", l_alert },
     { NULL, NULL }
 };
 
-static const struct luaL_Reg prompts_global_lib[] = {
+static const struct luaL_Reg prompts_global_lib[] =
+{
     { "alert", l_alert },
     { NULL, NULL }
 };

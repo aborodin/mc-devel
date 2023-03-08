@@ -397,11 +397,9 @@ void
 luaTTY_assert_ui_is_ready (lua_State * L)
 {
     if (!mc_lua_ui_is_ready ())
-    {
         luaL_error (L,
                     E_ ("You can not use %s() yet, because the UI has not been initialized."),
                     luaMC_get_function_name (L, 0, FALSE));
-    }
 }
 
 /* --------------------------------------------------------------------------------------------- */
