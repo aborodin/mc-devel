@@ -53,7 +53,8 @@ static int l_beep (lua_State * L);
 /*** file scope variables ************************************************************************/
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ttylib[] = {
+static const struct luaL_Reg ttylib[] =
+{
     { "keyname_to_keycode", l_keyname_to_keycode },
     { "keycode_to_keyname", l_keycode_to_keyname },
     { "beep", l_beep },
@@ -108,9 +109,11 @@ static char *
 emacs_to_mc (const char *name)
 {
     const char *p = name;
-    GString *mc = g_string_sized_new (32);
+    GString *mc;
 
-    while (*p)
+    mc = g_string_sized_new (32);
+
+    while (*p != '\0')
     {
         if (START (p, 'c', '-') || START (p, 'C', '-')) /* alternatively we could do !strncmp (p, "c-", 2) */
         {
@@ -129,8 +132,10 @@ emacs_to_mc (const char *name)
         }
         else if (*p == '<')
         {
-            const char *next_angle = strchr (p, '>');
-            if (next_angle)
+            const char *next_angle;
+
+            next_angle = strchr (p, '>');
+            if (next_angle != NULL)
             {
                 g_string_append_len (mc, p + 1, next_angle - p - 1);
                 p = next_angle + 1;
@@ -143,8 +148,10 @@ emacs_to_mc (const char *name)
         }
         else
         {
-            const char *next_dash = strchr (p, '-');
-            if (next_dash)
+            const char *next_dash;
+
+            next_dash = strchr (p, '-');
+            if (next_dash != NULL)
             {
                 g_string_append_len (mc, p, next_dash - p + 1);
                 p = next_dash + 1;
@@ -208,20 +215,16 @@ luaTTY_check_keycode (lua_State * L, int name_index, gboolean push_name_short)
     name = luaL_checkstring (L, name_index);
 
     keycode = lookup_emacs_key (name, push_name_short ? &name_short : NULL);
-
-    if (keycode)
-    {
-        if (push_name_short)
-        {
-            lua_pushstring (L, name_short);
-            g_free (name_short);
-        }
-        return keycode;
-    }
-    else
-    {
+    if (keycode == 0)
         return luaL_error (L, _("Invalid key name '%s'"), name);
+
+    if (push_name_short)
+    {
+        lua_pushstring (L, name_short);
+        g_free (name_short);
     }
+
+    return keycode;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -276,10 +279,10 @@ l_keycode_to_keyname (lua_State * L)
     keycode = luaL_checki (L, 1);
 
     name_long = tty_keycode_to_keyname (keycode);
-    if (name_long)
+    if (name_long != NULL)
         tty_keyname_to_keycode (name_long, &name_short);
 
-    if (name_long && name_short)
+    if (name_long != NULL && name_short != NULL)
     {
         lua_pushstring (L, name_short);
         lua_pushstring (L, name_long);
@@ -287,12 +290,10 @@ l_keycode_to_keyname (lua_State * L)
         g_free (name_short);
         return 2;
     }
-    else
-    {
-        g_free (name_long);
-        g_free (name_short);
-        return luaL_error (L, _("Invalid key code '%d'"), keycode);
-    }
+
+    g_free (name_long);
+    g_free (name_short);
+    return luaL_error (L, _("Invalid key code '%d'"), keycode);
 }
 
 /**
