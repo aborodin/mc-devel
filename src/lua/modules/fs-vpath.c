@@ -164,7 +164,8 @@ static int l_vpath_to_str (lua_State * L);
 /*** file scope variables ************************************************************************/
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg fsvpathlib[] = {
+static const struct luaL_Reg fsvpathlib[] =
+{
     { "__index", l_vpath_index },
     { "__gc", l_vpath_gc },
     { "last", l_vpath_last },
@@ -434,14 +435,12 @@ l_vpath_index (lua_State * L)
         /* The property was found in the meta table */
         return 1;
     }
-    else
-    {
-        /* Property isn't there. Get it from the stash. */
-        luaFS_get_vpath_stash (L, VPATH_IDX);
-        lua_pushvalue (L, KEY_IDX);
-        lua_rawget (L, -2);
-        return 1;
-    }
+
+    /* Property isn't there. Get it from the stash. */
+    luaFS_get_vpath_stash (L, VPATH_IDX);
+    lua_pushvalue (L, KEY_IDX);
+    lua_rawget (L, -2);
+    return 1;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -560,10 +559,10 @@ luaFS_check_vpath_ex (lua_State * L, int index, gboolean relative)
     index = lua_absindex (L, index);
 
     /* If the item is already a VPath, return it. */
-    if ((userdata = luaL_testudata (L, index, "fs.VPath")) != NULL)
-    {
+    userdata = luaL_testudata (L, index, "fs.VPath");
+    if (userdata != NULL)
         return userdata->vpath;
-    }
+
     /* Else: if the item is a string, convert it to VPath.
      *
      * Note: We don't use lua_isstring(). In the Lua world numbers are
@@ -571,26 +570,25 @@ luaFS_check_vpath_ex (lua_State * L, int index, gboolean relative)
      * because they're more likely file descriptors (fed to us by error)
      * than genuine file names.
      */
-    else if (lua_type (L, index) == LUA_TSTRING)
+    if (lua_type (L, index) == LUA_TSTRING)
     {
         /* We mimic the semantics of lua_tostring(): We replace the string
          * on the Lua stack with a VPath object. Because the pointer is now
          * on the Lua stack, the programmer won't need to handle it (free())
          * himself: the garbage collector handles this.
          */
-        const char *str = lua_tostring (L, index);
+        const char *str;
         vfs_path_t *vpath;
 
+        str = lua_tostring (L, index);
         vpath = vfs_path_from_str_flags (str, relative ? VPF_NO_CANON : VPF_NONE);
         luaFS_push_vpath__without_cloning (L, vpath);
         lua_replace (L, index);
 
         return vpath;
     }
-    else
-    {
-        luaL_typerror (L, index, "pathname");
-    }
+
+    luaL_typerror (L, index, "pathname");
     return NULL;                /* We won't ever arrive here. */
 }
 
@@ -629,7 +627,8 @@ get_vpath_argument (lua_State * L, int index)
     lua_vpath_t *userdata;
 
     /* If the item is already a VPath, return it. */
-    if ((userdata = luaL_testudata (L, index, "fs.VPath")) != NULL)
+    userdata = luaL_testudata (L, index, "fs.VPath");
+    if (userdata != NULL)
     {
         arg = g_new (vpath_argument, 1);
         arg->vpath = userdata->vpath;
@@ -638,6 +637,7 @@ get_vpath_argument (lua_State * L, int index)
     else if (lua_type (L, index) == LUA_TSTRING)
     {
         const char *str;
+
         str = lua_tostring (L, index);
         arg = g_new (vpath_argument, 1);
         arg->vpath = vfs_path_from_str (str);
@@ -645,9 +645,7 @@ get_vpath_argument (lua_State * L, int index)
     }
     /* Raise exception. */
     else
-    {
         (void) luaFS_check_vpath (L, index);
-    }
 
     return arg;
 }
@@ -657,7 +655,7 @@ get_vpath_argument (lua_State * L, int index)
 void
 destroy_vpath_argument (vpath_argument * arg)
 {
-    if (arg && arg->allocated_by_us)
+    if (arg != NULL && arg->allocated_by_us)
     {
         vfs_path_free (arg->vpath, TRUE);
         g_free (arg);

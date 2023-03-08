@@ -56,7 +56,9 @@ static int l_vpath_new (lua_State * L);
 
 /*** file scope variables ************************************************************************/
 
-static const luaMC_constReg fslib_constants[] = {
+/* *INDENT-OFF* */
+static const luaMC_constReg fslib_constants[] =
+{
     /*
      * Flags for VPath:to_str().
      *
@@ -70,11 +72,13 @@ static const luaMC_constReg fslib_constants[] = {
     REGC (VPF_STRIP_PASSWORD),
     REGC (VPF_HIDE_CHARSET),
 
-    {NULL, 0}
+    { NULL, 0 }
 };
+/* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg fslib[] = {
+static const struct luaL_Reg fslib[] =
+{
     { "VPath", l_vpath_new },
     { NULL, NULL }
 };
