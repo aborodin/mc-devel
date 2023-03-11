@@ -53,20 +53,32 @@
 
 /*** file scope macro definitions ****************************************************************/
 
-#define DEFAULT_BLKSIZE  4096
+#define DEFAULT_BLKSIZE 4096
 
 /* Note the use of lua_pushi() to support huge integers. */
-#define ON_FIELD(name) if (STREQ (field, #name)) { lua_pushi (L, sb->st_ ## name); }
+#define ON_FIELD(name) \
+    if (STREQ (field, #name)) \
+    { \
+        lua_pushi (L, sb->st_##name); \
+    }
 
-#define ON_FIELD_PUSH_ZERO(name) if (STREQ (field, #name)) { lua_pushinteger (L, 0); }
+#define ON_FIELD_PUSH_ZERO(name) \
+    if (STREQ (field, #name)) \
+    { \
+        lua_pushinteger (L, 0); \
+    }
 
 #define GET_INT_FIELD(name) \
-    do { \
-        if (!lua_isnumber (L, -1)) { \
-          luaL_error (L, E_("field '%s' should be numeric, but instead is %s."), #name, luaL_typename (L, -1)); \
+    do \
+    { \
+        if (lua_isnumber (L, -1) == 0) \
+        { \
+            luaL_error (L, E_("field '%s' should be numeric, but instead is %s."), \
+                            #name, luaL_typename (L, -1)); \
         } \
-        sb->st_ ## name = lua_tointeger (L, -1); \
-    } while (0)
+        sb->st_##name = lua_tointeger (L, -1); \
+    } \
+    while (FALSE)
 
 /*** file scope type declarations ****************************************************************/
 
@@ -85,7 +97,8 @@ static const char *valid_fields[] = {
 };
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg fsstatlib[] = {
+static const struct luaL_Reg fsstatlib[] =
+{
     { "__index", l_statbuf_index },
     { NULL, NULL }
 };
@@ -244,26 +257,36 @@ invalid_field_error (lua_State * L, const char *field)
  * Pushes a single statbuf field onto the Lua stack.
  */
 
-/* *INDENT-OFF* */
 static void
 statbuf_push_field (lua_State * L, struct stat *sb, const char *field)
 {
-    if (STREQ (field, "type")) {
+    if (STREQ (field, "type"))
+    {
         mode_t mode = sb->st_mode;
         const char *type_name;
-             if (S_ISREG (mode))  type_name = "regular";
-        else if (S_ISDIR (mode))  type_name = "directory";
-        else if (S_ISLNK (mode))  type_name = "link";
-        else if (S_ISSOCK (mode)) type_name = "socket";
-        else if (S_ISFIFO (mode)) type_name = "fifo";
-        else if (S_ISCHR (mode))  type_name = "character device";
-        else if (S_ISBLK (mode))  type_name = "block device";
-        else                      type_name = "unknown";
+
+        if (S_ISREG (mode))
+            type_name = "regular";
+        else if (S_ISDIR (mode))
+            type_name = "directory";
+        else if (S_ISLNK (mode))
+            type_name = "link";
+        else if (S_ISSOCK (mode))
+            type_name = "socket";
+        else if (S_ISFIFO (mode))
+            type_name = "fifo";
+        else if (S_ISCHR (mode))
+            type_name = "character device";
+        else if (S_ISBLK (mode))
+            type_name = "block device";
+        else
+            type_name = "unknown";
+
         lua_pushstring (L, type_name);
     }
-    else if (STREQ (field, "perm")) {
+    else if (STREQ (field, "perm"))
         lua_pushinteger (L, sb->st_mode & ~S_IFMT);
-    }
+    /* *INDENT-OFF* */
     else ON_FIELD (mode)
     else ON_FIELD (size)
     else ON_FIELD (atime)
@@ -282,20 +305,18 @@ statbuf_push_field (lua_State * L, struct stat *sb, const char *field)
 #ifdef HAVE_STRUCT_STAT_ST_BLKSIZE
     else ON_FIELD (blksize)
 #else
-    else if (STREQ (field, "blksize")) {
+    else if (STREQ (field, "blksize"))
         lua_pushinteger (L, DEFAULT_BLKSIZE);
-    }
 #endif
 #ifdef HAVE_STRUCT_STAT_ST_BLOCKS
     else ON_FIELD (blocks)
 #else
     else ON_FIELD_PUSH_ZERO (blocks)
 #endif
-    else {
+    /* *INDENT-ON* */
+    else
         invalid_field_error (L, field);
-    }
 }
-/* *INDENT-ON* */
 
 /* --------------------------------------------------------------------------------------------- */
 
@@ -307,7 +328,7 @@ umask_permissions (mode_t perm)
     mymode = umask (0);
     umask (mymode);
 
-    return perm & ~mymode;
+    return (perm & ~mymode);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -326,7 +347,7 @@ luaFS_push_statbuf (lua_State * L, struct stat *sb_init)
 
     sb = luaMC_newuserdata (L, sizeof (struct stat), "fs.StatBuf");
 
-    if (sb_init)
+    if (sb_init != NULL)
         memcpy (sb, sb_init, sizeof (struct stat));
     else
         memset (sb, 0, sizeof (struct stat));
@@ -342,7 +363,6 @@ luaFS_push_statbuf (lua_State * L, struct stat *sb_init)
  * Also returns the allocated buffer.
  */
 
-/* *INDENT-OFF* */
 static struct stat *
 statbuf_from_table (lua_State * L, int idx)
 {
@@ -361,122 +381,150 @@ statbuf_from_table (lua_State * L, int idx)
 
     sb = luaFS_push_statbuf (L, NULL);
 
-    lua_pushnil (L);  /* first key */
-    while (lua_next (L, idx) != 0) {
+    lua_pushnil (L);            /* first key */
+    while (lua_next (L, idx) != 0)
+    {
         const char *field;
-        if (lua_type (L, -2) != LUA_TSTRING) {
-            luaL_error (L, E_("Field name must be a string."));
-        }
+
+        if (lua_type (L, -2) != LUA_TSTRING)
+            luaL_error (L, E_ ("Field name must be a string."));
+
         field = lua_tostring (L, -2);
-        if (STREQ (field, "type")) {
+        if (STREQ (field, "type"))
+        {
             const char *type;
-            if (!lua_isstring (L, -1)) {
-                luaL_error (L, E_("Field 'type' must be a string."));
-            }
+
+            if (lua_isstring (L, -1) == 0)
+                luaL_error (L, E_ ("Field 'type' must be a string."));
+
             type = lua_tostring (L, -1);
+
             /* Clear the effect of a 'mode' field encountered previously: */
             sb->st_mode = sb->st_mode & ~S_IFMT;
-            if (STREQ (type, "regular")) {
+
+            if (STREQ (type, "regular"))
                 sb->st_mode |= S_IFREG;
-            }
-            else if (STREQ (type, "directory")) {
+            else if (STREQ (type, "directory"))
+            {
                 sb->st_mode |= S_IFDIR;
                 is_dir = TRUE;
             }
-            else if (STREQ (type, "link")) {
+            else if (STREQ (type, "link"))
+            {
 #ifdef S_IFLINK
                 sb->st_mode |= S_IFDIR;
 #endif
                 is_link = TRUE;
             }
-            else if (STREQ (type, "socket")) {
+            else if (STREQ (type, "socket"))
+            {
 #ifdef S_IFSOCK
                 sb->st_mode |= S_IFSOCK;
 #endif
             }
-            else if (STREQ (type, "fifo")) {
+            else if (STREQ (type, "fifo"))
+            {
 #ifdef S_IFIFO
                 sb->st_mode |= S_IFIFO;
 #endif
             }
-            else if (STREQ (type, "character device")) {
+            else if (STREQ (type, "character device"))
+            {
 #ifdef S_IFCHR
                 sb->st_mode |= S_IFCHR;
 #endif
             }
-            else if (STREQ (type, "block device")) {
+            else if (STREQ (type, "block device"))
+            {
 #ifdef S_IFBLK
                 sb->st_mode |= S_IFBLK;
 #endif
             }
-            else luaL_error (L, E_("Invalid type '%s'."), type);
+            else
+                luaL_error (L, E_ ("Invalid type '%s'."), type);
+
             has_type = TRUE;
         }
-        else if (STREQ (field, "perm")) {
+        else if (STREQ (field, "perm"))
+        {
             sb->st_mode = (sb->st_mode & S_IFMT) | lua_tointeger (L, -1);
             has_perm = TRUE;
         }
-        else if (STREQ (field, "mode")) {
-            mode_t mode = lua_tointeger (L, -1);
-            mode_t part_type = mode & S_IFMT;
-            mode_t part_perm = mode & ~S_IFMT;
+        else if (STREQ (field, "mode"))
+        {
+            mode_t mode, part_type, part_perm;
+
+            mode = lua_tointeger (L, -1);
+            part_type = mode & S_IFMT;
+            part_perm = mode & ~S_IFMT;
 
             /* We make "mode" of lower precedence than "perm" and "type". */
-            if (!has_perm) {
+            if (!has_perm)
                 sb->st_mode |= part_perm;
-            }
-            if (!has_type) {
+
+            if (!has_type)
                 sb->st_mode |= part_type;
-            }
+
             has_mode = TRUE;
         }
-        else if (STREQ (field, "ino")) {
+        else if (STREQ (field, "ino"))
+        {
             GET_INT_FIELD (ino);
         }
-        else if (STREQ (field, "uid")) {
+        else if (STREQ (field, "uid"))
+        {
             GET_INT_FIELD (uid);
             has_uid = TRUE;
         }
-        else if (STREQ (field, "gid")) {
+        else if (STREQ (field, "gid"))
+        {
             GET_INT_FIELD (gid);
             has_gid = TRUE;
         }
-        else if (STREQ (field, "nlink")) {
+        else if (STREQ (field, "nlink"))
+        {
             GET_INT_FIELD (nlink);
         }
-        else if (STREQ (field, "size")) {
+        else if (STREQ (field, "size"))
+        {
             GET_INT_FIELD (size);
         }
-        else if (STREQ (field, "mtime")) {
+        else if (STREQ (field, "mtime"))
+        {
             GET_INT_FIELD (mtime);
         }
-        else if (STREQ (field, "ctime")) {
+        else if (STREQ (field, "ctime"))
+        {
             GET_INT_FIELD (ctime);
         }
-        else if (STREQ (field, "atime")) {
+        else if (STREQ (field, "atime"))
+        {
             GET_INT_FIELD (atime);
         }
-        else if (STREQ (field, "dev")) {
+        else if (STREQ (field, "dev"))
+        {
             GET_INT_FIELD (dev);
         }
-        else if (STREQ (field, "rdev")) {
+        else if (STREQ (field, "rdev"))
+        {
 #ifdef HAVE_STRUCT_STAT_ST_RDEV
             GET_INT_FIELD (rdev);
 #endif
         }
-        else if (STREQ (field, "blksize")) {
+        else if (STREQ (field, "blksize"))
+        {
 #ifdef HAVE_STRUCT_STAT_ST_BLKSIZE
             GET_INT_FIELD (blksize);
 #endif
         }
-        else if (STREQ (field, "blocks")) {
+        else if (STREQ (field, "blocks"))
+        {
 #ifdef HAVE_STRUCT_STAT_ST_BLOCKS
             GET_INT_FIELD (blocks);
 #endif
         }
-        else {
+        else
             invalid_field_error (L, field);
-        }
 
         /* Remove 'value'; keep 'key' for next iteration. */
         lua_pop (L, 1);
@@ -486,53 +534,47 @@ statbuf_from_table (lua_State * L, int idx)
      * Fill-in some default values.
      */
 
-    if (!has_uid) {
+    if (!has_uid)
         sb->st_uid = getuid ();
-    }
-    if (!has_gid) {
+    if (!has_gid)
         sb->st_gid = getgid ();
-    }
 
-    if (!sb->st_mtime) {
+    if (sb->st_mtime == 0)
         sb->st_mtime = time (NULL);
-    }
-    if (!sb->st_ctime) {
+    if (sb->st_ctime == 0)
         sb->st_ctime = sb->st_mtime;
-    }
-    if (!sb->st_atime) {
+    if (sb->st_atime == 0)
         sb->st_atime = sb->st_mtime;
-    }
 
-    if (!has_mode && !has_type) {
+    if (!has_mode && !has_type)
+    {
         /* Make it a regular file. */
         sb->st_mode |= S_IFREG;
     }
 
-    if (!has_mode && !has_perm) {
-      /* Set default access permissions. */
-      mode_t perm;
+    if (!has_mode && !has_perm)
+    {
+        /* Set default access permissions. */
+        mode_t perm;
 
-      if (is_link)
-          perm = 0777;
-      else
-          perm = umask_permissions (is_dir ? 0777 : 0666);
+        if (is_link)
+            perm = 0777;
+        else
+            perm = umask_permissions (is_dir ? 0777 : 0666);
 
-      sb->st_mode |= perm;
+        sb->st_mode |= perm;
     }
 
-    if (!has_nlink) {
+    if (!has_nlink)
         sb->st_nlink = 1;
-    }
 
 #ifdef HAVE_STRUCT_STAT_ST_BLKSIZE
-    if (sb->st_blksize == 0) {
+    if (sb->st_blksize == 0)
         sb->st_blksize = DEFAULT_BLKSIZE;
-    }
 #endif
 
     return sb;
 }
-/* *INDENT-ON* */
 
 /* --------------------------------------------------------------------------------------------- */
 
@@ -546,19 +588,15 @@ luaFS_check_statbuf (lua_State * L, int idx)
 {
     struct stat *sb = NULL;
 
-    if (lua_isuserdata (L, idx))
-    {
+    if (lua_isuserdata (L, idx) != 0)
         sb = luaL_checkudata (L, idx, "fs.StatBuf");
-    }
     else if (lua_istable (L, idx))
     {
         sb = statbuf_from_table (L, idx);
         lua_replace (L, idx);
     }
     else
-    {
         luaL_argerror (L, idx, E_ ("StatBuf expected (either table or a fs.StatBuf())"));
-    }
 
     return sb;
 }
@@ -592,24 +630,25 @@ luaFS_to_statbuf (lua_State * L, int idx)
 int
 luaFS_statbuf_extract_fields (lua_State * L, struct stat *sb, int start_index)
 {
-    int top = lua_gettop (L);
+    int top;
+    int i;
 
+    top = lua_gettop (L);
     if (start_index > top)
     {
         luaFS_push_statbuf (L, sb);
         return 1;
     }
-    else
+
+    for (i = start_index; i <= top; i++)
     {
-        int i;
-        for (i = start_index; i <= top; i++)
-        {
-            const char *field;
-            field = luaL_checkstring (L, i);
-            statbuf_push_field (L, sb, field);
-        }
-        return top - start_index + 1;
+        const char *field;
+
+        field = luaL_checkstring (L, i);
+        statbuf_push_field (L, sb, field);
     }
+
+    return top - start_index + 1;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -632,18 +671,16 @@ static int
 l_statbuf_extract (lua_State * L)
 {
     struct stat *sb;
-
-    const char **field = valid_fields;
+    const char **field;
 
     sb = luaFS_check_statbuf (L, 1);
 
     lua_newtable (L);
 
-    while (*field)
+    for (field = valid_fields; *field != NULL; field++)
     {
         statbuf_push_field (L, sb, *field);
         lua_setfield (L, -2, *field);
-        field++;
     }
 
     return 1;
