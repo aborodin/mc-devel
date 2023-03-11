@@ -65,12 +65,16 @@ static int l_fstat (lua_State * L);
 /*** file scope variables ************************************************************************/
 
 /* *INDENT-OFF* */
-static const luaMC_constReg fsfiledeslib_constants[] = {
+static const luaMC_constReg fsfiledeslib_constants[] =
+{
     { "CLOSED_FD", LUAFS_CLOSED_FD },
     { NULL, 0 }
 };
+/* *INDENT-ON* */
 
-static const struct luaL_Reg fsfiledeslib[] = {
+/* *INDENT-OFF* */
+static const struct luaL_Reg fsfiledeslib[] =
+{
     { "open", l_open },
     { "read", l_read },
     { "write", l_write },
@@ -134,7 +138,6 @@ l_open (lua_State * L)
     const vfs_path_t *vpath;
     int flags;
     mode_t mode;
-
     int fd;
 
     vpath = luaFS_check_vpath (L, 1);
@@ -142,14 +145,11 @@ l_open (lua_State * L)
     mode = luaL_opti (L, 3, 0666);
 
     fd = mc_open (vpath, flags, mode);
-
-    if (fd != -1)
-    {
-        lua_pushinteger (L, fd);
-        return 1;
-    }
-    else
+    if (fd == -1)
         return luaFS_push_error (L, vpath->str);
+
+    lua_pushinteger (L, fd);
+    return 1;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -164,13 +164,10 @@ static int
 l_close (lua_State * L)
 {
     int fd;
-
     int result;
 
     fd = luaFS_check_fd (L, 1);
-
     result = mc_close (fd);
-
     return luaFS_push_result (L, result, NULL);
 }
 
@@ -193,25 +190,21 @@ l_write (lua_State * L)
     int fd;
     const char *bf;
     size_t bf_len;
-
     ssize_t count;
 
     fd = luaFS_check_fd (L, 1);
     bf = luaL_checklstring (L, 2, &bf_len);
 
     count = mc_write (fd, bf, bf_len);
-
-    if (count >= 0)
-    {
-        lua_pushi (L, count);
-        return 1;
-    }
-    else
+    if (count < 0)
     {
         /* @FIXME: MC's mc_read()/mc_write()/mc_close() should return
          * EBADDESC on bad descriptor. */
         return luaFS_push_error (L, NULL);
     }
+
+    lua_pushi (L, count);
+    return 1;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -233,7 +226,6 @@ l_read (lua_State * L)
 {
     int fd;
     ssize_t count;
-
     char *bf;
 
     fd = luaFS_check_fd (L, 1);
@@ -241,26 +233,23 @@ l_read (lua_State * L)
 
     bf = g_malloc (count);
     count = mc_read (fd, bf, count);
-
-    if (count >= 0)
-    {
-        /*
-         * What to do on EOF?
-         *
-         *  - luaposix.read() returns an empty string.
-         *  - io.file:read() returns nil.
-         *
-         * We follow the luaposix way.
-         */
-        lua_pushlstring (L, bf, count);
-        g_free (bf);
-        return 1;
-    }
-    else
+    if (count < 0)
     {
         g_free (bf);
         return luaFS_push_error (L, NULL);
     }
+
+    /*
+     * What to do on EOF?
+     *
+     *  - luaposix.read() returns an empty string.
+     *  - io.file:read() returns nil.
+     *
+     * We follow the luaposix way.
+     */
+    lua_pushlstring (L, bf, count);
+    g_free (bf);
+    return 1;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -285,7 +274,6 @@ l_lseek (lua_State * L)
     int fd;
     off_t offset;
     int whence;
-
     off_t result;
 
     fd = luaFS_check_fd (L, 1);
@@ -293,14 +281,11 @@ l_lseek (lua_State * L)
     whence = luaL_optint (L, 3, SEEK_SET);
 
     result = mc_lseek (fd, offset, whence);
-
-    if (result >= 0)
-    {
-        lua_pushi (L, result);
-        return 1;
-    }
-    else
+    if (result < 0)
         return luaFS_push_error (L, NULL);
+
+    lua_pushi (L, result);
+    return 1;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -319,15 +304,13 @@ static int
 l_fstat (lua_State * L)
 {
     int fd;
-
     struct stat sb;
 
     fd = luaFS_check_fd (L, 1);
-
     if (mc_fstat (fd, &sb) == -1)
         return luaFS_push_error (L, NULL);
-    else
-        return luaFS_statbuf_extract_fields (L, &sb, 2);
+
+    return luaFS_statbuf_extract_fields (L, &sb, 2);
 }
 
 /* --------------------------------------------------------------------------------------------- */
