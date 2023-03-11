@@ -66,14 +66,18 @@ static int l_dir_close (lua_State * L);
 /*** file scope variables ************************************************************************/
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg fslib[] = {
+static const struct luaL_Reg fslib[] =
+{
     { "opendir", l_opendir },
     { "dir", l_dir },
     { "files", l_files },
     { NULL, NULL }
 };
+/* *INDENT-ON* */
 
-static const struct luaL_Reg fsdirlib[] = {
+/* *INDENT-OFF* */
+static const struct luaL_Reg fsdirlib[] =
+{
     { "next", l_dir_next },
     { "close", l_dir_close },
     { "__gc", l_dir_close },
@@ -147,13 +151,11 @@ l_dir (lua_State * L)
         int i = 1;
 
         while ((ent = mc_readdir (dir)) != NULL)
-        {
             if (!DIR_IS_DOT (ent->d_name) && !DIR_IS_DOTDOT (ent->d_name))
             {
                 lua_pushstring (L, ent->d_name);
                 lua_rawseti (L, -2, i++);
             }
-        }
     }
 
     mc_closedir (dir);
@@ -217,8 +219,8 @@ l_opendir (lua_State * L)
 
     if (dir_obj->dir == NULL)
         return luaFS_push_error__by_idx (L, 1);
-    else
-        return 1;
+
+    return 1;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -229,7 +231,6 @@ l_dir_close (lua_State * L)
     dir_obj_t *dir_obj;
 
     dir_obj = luaMC_checkudata__unsafe (L, 1, "fs.DIR");
-
     if (dir_obj->dir != NULL)
     {
         mc_closedir (dir_obj->dir);
@@ -247,14 +248,15 @@ l_dir_next (lua_State * L)
     dir_obj_t *dir_obj;
 
     dir_obj = luaMC_checkudata__unsafe (L, 1, "fs.DIR");
-
     if (dir_obj->dir != NULL)
     {
         struct vfs_dirent *ent;
 
         /* Skip '.' and '..' */
         do
+        {
             ent = mc_readdir (dir_obj->dir);
+        }
         while (ent != NULL && !dir_obj->include_dot_dot
                && (DIR_IS_DOT (ent->d_name) || DIR_IS_DOTDOT (ent->d_name)));
 
@@ -264,11 +266,9 @@ l_dir_next (lua_State * L)
             lua_pushi (L, ent->d_ino);
             return 2;
         }
-        else
-        {
-            /* Close immediately to save on resources; don't wait for GC. */
-            l_dir_close (L);
-        }
+
+        /* Close immediately to save on resources; don't wait for GC. */
+        l_dir_close (L);
     }
 
     return 0;
