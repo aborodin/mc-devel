@@ -57,7 +57,9 @@
 
 /* The following are needed for l_expand_format() */
 
-#include "src/editor/editwidget.h"      /* WEdit type */
+#ifdef USE_INTERNAL_EDIT
+#include "src/editor/edit.h"
+#endif
 #include "src/usermenu.h"       /* expand_format() */
 
 /*** global variables ****************************************************************************/
@@ -183,6 +185,8 @@ l_view_command (lua_State * L)
 
 /* --------------------------------------------------------------------------------------------- */
 
+#ifdef USE_INTERNAL_EDIT
+
 /**
  * Launches the editor.
  *
@@ -231,6 +235,18 @@ l_edit (lua_State * L)
 
     return 0;
 }
+
+/* --------------------------------------------------------------------------------------------- */
+
+#else
+
+static int
+l_edit (lua_State * L)
+{
+    return luaL_error (L, "%s", _("The internal editor has not been compiled in."));
+}
+
+#endif /* USE_INTERNAL_EDIT */
 
 /* --------------------------------------------------------------------------------------------- */
 
@@ -453,6 +469,7 @@ expand_format__string (const char *template, Widget * edit_widget, gboolean do_q
 }
 
 /* --------------------------------------------------------------------------------------------- */
+
 
 /**
  * Expands a format string.
