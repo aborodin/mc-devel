@@ -1,3 +1,28 @@
+/*
+   Directory-related functions.
+
+   Copyright (C) 2015-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2015
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 /**
  * Directory-related functions.
  *
@@ -15,9 +40,11 @@
 #include "../modules.h"
 #include "fs.h"                 /* get_vpath_argument() */
 
+/*** global variables ****************************************************************************/
 
-static int l_dir_next (lua_State * L);
-static int l_opendir (lua_State * L);
+/*** file scope macro definitions ****************************************************************/
+
+/*** file scope type declarations ****************************************************************/
 
 /*
  * The Lua userdata.
@@ -27,6 +54,36 @@ typedef struct
     DIR *dir;
     gboolean include_dot_dot;   /* Whether to return the '.' and '..' when traversing. */
 } dir_obj_t;
+
+/*** forward declarations (file scope functions) *************************************************/
+
+static int l_opendir (lua_State * L);
+static int l_dir (lua_State * L);
+static int l_files (lua_State * L);
+static int l_dir_next (lua_State * L);
+static int l_dir_close (lua_State * L);
+
+/*** file scope variables ************************************************************************/
+
+/* *INDENT-OFF* */
+static const struct luaL_Reg fslib[] = {
+    { "opendir", l_opendir },
+    { "dir", l_dir },
+    { "files", l_files },
+    { NULL, NULL }
+};
+
+static const struct luaL_Reg fsdirlib[] = {
+    { "next", l_dir_next },
+    { "close", l_dir_close },
+    { "__gc", l_dir_close },
+    { NULL, NULL }
+};
+/* *INDENT-ON* */
+
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Iterates over files in a directory.
@@ -56,6 +113,8 @@ l_files (lua_State * L)
     return 2;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Returns a directory's contents.
  *
@@ -82,6 +141,7 @@ l_dir (lua_State * L)
         return luaFS_push_error__by_idx (L, 1);
 
     lua_newtable (L);
+
     {
         struct vfs_dirent *ent;
         int i = 1;
@@ -99,6 +159,8 @@ l_dir (lua_State * L)
     mc_closedir (dir);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Opens a directory for reading.
@@ -159,6 +221,8 @@ l_opendir (lua_State * L)
         return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static int
 l_dir_close (lua_State * L)
 {
@@ -174,6 +238,8 @@ l_dir_close (lua_State * L)
 
     return 0;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 static int
 l_dir_next (lua_State * L)
@@ -208,23 +274,9 @@ l_dir_next (lua_State * L)
     return 0;
 }
 
-/* ------------------------------------------------------------------------ */
-
-/* *INDENT-OFF* */
-static const struct luaL_Reg fslib[] = {
-    { "opendir", l_opendir },
-    { "dir", l_dir },
-    { "files", l_files },
-    { NULL, NULL }
-};
-
-static const struct luaL_Reg fsdirlib[] = {
-    { "next", l_dir_next },
-    { "close", l_dir_close },
-    { "__gc", l_dir_close },
-    { NULL, NULL }
-};
-/* *INDENT-ON* */
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 int
 luaopen_fs_dir (lua_State * L)
@@ -234,3 +286,5 @@ luaopen_fs_dir (lua_State * L)
     luaL_newlib (L, fslib);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
