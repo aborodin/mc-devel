@@ -1,3 +1,28 @@
+/*
+   An object holding various attributes of a file.
+
+   Copyright (C) 2015-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2015
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 /**
  * An object holding various attributes of a file. Returned by @{fs.stat},
  * @{~mod:ui.Panel*ui.Panel:current|ui.Panel:get_current}, and others.
@@ -24,8 +49,32 @@
 
 #include "fs.h"
 
+/*** global variables ****************************************************************************/
+
+/*** file scope macro definitions ****************************************************************/
 
 #define DEFAULT_BLKSIZE  4096
+
+/* Note the use of lua_pushi() to support huge integers. */
+#define ON_FIELD(name) if (STREQ (field, #name)) { lua_pushi (L, sb->st_ ## name); }
+
+#define ON_FIELD_PUSH_ZERO(name) if (STREQ (field, #name)) { lua_pushinteger (L, 0); }
+
+#define GET_INT_FIELD(name) \
+    do { \
+        if (!lua_isnumber (L, -1)) { \
+          luaL_error (L, E_("field '%s' should be numeric, but instead is %s."), #name, luaL_typename (L, -1)); \
+        } \
+        sb->st_ ## name = lua_tointeger (L, -1); \
+    } while (0)
+
+/*** file scope type declarations ****************************************************************/
+
+/*** forward declarations (file scope functions) *************************************************/
+
+static int l_statbuf_index (lua_State * L);
+
+/*** file scope variables ************************************************************************/
 
 static const char *valid_fields[] = {
     "dev", "ino", "mode", "nlink", "uid", "gid", "rdev",
@@ -35,15 +84,30 @@ static const char *valid_fields[] = {
     NULL
 };
 
+/* *INDENT-OFF* */
+static const struct luaL_Reg fsstatlib[] = {
+    { "__index", l_statbuf_index },
+    { NULL, NULL }
+};
+/* *INDENT-ON* */
+
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Time of last modification.
  * @field mtime
  */
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Time of last status change.
  * @field ctime
  */
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Time of last access.
@@ -55,15 +119,21 @@ static const char *valid_fields[] = {
  * @field atime
  */
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * ID of device containing file.
  * @field dev
  */
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * inode number.
  * @field ino
  */
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Permission bits **plus** file-type bits.
@@ -78,6 +148,8 @@ static const char *valid_fields[] = {
  *
  * @field mode
  */
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * The type of the file.
@@ -95,46 +167,64 @@ static const char *valid_fields[] = {
  * @field type
  */
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * The permission bits of the file.
  *
  * @field perm
  */
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Number of links.
  * @field nlink
  */
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * User ID of owner.
  * @field uid
  */
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Group ID of owner.
  * @field gid
  */
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Device ID (if special file).
  * @field rdev
  */
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * File size.
  * @field size
  */
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Preferred block size for filesystem I/O.
  * @field blksize
  */
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Number of 512B blocks allocated.
  * @field blocks
  */
+
+/* --------------------------------------------------------------------------------------------- */
 
 static void
 invalid_field_error (lua_State * L, const char *field)
@@ -148,10 +238,7 @@ invalid_field_error (lua_State * L, const char *field)
     lua_error (L);
 }
 
-/* Note the use of lua_pushi() to support huge integers. */
-#define ON_FIELD(name) if (STREQ (field, #name)) { lua_pushi (L, sb->st_ ## name); }
-
-#define ON_FIELD_PUSH_ZERO(name) if (STREQ (field, #name)) { lua_pushinteger (L, 0); }
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Pushes a single statbuf field onto the Lua stack.
@@ -210,6 +297,8 @@ statbuf_push_field (lua_State * L, struct stat *sb, const char *field)
 }
 /* *INDENT-ON* */
 
+/* --------------------------------------------------------------------------------------------- */
+
 static mode_t
 umask_permissions (mode_t perm)
 {
@@ -220,6 +309,8 @@ umask_permissions (mode_t perm)
 
     return perm & ~mymode;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Pushes a C statbuf onto the Lua stack.
@@ -243,14 +334,7 @@ luaFS_push_statbuf (lua_State * L, struct stat *sb_init)
     return sb;
 }
 
-
-#define GET_INT_FIELD(name) \
-    do { \
-        if (!lua_isnumber (L, -1)) { \
-          luaL_error (L, E_("field '%s' should be numeric, but instead is %s."), #name, luaL_typename (L, -1)); \
-        } \
-        sb->st_ ## name = lua_tointeger (L, -1); \
-    } while (0)
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Creates a fs.StatBuf object from a Lua table.
@@ -450,6 +534,8 @@ statbuf_from_table (lua_State * L, int idx)
 }
 /* *INDENT-ON* */
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Converts a Lua fs.StatBuf, or a Lua table, into a C statbuf.
  *
@@ -477,6 +563,8 @@ luaFS_check_statbuf (lua_State * L, int idx)
     return sb;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Like luaFS_check_statbuf(), but doesn't raise exceptions.
  *
@@ -491,6 +579,8 @@ luaFS_to_statbuf (lua_State * L, int idx)
 {
     return luaL_testudata (L, idx, "fs.StatBuf");
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * A utility function used by stat() and lstat(): it extracts a bunch of
@@ -521,6 +611,8 @@ luaFS_statbuf_extract_fields (lua_State * L, struct stat *sb, int start_index)
         return top - start_index + 1;
     }
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Converts a fs.StatBuf to a table.
@@ -557,6 +649,8 @@ l_statbuf_extract (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * An __index handler for a fs.StatBuf, used for extracting individual fields.
  */
@@ -579,14 +673,9 @@ l_statbuf_index (lua_State * L)
     return 1;
 }
 
-/* ------------------------------------------------------------------------ */
-
-/* *INDENT-OFF* */
-static const struct luaL_Reg fsstatlib[] = {
-    { "__index", l_statbuf_index },
-    { NULL, NULL }
-};
-/* *INDENT-ON* */
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 int
 luaopen_fs_statbuf (lua_State * L)
@@ -594,3 +683,5 @@ luaopen_fs_statbuf (lua_State * L)
     luaMC_register_metatable (L, "fs.StatBuf", fsstatlib, FALSE);
     return 0;                   /* Nothing to return! */
 }
+
+/* --------------------------------------------------------------------------------------------- */
