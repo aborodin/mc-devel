@@ -51,7 +51,7 @@ An alternative to the instructions above (of "Step 3") is to download MC as a
 source "tarball", which already includes the `configure` script. You can
 download the tarball from:
 
-  [http://www.typo.co.il/~mooffie/mc-lua/tarballs/](http://www.typo.co.il/~mooffie/mc-lua/tarballs/)
+  [http://www.geek.co.il/~mooffie/mc-lua/tarballs/](http://www.typo.co.il/~mooffie/mc-lua/tarballs/)
 
 (If there are several files there, pick the one with the latest date.)
 Then extract it with the command `tar zxvf <tarball-file-name>`, enter

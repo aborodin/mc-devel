@@ -9,6 +9,7 @@ This is how I upload the documentation to the server.
 ]]
 
 local src = '../../doc/ldoc/html'
+-- 2023: this server is not available anymore
 local trg = 'sh://www.typo.co.il/vhosts/coil/typo/users/mooffie/public_html/mc-lua/docs'
 
 mc.cp(
