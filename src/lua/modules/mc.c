@@ -1,3 +1,28 @@
+/*
+   High-level Midnight Commander services.
+
+   Copyright (C) 2015-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2015
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 /**
  * High-level Midnight Commander services.
  *
@@ -35,6 +60,48 @@
 #include "src/editor/editwidget.h"      /* WEdit type */
 #include "src/usermenu.h"       /* expand_format() */
 
+/*** global variables ****************************************************************************/
+
+/*** file scope macro definitions ****************************************************************/
+
+/*** file scope type declarations ****************************************************************/
+
+/*** forward declarations (file scope functions) *************************************************/
+
+static int l_view (lua_State * L);
+static int l_view_command (lua_State * L);
+static int l_edit (lua_State * L);
+static int l_diff (lua_State * L);
+static int l_help (lua_State * L);
+static int l_activate (lua_State * L);
+static int l_execute (lua_State * L);
+static int l_expand_format (lua_State * L);
+static int l_name_quote (lua_State * L);
+static int l_is_background (lua_State * L);
+static int l_is_standalone (lua_State * L);
+
+/*** file scope variables ************************************************************************/
+
+/* *INDENT-OFF* */
+static const struct luaL_Reg mclib[] = {
+    { "view", l_view },
+    { "view_command", l_view_command },
+    { "edit", l_edit },
+    { "diff", l_diff },
+    { "help", l_help },
+    { "activate", l_activate },
+    { "execute", l_execute },
+    { "expand_format", l_expand_format },
+    { "name_quote", l_name_quote },
+    { "is_background", l_is_background },
+    { "is_standalone", l_is_standalone },
+    { NULL, NULL }
+};
+/* *INDENT-ON* */
+
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Applications.
@@ -75,6 +142,8 @@ l_view (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Launches the viewer to view the output of a command.
  *
@@ -111,6 +180,8 @@ l_view_command (lua_State * L)
 
     return 0;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Launches the editor.
@@ -161,6 +232,7 @@ l_edit (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
 
 #ifdef USE_DIFF_VIEW
 
@@ -192,6 +264,8 @@ l_diff (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 #else
 
 static int
@@ -201,6 +275,8 @@ l_diff (lua_State * L)
 }
 
 #endif
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Launches the help viewer.
@@ -222,12 +298,16 @@ l_help (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static void
 assert_not_standalone (lua_State * L)
 {
     if (mc_global.mc_run_mode == MC_RUN_SCRIPT)
         luaL_error (L, "%s", _("This function is not safe to run in standalone mode."));
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * "Opens" a document.
@@ -289,6 +369,8 @@ l_activate (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Shell.
  *
@@ -339,6 +421,8 @@ l_execute (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Surprisingly, MC itself doesn't have this utility function. @FIXME.
  */
@@ -367,6 +451,8 @@ expand_format__string (const char *template, WEdit * edit_widget, gboolean do_qu
 
     return g_string_free (buf, FALSE);
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Expands a format string.
@@ -412,6 +498,8 @@ l_expand_format (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Quotes a filename to be used by the shell.
  *
@@ -453,6 +541,8 @@ l_name_quote (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Misc.
  *
@@ -483,6 +573,8 @@ l_is_background (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Whether we're running in @{~standalone|standalone} mode.
  *
@@ -502,24 +594,9 @@ l_is_standalone (lua_State * L)
     return 1;
 }
 
-/* ------------------------------------------------------------------------ */
-
-/* *INDENT-OFF* */
-static const struct luaL_Reg mclib[] = {
-    { "view", l_view },
-    { "view_command", l_view_command },
-    { "edit", l_edit },
-    { "diff", l_diff },
-    { "help", l_help },
-    { "activate", l_activate },
-    { "execute", l_execute },
-    { "expand_format", l_expand_format },
-    { "name_quote", l_name_quote },
-    { "is_background", l_is_background },
-    { "is_standalone", l_is_standalone },
-    { NULL, NULL }
-};
-/* *INDENT-ON* */
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 int
 luaopen_mc (lua_State * L)
@@ -527,3 +604,5 @@ luaopen_mc (lua_State * L)
     luaL_newlib (L, mclib);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
