@@ -427,7 +427,7 @@ l_execute (lua_State * L)
  * Surprisingly, MC itself doesn't have this utility function. @FIXME.
  */
 static char *
-expand_format__string (const char *template, WEdit * edit_widget, gboolean do_quote)
+expand_format__string (const char *template, Widget * edit_widget, gboolean do_quote)
 {
     GString *buf = g_string_sized_new (32);
     const char *p = template;
@@ -493,7 +493,7 @@ l_expand_format (lua_State * L)
     w = NULL; /* @todo */
     dont_quote = lua_toboolean (L, 3);
 
-    luaMC_pushstring_and_free (L, expand_format__string (template, (WEdit *) w, !dont_quote));
+    luaMC_pushstring_and_free (L, expand_format__string (template, w, !dont_quote));
 
     return 1;
 }
