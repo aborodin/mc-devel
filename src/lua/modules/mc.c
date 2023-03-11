@@ -85,7 +85,8 @@ static int l_is_standalone (lua_State * L);
 /*** file scope variables ************************************************************************/
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg mclib[] = {
+static const struct luaL_Reg mclib[] =
+{
     { "view", l_view },
     { "view_command", l_view_command },
     { "edit", l_edit },
@@ -132,12 +133,10 @@ l_view (lua_State * L)
 
     luaTTY_assert_ui_is_ready (L);
 
-    /* *INDENT-OFF* */
-    vpath      = luaFS_check_vpath (L, 1);
-    line       = luaL_optlong (L, 2, 0);  /* 0 = load saved position */
-    internal   = luaMC_optboolean (L, 3, use_internal_view);
-    plain_view = lua_toboolean (L, 4);
-    /* *INDENT-ON* */
+    vpath = luaFS_check_vpath (L, 1);
+    line = luaL_optlong (L, 2, 0);      /* 0 = load saved position */
+    internal = luaMC_optboolean (L, 3, use_internal_view);
+    plain_view = lua_toboolean (L, 4) != 0;
 
     view_file_at_line (vpath, plain_view, internal, line, 0, 0);
 
@@ -211,11 +210,9 @@ l_edit (lua_State * L)
 
     luaTTY_assert_ui_is_ready (L);
 
-    /* *INDENT-OFF* */
-    vpath    = luaFS_check_vpath (L, 1);
-    line     = luaL_optlong (L, 2, 0);  /* 0 = load saved position */
+    vpath = luaFS_check_vpath (L, 1);
+    line = luaL_optlong (L, 2, 0);      /* 0 = load saved position */
     internal = luaMC_optboolean (L, 3, use_internal_edit);
-    /* *INDENT-ON* */
 
     /*
      * @FIXME:
@@ -290,7 +287,7 @@ l_diff (lua_State * L)
     return luaL_error (L, "%s", _("The diff viewer has not been compiled in."));
 }
 
-#endif
+#endif /* USE_DIFF_VIEW */
 
 /* --------------------------------------------------------------------------------------------- */
 
@@ -374,13 +371,18 @@ l_activate (lua_State * L)
     vpath = luaFS_check_vpath (L, 1);
     action = luaL_optstring (L, 2, "Open");
 
-    /* *INDENT-OFF* */
-    switch (regex_command (vpath, action)) {
-        case 1:  lua_pushliteral (L, "ok");      break;
-        case 0:  lua_pushliteral (L, "missing"); break;
-        default: lua_pushliteral (L, "error");   break;
+    switch (regex_command (vpath, action))
+    {
+    case 1:
+        lua_pushliteral (L, "ok");
+        break;
+    case 0:
+        lua_pushliteral (L, "missing");
+        break;
+    default:
+        lua_pushliteral (L, "error");
+        break;
     }
-    /* *INDENT-ON* */
 
     return 1;
 }
@@ -445,10 +447,12 @@ l_execute (lua_State * L)
 static char *
 expand_format__string (const char *template, Widget * edit_widget, gboolean do_quote)
 {
-    GString *buf = g_string_sized_new (32);
+    GString *buf;
     const char *p = template;
 
-    while (*p)
+    buf = g_string_sized_new (32);
+
+    while (*p != '\0')
     {
         if (*p != '%')
             g_string_append_c (buf, *p);
@@ -461,7 +465,7 @@ expand_format__string (const char *template, Widget * edit_widget, gboolean do_q
             g_free (s);
         }
 
-        if (*p)                 /* Protect against '%' at end of string. */
+        if (*p != '\0')         /* Protect against '%' at end of string. */
             p++;
     }
 
@@ -507,8 +511,8 @@ l_expand_format (lua_State * L)
     assert_not_standalone (L);
 
     template = lua_tostring (L, 1);
-    w = NULL; /* @todo */
-    dont_quote = lua_toboolean (L, 3);
+    w = NULL;                   /* @todo */
+    dont_quote = lua_toboolean (L, 3) != 0;
 
     luaMC_pushstring_and_free (L, expand_format__string (template, w, !dont_quote));
 
@@ -552,7 +556,7 @@ l_name_quote (lua_State * L)
     gboolean quote_percent;
 
     s = luaL_checkstring (L, 1);
-    quote_percent = lua_toboolean (L, 2);
+    quote_percent = lua_toboolean (L, 2) != 0;
 
     luaMC_pushstring_and_free (L, name_quote (s, quote_percent));
     return 1;
