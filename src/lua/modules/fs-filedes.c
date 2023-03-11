@@ -1,3 +1,28 @@
+/*
+   Low-level file I/O.
+
+   Copyright (C) 2015-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2015
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 /**
  * Low-level file I/O.
  *
@@ -20,8 +45,45 @@
 #include "../modules.h"
 #include "fs.h"
 
+/*** global variables ****************************************************************************/
+
+/*** file scope macro definitions ****************************************************************/
 
 #define LUAFS_CLOSED_FD -1
+
+/*** file scope type declarations ****************************************************************/
+
+/*** forward declarations (file scope functions) *************************************************/
+
+static int l_open (lua_State * L);
+static int l_read (lua_State * L);
+static int l_write (lua_State * L);
+static int l_close (lua_State * L);
+static int l_lseek (lua_State * L);
+static int l_fstat (lua_State * L);
+
+/*** file scope variables ************************************************************************/
+
+/* *INDENT-OFF* */
+static const luaMC_constReg fsfiledeslib_constants[] = {
+    { "CLOSED_FD", LUAFS_CLOSED_FD },
+    { NULL, 0 }
+};
+
+static const struct luaL_Reg fsfiledeslib[] = {
+    { "open", l_open },
+    { "read", l_read },
+    { "write", l_write },
+    { "close", l_close },
+    { "lseek", l_lseek },
+    { "fstat", l_fstat },
+    { NULL, NULL }
+};
+/* *INDENT-ON* */
+
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Checks a file descriptor out of the Lua stack. We use a special sentry
@@ -43,6 +105,8 @@ luaFS_check_fd (lua_State * L, int idx)
 
     return fd;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Opens a file.
@@ -88,6 +152,8 @@ l_open (lua_State * L)
         return luaFS_push_error (L, vpath->str);
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Closes a file.
  *
@@ -107,6 +173,8 @@ l_close (lua_State * L)
 
     return luaFS_push_result (L, result, NULL);
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Writes to a file.
@@ -145,6 +213,8 @@ l_write (lua_State * L)
         return luaFS_push_error (L, NULL);
     }
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Reads from a file.
@@ -193,6 +263,8 @@ l_read (lua_State * L)
     }
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Seeks in a file.
  *
@@ -231,6 +303,8 @@ l_lseek (lua_State * L)
         return luaFS_push_error (L, NULL);
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Stats a file.
  *
@@ -256,24 +330,9 @@ l_fstat (lua_State * L)
         return luaFS_statbuf_extract_fields (L, &sb, 2);
 }
 
-/* ------------------------------------------------------------------------ */
-
-/* *INDENT-OFF* */
-static const luaMC_constReg fsfiledeslib_constants[] = {
-    { "CLOSED_FD", LUAFS_CLOSED_FD },
-    { NULL, 0 }
-};
-
-static const struct luaL_Reg fsfiledeslib[] = {
-    { "open", l_open },
-    { "read", l_read },
-    { "write", l_write },
-    { "close", l_close },
-    { "lseek", l_lseek },
-    { "fstat", l_fstat },
-    { NULL, NULL }
-};
-/* *INDENT-ON* */
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 int
 luaopen_fs_filedes (lua_State * L)
@@ -282,3 +341,5 @@ luaopen_fs_filedes (lua_State * L)
     luaMC_register_constants (L, fsfiledeslib_constants);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
