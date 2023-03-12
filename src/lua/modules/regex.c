@@ -1,3 +1,28 @@
+/*
+   Regular expressions.
+
+   Copyright (C) 2015-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2015
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 /**
 
 Regular expressions.
@@ -110,6 +135,21 @@ directly.
  * Note: MC, starting with 4.8.14, requires GLib 2.14+, so we know we do have regex support.
  */
 
+/*** global variables ****************************************************************************/
+
+/*** file scope macro definitions ****************************************************************/
+
+/* By default regex patterns are compiled as non UTF-8. (The user may override
+ * this by specifying the "u" flag.) We may wish to revisit this decision later on. */
+#define DEFAULT_REGEX_FLAGS G_REGEX_RAW
+
+/* The following only affects split(), not tsplit(). */
+#define MAX_SPLIT_TOKENS 12
+
+/* The maximum number of compiled regex objects to keep in the cache. */
+#define REGEX_CACHE_MAX  128
+
+/*** file scope type declarations ****************************************************************/
 /*
  * The Lua userdata.
  */
@@ -120,20 +160,45 @@ typedef struct
 
 typedef long flags_t;
 
-/* By default regex patterns are compiled as non UTF-8. (The user may override
- * this by specifying the "u" flag.) We may wish to revisit this decision later on. */
-#define DEFAULT_REGEX_FLAGS G_REGEX_RAW
+/*** forward declarations (file scope functions) *************************************************/
 
-/* The following only affects split(), not tsplit(). */
-#define MAX_SPLIT_TOKENS 12
+static int l_regex_gc (lua_State * L);
+static int l_compile (lua_State * L);
+static int l_match (lua_State * L);
+static int l_find (lua_State * L);
+static int l_gsub (lua_State * L);
+static int l_split (lua_State * L);
+static int l_tsplit (lua_State * L);
 
-/* -------------------------------- Cache --------------------------------- */
-
-/* The maximum number of compiled regex objects to keep in the cache. */
-#define REGEX_CACHE_MAX  128
+/*** file scope variables ************************************************************************/
 
 /* How many regex objects are currently held in the cache? */
 static int regex_cache_size = 0;
+
+/* *INDENT-OFF* */
+static const struct luaL_Reg regex_class_lib[] = {
+    { "__gc", l_regex_gc },
+    { NULL, NULL }
+};
+
+static const struct luaL_Reg regex_lib[] = {
+    { "compile", l_compile },
+    { "match", l_match },
+    { "find", l_find },
+    { "gsub", l_gsub },
+    { "split", l_split },
+    { "tsplit", l_tsplit },
+    /* Should we have a clear_cache() Lua function too? (calling regex_cache__clear())
+     * No reason to, probably. */
+    { NULL, NULL }
+};
+/* *INDENT-ON* */
+
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
+
+/* -------------------------------- Cache --------------------------------- */
 
 /* Empty (or initialize) the cache. */
 static void
@@ -144,6 +209,8 @@ regex_cache__clear (lua_State * L)
     regex_cache_size = 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /* To be called whenever you add an item to the cache. */
 static void
 regex_cache__bump_size (lua_State * L)
@@ -152,6 +219,8 @@ regex_cache__bump_size (lua_State * L)
     if (regex_cache_size > REGEX_CACHE_MAX)
         regex_cache__clear (L);
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /* -------------------------------- Flags --------------------------------- */
 
@@ -163,6 +232,8 @@ raise_error (lua_State * L, GError * error)
     g_error_free (error);
     return luaL_error (L, "%s", lua_tostring (L, -1));
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 static flags_t
 parse_flags (lua_State * L, const char *flags_string, flags_t flags)
@@ -200,6 +271,8 @@ parse_flags (lua_State * L, const char *flags_string, flags_t flags)
     return flags;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Converts a flags string (e.g., "sm", "u", ...) to PCRE's codes.
  */
@@ -213,6 +286,8 @@ luaMC_checkflags (lua_State * L, int index)
 
     return flags;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /* ---------------------------- Compilation ------------------------------- */
 
@@ -232,6 +307,8 @@ luaMC_pushregex (lua_State * L, const char *pattern, flags_t flags)
     if (error != NULL)
         raise_error (L, error);
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Given a regex pattern (its index) and its flags (its index), either
@@ -330,6 +407,8 @@ create_regex_or_cached (lua_State * L, int index_pattern, int index_flags)
     LUAMC_UNGUARD_BY (L, 1);
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Converts a Lua value to a C regex.
  *
@@ -376,11 +455,15 @@ luaMC_checkregex_ex (lua_State * L, int index, int index_flags)
     return NULL;                /* We never arrive here. */
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static GRegex *
 luaMC_checkregex (lua_State * L, int index)
 {
     return luaMC_checkregex_ex (L, index, 0)->handle;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Compiles a regular expression.
@@ -404,6 +487,8 @@ l_compile (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /* ------------------------------ Matching -------------------------------- */
 
 static void
@@ -411,6 +496,8 @@ push_match (lua_State * L, const GMatchInfo * match_info, int num)
 {
     luaMC_pushstring_and_free (L, g_match_info_fetch (match_info, num));
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 static int
 push_captures (lua_State * L, const GMatchInfo * match_info)
@@ -425,6 +512,8 @@ push_captures (lua_State * L, const GMatchInfo * match_info)
        do "return count". We return the number of push_match() calls. */
     return i - 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * The implementation of regex.match() / regex.find().
@@ -499,6 +588,8 @@ match_or_find (lua_State * L, gboolean do_find)
     return return_count;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Searches in a string.
  *
@@ -513,6 +604,8 @@ l_match (lua_State * L)
     return match_or_find (L, FALSE);
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Searches in a string.
  *
@@ -526,6 +619,8 @@ l_find (lua_State * L)
 {
     return match_or_find (L, TRUE);
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 static gboolean
 eval_cb (const GMatchInfo * match_info, GString * result, gpointer data)
@@ -574,12 +669,16 @@ eval_cb (const GMatchInfo * match_info, GString * result, gpointer data)
     return FALSE;               /* GLib's manual: "FALSE to continue the replacement process, TRUE to stop it. */
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static int
 gsub_by_callback (lua_State * L, const char *subject, size_t len, GRegex * re)
 {
     luaMC_pushstring_and_free (L, g_regex_replace_eval (re, subject, len, 0, 0, eval_cb, L, NULL));
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 static int
 gsub_by_template (lua_State * L, const char *subject, size_t len, GRegex * re)
@@ -590,6 +689,8 @@ gsub_by_template (lua_State * L, const char *subject, size_t len, GRegex * re)
     luaMC_pushstring_and_free (L, g_regex_replace (re, subject, len, 0, template, 0, NULL));
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Performs a global search/replace on a string.
@@ -619,6 +720,8 @@ l_gsub (lua_State * L)
     else
         return luaL_typerror (L, 3, "string/function");
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 static int
 split (lua_State * L, gboolean return_table)
@@ -655,6 +758,8 @@ split (lua_State * L, gboolean return_table)
     }
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Splits a string.
  *
@@ -676,6 +781,8 @@ l_split (lua_State * L)
     return split (L, FALSE);
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Splits a string into a table.
  *
@@ -690,6 +797,8 @@ l_tsplit (lua_State * L)
 {
     return split (L, TRUE);
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /*
  * Garbage collector for a regex.
@@ -709,26 +818,9 @@ l_regex_gc (lua_State * L)
     return 0;
 }
 
-/* ------------------------------------------------------------------------ */
-
-/* *INDENT-OFF* */
-static const struct luaL_Reg regex_class_lib[] = {
-    { "__gc", l_regex_gc },
-    { NULL, NULL }
-};
-
-static const struct luaL_Reg regex_lib[] = {
-    { "compile", l_compile },
-    { "match", l_match },
-    { "find", l_find },
-    { "gsub", l_gsub },
-    { "split", l_split },
-    { "tsplit", l_tsplit },
-    /* Should we have a clear_cache() Lua function too? (calling regex_cache__clear())
-     * No reason to, probably. */
-    { NULL, NULL }
-};
-/* *INDENT-ON* */
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 int
 luaopen_regex (lua_State * L)
@@ -740,3 +832,5 @@ luaopen_regex (lua_State * L)
     luaL_newlib (L, regex_lib);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
