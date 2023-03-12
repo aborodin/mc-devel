@@ -32,12 +32,7 @@
  *
  * The C side, this file, contains a few devices:
  *
- * First, it defines a timestamp data type (pit_t) whose resolution is
- * 1/1000 of a second. (Which makes it more useful than Unix' classic
- * 1-second resolution returned by time().) "pit" stands for "Point In
- * Time".
- *
- * Second, it defines a few primitive functions:
+ * It defines a few primitive functions:
  *
  * - mc_lua_set_next_timeout() and mc_lua_timer_now(), which are used by
  *   the Lua side.
@@ -47,8 +42,6 @@
  */
 
 #include <config.h>
-
-#include <sys/time.h>           /* gettimeofday() */
 
 #include "lib/global.h"
 
@@ -72,7 +65,7 @@
  * *all* the scheduled functions. *That* is what the Lua side does. We
  * only need to know when to invoke the Lua side.
  */
-static pit_t next_timeout;
+static gint64 next_timeout;
 
 /**
  * This flag is documented at Lua's timer.unlock().
@@ -96,7 +89,7 @@ static gboolean lock;
  * to tell us when it's time to invoke it.
  */
 void
-mc_lua_set_next_timeout (pit_t tm)
+mc_lua_set_next_timeout (gint64 tm)
 {
     next_timeout = tm;
 }
@@ -117,7 +110,7 @@ mc_lua_timer_unlock (void)
  * You can think of it as the equivalent of C's time(), with the following
  * differences:
  *
- * - The resolution is 1/1000 of a second.
+ * - The resolution is 1 microsecond.
  *
  * - The first call to mc_lua_timer_now() is the 'epoch'. That is, the first
  *   call returns zero.
@@ -126,38 +119,28 @@ mc_lua_timer_unlock (void)
  *   time, mc_lua_timer_now() will detect this and at the least return a
  *   reading equal to the previous reading.
  */
-pit_t
+gint64
 mc_lua_timer_now (void)
 {
-    static struct timeval last_reading;
-    static pit_t current_pit;
+    static gint64 last_reading = 0;
+    static gint64 current_pit;
 
-    struct timeval now;
+    gint64 now;
 
-    /* We're using gettimeofday(), not clock_gettime() because: (1) the
-       former is what's already used throughout MC. (2) According to
-       clock_gettime's manual page(s), while Linux and BSD do support
-       CLOCK_MONOTONIC, which could free us from the need to handle the
-       monotony issue ourselves, this is not guaranteed to be supported
-       on other systems, so we'd have to handle this ourselves anyway. */
-    gettimeofday (&now, NULL);
+    now = g_get_monotonic_time ();
 
-    if (last_reading.tv_sec == 0)
+    if (last_reading == 0)
     {
         /* First call. */
         last_reading = now;
     }
-    else if (now.tv_sec < last_reading.tv_sec
-             || (now.tv_sec == last_reading.tv_sec && now.tv_usec < last_reading.tv_usec))
+    else if (now < last_reading)
     {
         /* The clock was set backwards in time. Ensure monotony. */
         last_reading = now;
     }
 
-    current_pit +=
-        /* If the following seems like an error to you, consider that
-           (B-A)*m + (b-a)/n    equals    (B*m+b/n) - (A*m+a/n)  */
-        (now.tv_sec - last_reading.tv_sec) * 1000 + ((now.tv_usec - last_reading.tv_usec) / 1000);
+    current_pit += now - last_reading;
 
     last_reading = now;
 
@@ -174,7 +157,7 @@ mc_lua_timer_now (void)
  * got to wait for user input.
  */
 gboolean
-mc_lua_has_pending_timeouts (struct timeval * time_out)
+mc_lua_has_pending_timeouts (gint64 * time_out)
 {
     if (next_timeout == 0)
         return FALSE;
@@ -182,23 +165,14 @@ mc_lua_has_pending_timeouts (struct timeval * time_out)
     if (time_out != NULL)
     {
         /* Calculate time till next timeout. */
-        pit_t now;
+        gint64 now;
 
         now = mc_lua_timer_now ();
 
         if (next_timeout <= now)
-        {
-            time_out->tv_sec = 0;
-            time_out->tv_usec = 0;
-        }
+            *time_out = 0;
         else
-        {
-            pit_t diff;
-
-            diff = next_timeout - now;
-            time_out->tv_sec = diff / 1000;
-            time_out->tv_usec = (diff % 1000) * 1000;
-        }
+            *time_out = next_timeout - now;
     }
 
     return TRUE;

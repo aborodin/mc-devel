@@ -1999,10 +1999,16 @@ tty_get_event (struct Gpm_Event *event, gboolean redo_event, gboolean block)
         else
         {
 #ifdef ENABLE_LUA
-            if (mc_lua_has_pending_timeouts (&time_out))
+            gint64 tout = 0;
+
+            time_addr = NULL;
+
+            if (mc_lua_has_pending_timeouts (&tout))
+            {
+                time_out.tv_sec = tout / G_USEC_PER_SEC;
+                time_out.tv_usec = tout % G_USEC_PER_SEC;
                 time_addr = &time_out;
-            else
-                time_addr = NULL;
+            }
 #else
             int seconds;
 
