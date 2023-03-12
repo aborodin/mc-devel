@@ -51,7 +51,8 @@ static int l_unlock (lua_State * L);
 /*** file scope variables ************************************************************************/
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg timerlib[] = {
+static const struct luaL_Reg timerlib[] =
+{
     { "now", l_now },
     { "_set_next_timeout", l_set_next_timeout },
     { "unlock", l_unlock },
@@ -136,6 +137,7 @@ static int
 l_unlock (lua_State * L)
 {
     (void) L;
+
     mc_lua_timer_unlock ();
     return 0;
 }

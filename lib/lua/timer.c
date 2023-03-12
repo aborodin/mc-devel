@@ -176,30 +176,32 @@ mc_lua_timer_now (void)
 gboolean
 mc_lua_has_pending_timeouts (struct timeval * time_out)
 {
-    if (next_timeout != 0)
-    {
-        if (time_out != NULL)
-        {
-            /* Calculate time till next timeout. */
-            pit_t now = mc_lua_timer_now ();
-            if (next_timeout <= now)
-            {
-                time_out->tv_sec = 0;
-                time_out->tv_usec = 0;
-            }
-            else
-            {
-                pit_t diff = next_timeout - now;
-                time_out->tv_sec = diff / 1000;
-                time_out->tv_usec = (diff % 1000) * 1000;
-            }
-        }
-        return TRUE;
-    }
-    else
-    {
+    if (next_timeout == 0)
         return FALSE;
+
+    if (time_out != NULL)
+    {
+        /* Calculate time till next timeout. */
+        pit_t now;
+
+        now = mc_lua_timer_now ();
+
+        if (next_timeout <= now)
+        {
+            time_out->tv_sec = 0;
+            time_out->tv_usec = 0;
+        }
+        else
+        {
+            pit_t diff;
+
+            diff = next_timeout - now;
+            time_out->tv_sec = diff / 1000;
+            time_out->tv_usec = (diff % 1000) * 1000;
+        }
     }
+
+    return TRUE;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -229,4 +231,5 @@ mc_lua_execute_ready_timeouts (void)
         lock = FALSE;
     }
 }
+
 /* --------------------------------------------------------------------------------------------- */
