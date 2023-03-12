@@ -500,6 +500,7 @@ static int
 l_redraw (lua_State * L)
 {
     (void) L;
+
     do_refresh ();
     return 0;
 }
@@ -520,6 +521,7 @@ static int
 l_refresh (lua_State * L)
 {
     (void) L;
+
     mc_refresh ();
     return 0;
 }
@@ -541,11 +543,9 @@ void
 luaTTY_assert_ui_is_ready (lua_State * L)
 {
     if (!mc_lua_ui_is_ready ())
-    {
         luaL_error (L,
                     E_ ("You can not use %s() yet, because the UI has not been initialized."),
                     luaMC_get_function_name (L, 0, FALSE));
-    }
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -589,12 +589,12 @@ static int
 l_text_width (lua_State * L)
 {
     const char *s;
-
-    int cols, lines = 1;
+    int cols;
+    int lines = 1;
 
     s = luaL_checkstring (L, 1);
 
-    if (strchr (s, '\n'))
+    if (strchr (s, '\n') != NULL)
         str_msg_term_size (s, &lines, &cols);
     else
         cols = str_term_width1 (s);
@@ -635,20 +635,16 @@ static int
 l_text_cols (lua_State * L)
 {
     const char *s;
-    int col1;
-    int col2;
-
-    int width;
+    int col1, col2;
+    int width = -1;
 
     s = luaL_checkstring (L, 1);
     col1 = luaL_checkint (L, 2);
     col2 = luaL_optint (L, 3, -1);
 
+    /* We compute the width only when needed. */
     if (col1 < 0 || col2 < 0)
-        /* We compute the width only when needed. */
         width = str_term_width1 (s);
-    else
-        width = -1;
 
     /* Convert Lua indices to C indices. */
     col1 = mc_lua_fixup_idx (col1, width, FALSE);
@@ -681,9 +677,7 @@ l_text_cols (lua_State * L)
          */
     }
     else
-    {
         lua_pushliteral (L, "");
-    }
 
     return 1;
 }
@@ -929,7 +923,6 @@ l_conv (lua_State * L)
     const char *s;
     size_t len;
     const char *from_enc;
-
     GIConv conv;
 
     s = luaL_checklstring (L, 1, &len);
@@ -938,6 +931,7 @@ l_conv (lua_State * L)
     conv = str_crt_conv_from (from_enc);
     if (conv == INVALID_CONV)
         return luaL_error (L, E_ ("Unknown encoding '%s'"), from_enc);
+
     (void) luaMC_pushlstring_conv (L, s, len, conv);
     /* We don't care about ESTR_PROBLEM/ESTR_FAILURE: we deem it natural that
      * terminal conversion won't preserve all the data. */
