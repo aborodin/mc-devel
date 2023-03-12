@@ -1,4 +1,29 @@
 /*
+   Functions serve the mechanism that lets us schedule Lua functions to run in the future.
+
+   Copyright (C) 2015-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2015
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
  * The functions here serve the mechanism that lets us schedule Lua
  * functions to run in the future.
  *
@@ -32,6 +57,11 @@
 
 #include "timer.h"
 
+/*** global variables ****************************************************************************/
+
+/*** file scope macro definitions ****************************************************************/
+
+/*** file scope type declarations ****************************************************************/
 
 /**
  * Holds the timestamp of the next Lua function we're to run. Zero if
@@ -49,6 +79,18 @@ static pit_t next_timeout;
  */
 static gboolean lock;
 
+/*** forward declarations (file scope functions) *************************************************/
+
+/*** file scope variables ************************************************************************/
+
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
+
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * The Lua side uses this function (exposed to Lua in the modules/timr.c)
  * to tell us when it's time to invoke it.
@@ -59,11 +101,15 @@ mc_lua_set_next_timeout (pit_t tm)
     next_timeout = tm;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 void
 mc_lua_timer_unlock (void)
 {
     lock = FALSE;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Returns the current timestamp.
@@ -118,6 +164,8 @@ mc_lua_timer_now (void)
     return current_pit;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Tells us whether there are functions scheduled to run, and calculates
  * the time till the first scheduled function.
@@ -154,6 +202,8 @@ mc_lua_has_pending_timeouts (struct timeval * time_out)
     }
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Runs the scheduled functions that are now ready to run.
  *
@@ -179,3 +229,4 @@ mc_lua_execute_ready_timeouts (void)
         lock = FALSE;
     }
 }
+/* --------------------------------------------------------------------------------------------- */

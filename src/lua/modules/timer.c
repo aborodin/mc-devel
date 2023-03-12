@@ -1,3 +1,28 @@
+/*
+   Timer.
+
+   Copyright (C) 2015-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2015
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 /**
  * @module timer
  */
@@ -11,6 +36,32 @@
 
 #include "../modules.h"
 
+/*** global variables ****************************************************************************/
+
+/*** file scope macro definitions ****************************************************************/
+
+/*** file scope type declarations ****************************************************************/
+
+/*** forward declarations (file scope functions) *************************************************/
+
+static int l_now (lua_State * L);
+static int l_set_next_timeout (lua_State * L);
+static int l_unlock (lua_State * L);
+
+/*** file scope variables ************************************************************************/
+
+/* *INDENT-OFF* */
+static const struct luaL_Reg timerlib[] = {
+    { "now", l_now },
+    { "_set_next_timeout", l_set_next_timeout },
+    { "unlock", l_unlock },
+    { NULL, NULL }
+};
+/* *INDENT-ON* */
+
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * The timer module is written mostly in Lua. Only a couple of functions
@@ -28,6 +79,8 @@ l_set_next_timeout (lua_State * L)
     mc_lua_set_next_timeout (luaL_opti (L, 1, 0));
     return 0;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Returns the current "timestamp".
@@ -51,6 +104,8 @@ l_now (lua_State * L)
     lua_pushi (L, mc_lua_timer_now ());
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Enables "reentrancy".
@@ -85,16 +140,9 @@ l_unlock (lua_State * L)
     return 0;
 }
 
-/* ------------------------------------------------------------------------ */
-
-/* *INDENT-OFF* */
-static const struct luaL_Reg timerlib[] = {
-    { "now", l_now },
-    { "_set_next_timeout", l_set_next_timeout },
-    { "unlock", l_unlock },
-    { NULL, NULL }
-};
-/* *INDENT-ON* */
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 int
 luaopen_timer (lua_State * L)
@@ -102,3 +150,5 @@ luaopen_timer (lua_State * L)
     luaL_newlib (L, timerlib);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
