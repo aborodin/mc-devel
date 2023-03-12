@@ -50,9 +50,10 @@
 
 #include "lib/global.h"
 
-#include "lib/vfs/vfs.h"
 #ifdef ENABLE_LUA
 #include "lib/lua/timer.h"      /* mc_lua_execute_ready_timeouts(), mc_lua_has_pending_timeouts() */
+#else
+#include "lib/vfs/vfs.h"
 #endif
 
 #include "tty.h"
