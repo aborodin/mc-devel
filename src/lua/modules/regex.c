@@ -176,12 +176,16 @@ static int l_tsplit (lua_State * L);
 static int regex_cache_size = 0;
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg regex_class_lib[] = {
+static const struct luaL_Reg regex_class_lib[] =
+{
     { "__gc", l_regex_gc },
     { NULL, NULL }
 };
+/* *INDENT-ON* */
 
-static const struct luaL_Reg regex_lib[] = {
+/* *INDENT-OFF* */
+static const struct luaL_Reg regex_lib[] =
+{
     { "compile", l_compile },
     { "match", l_match },
     { "find", l_find },
@@ -215,8 +219,7 @@ regex_cache__clear (lua_State * L)
 static void
 regex_cache__bump_size (lua_State * L)
 {
-    ++regex_cache_size;
-    if (regex_cache_size > REGEX_CACHE_MAX)
+    if (++regex_cache_size > REGEX_CACHE_MAX)
         regex_cache__clear (L);
 }
 
@@ -238,9 +241,9 @@ raise_error (lua_State * L, GError * error)
 static flags_t
 parse_flags (lua_State * L, const char *flags_string, flags_t flags)
 {
-    const char *c = flags_string;
-    while (*c)
-    {
+    const char *c;
+
+    for (c = flags_string; *c != '\0'; c++)
         switch (*c)
         {
         case 'i':
@@ -266,8 +269,7 @@ parse_flags (lua_State * L, const char *flags_string, flags_t flags)
         default:
             return luaL_error (L, E_ ("Invalid regex flag '%c'."), *c);
         }
-        ++c;
-    }
+
     return flags;
 }
 
@@ -424,19 +426,21 @@ luaMC_checkregex_ex (lua_State * L, int index, int index_flags)
     index = lua_absindex (L, index);
     index_flags = lua_absindex (L, index_flags);
 
-    if (lua_isuserdata (L, index))
+    if (lua_isuserdata (L, index) != 0)
     {
         /* It's already a regex object. Return it directly. */
         return luaL_checkudata (L, index, "regex.Regex");
     }
+
     /* Convert from a string or table: */
-    else if (lua_type (L, index) == LUA_TSTRING)
+    if (lua_type (L, index) == LUA_TSTRING)
     {
         create_regex_or_cached (L, index, index_flags);
         lua_replace (L, index); /* Override 'index' with the userdata. */
         return lua_touserdata (L, index);
     }
-    else if (lua_type (L, index) == LUA_TTABLE)
+
+    if (lua_type (L, index) == LUA_TTABLE)
     {
         lua_rawgeti (L, index, 1);      /* pattern */
         lua_rawgeti (L, index, 2);      /* flags */
@@ -445,12 +449,10 @@ luaMC_checkregex_ex (lua_State * L, int index, int index_flags)
         lua_replace (L, index); /* Override 'index' with the userdata. */
         return lua_touserdata (L, index);
     }
-    else
-    {
-        luaL_error (L,
-                    E_
-                    ("Unrecognized format for regex. A string, table, or compiled regex is expected."));
-    }
+
+    luaL_error (L,
+                E_
+                ("Unrecognized format for regex. A string, table, or compiled regex is expected."));
 
     return NULL;                /* We never arrive here. */
 }
@@ -502,8 +504,10 @@ push_match (lua_State * L, const GMatchInfo * match_info, int num)
 static int
 push_captures (lua_State * L, const GMatchInfo * match_info)
 {
-    int count = g_match_info_get_match_count (match_info) - 1;  /* "-1" gives the number of captures. */
+    int count;
     int i;
+
+    count = g_match_info_get_match_count (match_info) - 1;      /* "-1" gives the number of captures. */
 
     for (i = 1; i <= count; i++)        /* We start from "1". "0" is the whole match. */
         push_match (L, match_info, i);
@@ -525,7 +529,6 @@ match_or_find (lua_State * L, gboolean do_find)
     size_t len;
     GRegex *re;
     int start;
-
     int return_count;
     GMatchInfo *match_info;
 
@@ -626,7 +629,6 @@ static gboolean
 eval_cb (const GMatchInfo * match_info, GString * result, gpointer data)
 {
     lua_State *L = (lua_State *) data;
-
     gchar *whole_match;
     int argn;
     const char *cb_result;
@@ -713,12 +715,13 @@ l_gsub (lua_State * L)
     /* Lua's string.gsub() supports a 4'th argument (number of replacements) but we do not: */
     luaMC_checkargcount (L, 3, FALSE);
 
-    if (lua_isstring (L, 3))
+    if (lua_isstring (L, 3) != 0)
         return gsub_by_template (L, subject, len, re);
-    else if (lua_isfunction (L, 3))
+
+    if (lua_isfunction (L, 3) != 0)
         return gsub_by_callback (L, subject, len, re);
-    else
-        return luaL_typerror (L, 3, "string/function");
+
+    return luaL_typerror (L, 3, "string/function");
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -730,7 +733,6 @@ split (lua_State * L, gboolean return_table)
     size_t len;
     GRegex *re;
     int max_tokens;
-
     gchar **result;
 
     subject = luaL_checklstring (L, 1, &len);
