@@ -63,7 +63,8 @@ static int l_shell_quote (lua_State * L);
 /*** file scope variables ************************************************************************/
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg utils_text_lib[] = {
+static const struct luaL_Reg utils_text_lib[] =
+{
     { "_format_size", l_format_size },
     { "parse_size", l_parse_size },
     { "format_file_date", l_format_file_date },
@@ -87,7 +88,6 @@ l_format_size (lua_State * L)
     /* input vars */
     uintmax_t size;
     int len;
-
     /* output vars */
     char buffer[BUF_TINY];
 
@@ -140,14 +140,12 @@ l_parse_size (lua_State * L)
 {
     /* input vars */
     const char *s;
-
     /* output vars */
     uintmax_t n;
-    gboolean invalid;
+    gboolean invalid = FALSE;
 
     s = luaL_checkstring (L, 1);
 
-    invalid = FALSE;
     n = parse_integer (s, &invalid);
 
     if (!invalid)
@@ -155,12 +153,10 @@ l_parse_size (lua_State * L)
         lua_pushi (L, n);
         return 1;
     }
-    else
-    {
-        lua_pushnil (L);
-        lua_pushfstring (L, E_ ("Invalid size \"%s\"."), s);
-        return 2;
-    }
+
+    lua_pushnil (L);
+    lua_pushfstring (L, E_ ("Invalid size \"%s\"."), s);
+    return 2;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -217,7 +213,6 @@ l_shell_split (lua_State * L)
 {
     /* input vars */
     const char *s;
-
     /* output vars */
     char **argv;
     GError *error = NULL;
@@ -230,24 +225,20 @@ l_shell_split (lua_State * L)
         g_strfreev (argv);
         return 1;
     }
-    else
+
+    if (error->code == G_SHELL_ERROR_EMPTY_STRING)
     {
-        if (error->code == G_SHELL_ERROR_EMPTY_STRING)
-        {
-            /* We don't consider an empty/whitespace string, as input, an error.
-             * We return an empty table in this case. */
-            lua_newtable (L);
-            g_error_free (error);
-            return 1;
-        }
-        else
-        {
-            lua_pushnil (L);
-            lua_pushstring (L, error->message);
-            g_error_free (error);
-            return 2;
-        }
+        /* We don't consider an empty/whitespace string, as input, an error.
+         * We return an empty table in this case. */
+        lua_newtable (L);
+        g_error_free (error);
+        return 1;
     }
+
+    lua_pushnil (L);
+    lua_pushstring (L, error->message);
+    g_error_free (error);
+    return 2;
 }
 
 /* --------------------------------------------------------------------------------------------- */
