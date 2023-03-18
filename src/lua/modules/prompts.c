@@ -86,18 +86,15 @@ l_input (lua_State * L)
 {
     const char *question, *def_text, *title, *history;
     gboolean is_password = FALSE;
-
     char *answer;
 
     /* We default to "", not NULLs, as NULLs would crash MC (because strlen()
      * is called on them later). */
-    /* *INDENT-OFF* */
-    question    = luaL_optstring(L, 1, "");
-    def_text    = luaMC_is_int_eq (L, 2, -1) ? INPUT_LAST_TEXT : luaL_optstring(L, 2, "");
-    title       = luaL_optstring(L, 3, "");
-    history     = luaL_optstring(L, 4, MC_HISTORY_LUA_DEFAULT);
-    is_password = lua_toboolean(L, 5);
-    /* *INDENT-ON* */
+    question = luaL_optstring (L, 1, "");
+    def_text = luaMC_is_int_eq (L, 2, -1) ? INPUT_LAST_TEXT : luaL_optstring (L, 2, "");
+    title = luaL_optstring (L, 3, "");
+    history = luaL_optstring (L, 4, MC_HISTORY_LUA_DEFAULT);
+    is_password = lua_toboolean (L, 5);
 
 #ifdef ENABLE_BACKGROUND
     if (mc_global.we_are_background)
