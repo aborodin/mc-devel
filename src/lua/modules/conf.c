@@ -213,10 +213,8 @@ luaopen_conf (lua_State * L)
     luaL_newlib (L, conf_lib);
 
     build_features_table (L);
-    {
-        build_features_api_table (L);
-        lua_setfield (L, -2, "api");
-    }
+    build_features_api_table (L);
+    lua_setfield (L, -2, "api");
     lua_setfield (L, -2, "features");
 
     build_dirs_table (L);
