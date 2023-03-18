@@ -1,3 +1,28 @@
+/*
+   Extra string utilities.
+
+   Copyright (C) 2015-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2015
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 /**
  * Extra string utilities.
  *
@@ -21,6 +46,36 @@
 
 #include "../modules.h"
 
+/*** global variables ****************************************************************************/
+
+/*** file scope macro definitions ****************************************************************/
+
+/*** file scope type declarations ****************************************************************/
+
+/*** forward declarations (file scope functions) *************************************************/
+
+static int l_format_size (lua_State * L);
+static int l_parse_size (lua_State * L);
+static int l_format_file_date (lua_State * L);
+static int l_shell_split (lua_State * L);
+static int l_shell_quote (lua_State * L);
+
+/*** file scope variables ************************************************************************/
+
+/* *INDENT-OFF* */
+static const struct luaL_Reg utils_text_lib[] = {
+    { "_format_size", l_format_size },
+    { "parse_size", l_parse_size },
+    { "format_file_date", l_format_file_date },
+    { "shell_split", l_shell_split },
+    { "shell_quote", l_shell_quote },
+    { NULL, NULL }
+};
+/* *INDENT-ON* */
+
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * This function is exposed to Lua as "_format_size" and is wrapped by
@@ -44,6 +99,8 @@ l_format_size (lua_State * L)
     lua_pushstring (L, buffer);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Parses a string denoting size.
@@ -106,6 +163,8 @@ l_parse_size (lua_State * L)
     }
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Formats a file date the way MC does in panels.
  *
@@ -125,6 +184,8 @@ l_format_file_date (lua_State * L)
     lua_pushstring (L, file_date (timestamp));
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Splits a string into tokens the way the shell does.
@@ -189,6 +250,8 @@ l_shell_split (lua_State * L)
     }
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Quotes a string to be used by the shell.
  *
@@ -212,18 +275,9 @@ l_shell_quote (lua_State * L)
     return 1;
 }
 
-/* ------------------------------------------------------------------------ */
-
-/* *INDENT-OFF* */
-static const struct luaL_Reg utils_text_lib[] = {
-    { "_format_size", l_format_size },
-    { "parse_size", l_parse_size },
-    { "format_file_date", l_format_file_date },
-    { "shell_split", l_shell_split },
-    { "shell_quote", l_shell_quote },
-    { NULL, NULL }
-};
-/* *INDENT-ON* */
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 int
 luaopen_utils_text (lua_State * L)
@@ -231,3 +285,5 @@ luaopen_utils_text (lua_State * L)
     luaL_newlib (L, utils_text_lib);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
