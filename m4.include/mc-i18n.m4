@@ -3,7 +3,8 @@ dnl
 dnl Check if environment is ready for get translations of docs from transifex
 dnl
 dnl @author Slava Zanko <slavazanko@gmail.com>
-dnl @version 2011-02-10
+dnl @author Mooffie <mooffie@gmail.com>
+dnl @version 2023-03-18
 dnl @license GPL
 dnl @copyright Free Software Foundation, Inc.
 
@@ -30,4 +31,40 @@ AC_DEFUN([mc_I18N],[
 
         AC_SUBST(CP1251)
     fi
+])
+
+AC_DEFUN([mc_I18N_PRINTF_GROUPING],[
+    gt_GLIBC2
+
+    AC_CACHE_CHECK([whether printf() can print localized thousand separators.],
+        [mc_cv_i18n_printf_grouping],
+        [
+            grouping=no
+
+            dnl Since runtime detection doesn't work when cross-compiling, we first
+            dnl test for the existence of a decent glibc library.
+
+            AS_IF([test x"$GLIBC2" = xyes], [grouping=yes], [
+                AC_MSG_NOTICE([** TRYING RUNTIME DETECTION])
+                AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <stdio.h>
+#include <string.h>
+int main ()
+{
+  /* We merely check that the "'" doesn't break anything. If it
+   * doesn't, we assume we have i18n support. */
+  char buf[100];
+  sprintf (buf, "%'d", 123);
+  return (strcmp (buf, "123") != 0);
+}
+                ]])], [grouping=yes], [:], [:])
+            ])
+
+            mc_cv_i18n_printf_grouping=$grouping
+        ])
+
+    if test x"$mc_cv_i18n_printf_grouping" = xyes; then
+        AC_DEFINE(HAVE_I18N_PRINTF_GROUPING, [1], [Define if printf() and family can print localized thousands separators for numbers.])
+    fi
+
 ])
