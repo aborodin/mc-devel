@@ -324,10 +324,10 @@ _add_commas (char *in, char *out)
     g_strreverse (in);
     p = in;
     q = out;
-    while (*p)
+    while (*p != '\0')
     {
         *q++ = *p++;
-        if (*p && ((p - in) % 3 == 0))
+        if (*p != '\0' && ((p - in) % 3 == 0))
             *q++ = ',';
     }
     *q = '\0';
@@ -343,7 +343,7 @@ add_commas (double num, int precision)
     char *fraction = NULL;
 
     if (precision >= 0)
-        sprintf (in, "%.*f", precision, num);
+        g_snprintf (in, sizeof (in), "%.*f", precision, num);
     else
     {
         /*
@@ -355,15 +355,15 @@ add_commas (double num, int precision)
          * which is also the solution used in other scripting languages; e.g.
          * Ruby (see numeric.c:flo_to_s) and Lua (see luaconf.h:LUA_NUMBER_FMT).
          */
-        sprintf (in, "%.14g", num);
+        g_snprintf (in, sizeof (in), "%.14g", num);
 
-        if (strchr (in, 'e'))
+        if (strchr (in, 'e') != NULL)
             return in;          /* give up */
     }
 
     fraction = strchr (in, '.');
 
-    if (fraction)
+    if (fraction != NULL)
     {
         *fraction = '\0';
         fraction++;
@@ -371,10 +371,10 @@ add_commas (double num, int precision)
 
     _add_commas (in, out);
 
-    if (fraction)
+    if (fraction != NULL)
     {
-        strcat (out, ".");
-        strcat (out, fraction);
+        g_strlcat (out, ".", sizeof (out));
+        g_strlcat (out, fraction, sizeof (out));
     }
 
     return out;
@@ -398,9 +398,9 @@ format_number__clib (lua_State * L, double num, int precision)
     char buf[BUF_SMALL];
 
     if (precision >= 0)
-        sprintf (buf, "%'.*f", precision, num);
+        g_snprintf (buf, sizeof (buf), "%'.*f", precision, num);
     else
-        sprintf (buf, "%'.14g", num);   /* See comment above. */
+        g_snprintf (buf, sizeof (buf), "%'.14g", num);  /* See comment above. */
 
     lua_pushstring (L, buf);
     return 1;
@@ -445,8 +445,8 @@ l_format_number (lua_State * L)
     if (numeric_locale_is_posix)
         /* We want to show commas when in POSIX loale. */
         return format_number__ours (L, num, precision);
-    else
-        return format_number__clib (L, num, precision);
+
+    return format_number__clib (L, num, precision);
 #else
     return format_number__ours (L, num, precision);
 #endif
