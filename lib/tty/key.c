@@ -1156,6 +1156,15 @@ correct_key_code (int code)
 
 /* --------------------------------------------------------------------------------------------- */
 
+static void
+time_convert (struct timeval *dest, gint64 src)
+{
+    dest->tv_sec = src / G_USEC_PER_SEC;
+    dest->tv_usec = src % G_USEC_PER_SEC;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
 static int
 getch_with_timeout (unsigned int delay_us)
 {
@@ -1163,8 +1172,7 @@ getch_with_timeout (unsigned int delay_us)
     int c;
     struct timeval time_out;
 
-    time_out.tv_sec = delay_us / G_USEC_PER_SEC;
-    time_out.tv_usec = delay_us % G_USEC_PER_SEC;
+    time_convert (&time_out, delay_us);
     tty_nodelay (TRUE);
     FD_ZERO (&Read_FD_Set);
     FD_SET (input_fd, &Read_FD_Set);
@@ -2005,8 +2013,7 @@ tty_get_event (struct Gpm_Event *event, gboolean redo_event, gboolean block)
 
             if (mc_lua_has_pending_timeouts (&tout))
             {
-                time_out.tv_sec = tout / G_USEC_PER_SEC;
-                time_out.tv_usec = tout % G_USEC_PER_SEC;
+                time_convert (&time_out, tout);
                 time_addr = &time_out;
             }
 #else
@@ -2203,8 +2210,7 @@ learn_key (void)
             if (time_out <= 0)
                 break;
 
-            tv.tv_sec = time_out / G_USEC_PER_SEC;
-            tv.tv_usec = time_out % G_USEC_PER_SEC;
+            time_convert (&tv, time_out);
             FD_ZERO (&Read_FD_Set);
             FD_SET (input_fd, &Read_FD_Set);
             select (input_fd + 1, &Read_FD_Set, NULL, NULL, &tv);
