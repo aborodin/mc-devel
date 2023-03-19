@@ -146,23 +146,23 @@ As a quick reference, here’s a snippet that uses some common features:
 #define LUA_TO_DIALOG(L, i) (DIALOG (luaUI_check_widget (L, i)))
 
 #define WDGT_GETTER(name, var) \
-    static int \
-    l_widget_get_ ## name (lua_State* L) \
-    { \
-        WRect *r; \
-        r = &luaUI_check_widget (L, 1)->rect; \
-        lua_pushinteger (L, r->var); \
-        return 1; \
-    }
+static int \
+l_widget_get_ ## name (lua_State* L) \
+{ \
+    WRect *r; \
+    r = &luaUI_check_widget (L, 1)->rect; \
+    lua_pushinteger (L, r->var); \
+    return 1; \
+}
 
 #define WDGT_SETTER(name, var) \
-    static int \
-    l_widget_set_ ## name (lua_State* L) { \
-        WRect *r; \
-        r = &luaUI_check_widget (L, 1)->rect; \
-        r->var = luaL_checkint (L, 2); \
-        return 0; \
-    }
+static int \
+l_widget_set_ ## name (lua_State* L) { \
+    WRect *r; \
+    r = &luaUI_check_widget (L, 1)->rect; \
+    r->var = luaL_checkint (L, 2); \
+    return 0; \
+}
 
 /*** file scope type declarations ****************************************************************/
 
@@ -295,7 +295,8 @@ static int l_dialog_focus (lua_State * L);
  */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_widget_methods_lib[] = {
+static const struct luaL_Reg ui_widget_methods_lib[] =
+{
     { "init", l_widget_init },
     { "get_x", l_widget_get_x },
     { "set_x", l_widget_set_x },
@@ -320,14 +321,16 @@ static const struct luaL_Reg ui_widget_methods_lib[] = {
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_button_static_lib[] = {
+static const struct luaL_Reg ui_button_static_lib[] =
+{
     { "_new", l_button_new },
     { NULL, NULL }
 };
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_button_methods_lib[] = {
+static const struct luaL_Reg ui_button_methods_lib[] =
+{
     { "set_text", l_button_set_text },
     { "get_text", l_button_get_text },
     { "set_type", l_button_set_type },
@@ -336,14 +339,16 @@ static const struct luaL_Reg ui_button_methods_lib[] = {
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_checkbox_static_lib[] = {
+static const struct luaL_Reg ui_checkbox_static_lib[] =
+{
     { "_new", l_checkbox_new },
     { NULL, NULL }
 };
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_checkbox_methods_lib[] = {
+static const struct luaL_Reg ui_checkbox_methods_lib[] =
+{
     { "get_checked", l_checkbox_get_checked },
     { "set_checked", l_checkbox_set_checked },
     { "set_text", l_checkbox_set_text },
@@ -353,14 +358,16 @@ static const struct luaL_Reg ui_checkbox_methods_lib[] = {
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_label_static_lib[] = {
+static const struct luaL_Reg ui_label_static_lib[] =
+{
     { "_new", l_label_new },
     { NULL, NULL }
 };
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_label_methods_lib[] = {
+static const struct luaL_Reg ui_label_methods_lib[] =
+{
     { "set_text", l_label_set_text },
     { "get_text", l_label_get_text },
     { "set_auto_size", l_set_auto_size },
@@ -369,14 +376,16 @@ static const struct luaL_Reg ui_label_methods_lib[] = {
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_input_static_lib[] = {
+static const struct luaL_Reg ui_input_static_lib[] =
+{
     { "_new", l_input_new },
     { NULL, NULL }
 };
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_input_methods_lib[] = {
+static const struct luaL_Reg ui_input_methods_lib[] =
+{
     { "insert", l_input_insert },
     { "set_cols", l_input_set_cols },
     { "set_text", l_input_set_text },
@@ -393,14 +402,16 @@ static const struct luaL_Reg ui_input_methods_lib[] = {
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_groupbox_static_lib[] = {
+static const struct luaL_Reg ui_groupbox_static_lib[] =
+{
     { "_new", l_groupbox_new },
     { NULL, NULL }
 };
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_groupbox_methods_lib[] = {
+static const struct luaL_Reg ui_groupbox_methods_lib[] =
+{
     { "set_text", l_groupbox_set_text },
     { "get_text", l_groupbox_get_text },
     { NULL, NULL }
@@ -408,14 +419,16 @@ static const struct luaL_Reg ui_groupbox_methods_lib[] = {
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_listbox_static_lib[] = {
+static const struct luaL_Reg ui_listbox_static_lib[] =
+{
     { "_new", l_listbox_new },
     { NULL, NULL }
 };
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_listbox_methods_lib[] = {
+static const struct luaL_Reg ui_listbox_methods_lib[] =
+{
     { "set_items", l_listbox_set_items },
     { "get_items", l_listbox_get_items },
     { "set_selected_index", l_listbox_set_selected_index },
@@ -425,12 +438,14 @@ static const struct luaL_Reg ui_listbox_methods_lib[] = {
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_radios_static_lib[] = {
+static const struct luaL_Reg ui_radios_static_lib[] =
+{
     { "_new", l_radios_new },
     { NULL, NULL }
 };
 
-static const struct luaL_Reg ui_radios_methods_lib[] = {
+static const struct luaL_Reg ui_radios_methods_lib[] =
+{
     { "set_items", l_radios_set_items },
     { "get_items", l_radios_get_items },
     { "set_selected_index", l_radios_set_selected_index },
@@ -440,14 +455,16 @@ static const struct luaL_Reg ui_radios_methods_lib[] = {
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_gauge_static_lib[] = {
+static const struct luaL_Reg ui_gauge_static_lib[] =
+{
     { "_new", l_gauge_new },
     { NULL, NULL }
 };
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_gauge_methods_lib[] = {
+static const struct luaL_Reg ui_gauge_methods_lib[] =
+{
     { "set_value", l_gauge_set_value },
     { "get_value", l_gauge_get_value },
     { "set_max", l_gauge_set_max },
@@ -459,14 +476,16 @@ static const struct luaL_Reg ui_gauge_methods_lib[] = {
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_hline_static_lib[] = {
+static const struct luaL_Reg ui_hline_static_lib[] =
+{
     { "_new", l_hline_new },
     { NULL, NULL }
 };
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_hline_methods_lib[] = {
+static const struct luaL_Reg ui_hline_methods_lib[] =
+{
     { "set_through", l_hline_set_through },
     { "get_through", l_hline_get_through },
     { "set_text", l_hline_set_text },
@@ -506,16 +525,23 @@ static const struct luaL_Reg ui_hline_methods_lib[] = {
  * @property rw
  */
 
-static const char *const colorset_names[] = {
+/* *INDENT-OFF* */
+static const char *const colorset_names[] =
+{
     "normal", "alarm", "pmenu", NULL
 };
-
-static const int *colorset_values[] = {
-    dialog_colors, alarm_colors, listbox_colors
-};
+/* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_dialog_static_lib[] = {
+static const int *colorset_values[] =
+{
+    dialog_colors, alarm_colors, listbox_colors
+};
+/* *INDENT-ON* */
+
+/* *INDENT-OFF* */
+static const struct luaL_Reg ui_dialog_static_lib[] =
+{
     { "_new", l_dialog_new },
     { "get_top", l_dialog_get_top },
     { "get_screens", l_dialog_get_screens },
@@ -525,7 +551,8 @@ static const struct luaL_Reg ui_dialog_static_lib[] = {
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_dialog_methods_lib[] = {
+static const struct luaL_Reg ui_dialog_methods_lib[] =
+{
     { "_run", l_dialog_run },
     { "_destroy", l_dialog_destroy },
     { "redraw", l_dialog_redraw },
@@ -556,7 +583,8 @@ static const struct luaL_Reg ui_dialog_methods_lib[] = {
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg uilib[] = {
+static const struct luaL_Reg uilib[] =
+{
     /* No functions are currently defined under the 'ui' namespace here.
      * (Note: ui.current_widget() is an alias to mc._current_widget().) */
     { NULL, NULL }
@@ -564,8 +592,8 @@ static const struct luaL_Reg uilib[] = {
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const luaMC_constReg uilib_constants[] = {
-
+static const luaMC_constReg uilib_constants[] =
+{
     /*
      * Option flags.
      */
@@ -700,6 +728,7 @@ l_widget_init (lua_State * L)
 {
     /* Do nothing. Subclasses can override this. */
     (void) L;
+
     return 0;
 }
 
@@ -748,21 +777,27 @@ l_widget_get_dialog (lua_State * L)
 static int
 l_widget_set_enabled (lua_State * L)
 {
-    Widget *w = luaUI_check_widget (L, 1);
-    gboolean b = lua_toboolean (L, 2);
+    Widget *w;
+    gboolean b;
 
-    WGroup *g;
+    w = luaUI_check_widget (L, 1);
+    b = lua_toboolean (L, 2) == 0;
 
-    widget_disable (w, !b);
+    widget_disable (w, b);
 
-    g = w->owner;
-
-    if (!b && g && g->current && g->current->data == w)
+    if (b)
     {
-        /* If we've disabled ourselves, focus the next widget. This in
-         * order to circumvent a "bug" in MC where it's still possible
-         * to hit ENTER on a disabled button thereby activating it. */
-        group_select_next_widget (g);
+        WGroup *g;
+
+        g = w->owner;
+
+        if (g != NULL && g->current != NULL && g->current->data == w)
+        {
+            /* If we've disabled ourselves, focus the next widget. This in
+             * order to circumvent a "bug" in MC where it's still possible
+             * to hit ENTER on a disabled button thereby activating it. */
+            group_select_next_widget (g);
+        }
     }
 
     return 0;
@@ -793,13 +828,14 @@ l_widget_get_enabled (lua_State * L)
 static int
 l_widget_destroy (lua_State * L)
 {
-    Widget *w = luaUI_check_widget_ex (L, 1, TRUE, NULL);
+    Widget *w;
 
     /* If the user asks us to destroy an already destroyed widget, we
      * don't play drama queens but fail silently. That's the 'TRUE' in
      * the call above. */
 
-    if (w)
+    w = luaUI_check_widget_ex (L, 1, TRUE, NULL);
+    if (w != NULL)
     {
         if (w->owner != NULL)
         {
@@ -851,10 +887,12 @@ l_widget_destroy (lua_State * L)
 static int
 l_widget_command (lua_State * L)
 {
-    Widget *w = luaUI_check_widget (L, 1);
-    const char *cmd_name = luaL_checkstring (L, 2);
-
+    Widget *w;
+    const char *cmd_name;
     int cmd;
+
+    w = luaUI_check_widget (L, 1);
+    cmd_name = luaL_checkstring (L, 2);
 
     cmd = keybind_lookup_action (cmd_name);
 
@@ -890,9 +928,15 @@ l_widget_command (lua_State * L)
 static int
 l_widget_send_message (lua_State * L)
 {
-    Widget *w = luaUI_check_widget (L, 1);
-    widget_msg_t msg = luaL_checkint (L, 2);
-    int parm = luaL_optint (L, 3, 0);
+    Widget *w;
+    widget_msg_t msg;
+    int parm;
+    Widget *sender;
+
+    w = luaUI_check_widget (L, 1);
+    msg = luaL_checkint (L, 2);
+    parm = luaL_optint (L, 3, 0);
+
     /*
      * Ideally, below we should use lua_isnoneornil() instead of
      * ensuring this is indeed a widget (table). But otherwise the
@@ -907,7 +951,7 @@ l_widget_send_message (lua_State * L)
      * Maybe we should instead make keyname_to_keycode() return just
      * one value (unless a flag is used).
      */
-    Widget *sender = (lua_type (L, 4) == LUA_TTABLE) ? luaUI_check_widget (L, 4) : NULL;
+    sender = (lua_type (L, 4) == LUA_TTABLE) ? luaUI_check_widget (L, 4) : NULL;
 
     lua_pushboolean (L, send_message (w, sender, msg, parm, NULL) == MSG_HANDLED);
     return 1;
@@ -1018,9 +1062,10 @@ l_widget_redraw (lua_State * L)
 static int
 l_widget_focus (lua_State * L)
 {
-    Widget *w = luaUI_check_widget (L, 1);
+    Widget *w;
 
-    if (!w->owner)
+    w = luaUI_check_widget (L, 1);
+    if (w->owner == NULL)
         luaL_error (L, E_ ("You can only focus a widget that has been mapped in a dialog."));
 
     widget_select (w);
@@ -1162,17 +1207,20 @@ l_button_get_text (lua_State * L)
 static int
 l_button_set_type (lua_State * L)
 {
-    static const char *const type_names[] = {
+    /* *INDENT-OFF* */
+    static const char *const type_names[] =
+    {
         "hidden", "narrow", "normal", "default", NULL
     };
-    static const int type_values[] = {
+    static const int type_values[] =
+    {
         HIDDEN_BUTTON, NARROW_BUTTON, NORMAL_BUTTON, DEFPUSH_BUTTON
     };
+    /* *INDENT-ON* */
 
     WButton *btn;
 
     btn = LUA_TO_BUTTON (L, 1);
-
     btn->flags = luaMC_checkoption (L, 2, NULL, type_names, type_values);
 
     /* We re-set the label so the button's size gets calculated anew. */
@@ -1233,7 +1281,7 @@ l_checkbox_set_checked (lua_State * L)
 {
     WCheck *chk = LUA_TO_CHECKBOX (L, 1);
 
-    chk->state = lua_toboolean (L, 2);
+    chk->state = lua_toboolean (L, 2) != 0;
 
     /* @FIXME: MC should have a setter for this so we won't have to
        deal with stuff like this ourselves. */
@@ -1253,13 +1301,16 @@ l_checkbox_set_checked (lua_State * L)
 static int
 l_checkbox_set_text (lua_State * L)
 {
-    WCheck *chk = LUA_TO_CHECKBOX (L, 1);
-    const char *text = luaL_checkstring (L, 2);
+    WCheck *chk;
+    const char *text;
+
+    chk = LUA_TO_CHECKBOX (L, 1);
+    text = luaL_checkstring (L, 2);
 
     /* @FIXME: MC should have a function to set (and get) a checkbox text.
      * We use an ugly hack in the meantime. */
 
-    if (WIDGET (chk)->owner)
+    if (WIDGET (chk)->owner != NULL)
     {
         /* Easier to give error than to bother with this. */
         luaL_error (L, "%s", E_ ("You must set the text *before* adding the checkbox to a dialog"));
@@ -1303,8 +1354,9 @@ unparse_hotkey (const hotkey_t hotkey)
 static int
 l_checkbox_get_text (lua_State * L)
 {
-    WCheck *chk = LUA_TO_CHECKBOX (L, 1);
+    WCheck *chk;
 
+    chk = LUA_TO_CHECKBOX (L, 1);
     luaMC_pushstring_and_free (L, unparse_hotkey (chk->text));
     return 1;
 }
@@ -1408,7 +1460,7 @@ static int
 l_set_auto_size (lua_State * L)
 {
     /* Note: 'auto_adjust_cols' is a misnomer: rows are changed as well. */
-    LUA_TO_LABEL (L, 1)->auto_adjust_cols = lua_toboolean (L, 2);
+    LUA_TO_LABEL (L, 1)->auto_adjust_cols = lua_toboolean (L, 2) != 0;
     return 0;
 }
 
@@ -1455,7 +1507,9 @@ l_input_new (lua_State * L)
 static int
 l_input_get_text (lua_State * L)
 {
-    WInput *ipt = LUA_TO_INPUT (L, 1);
+    WInput *ipt;
+
+    ipt = LUA_TO_INPUT (L, 1);
 
     if ((ipt->completion_flags & INPUT_COMPLETE_CD) != 0)
     {
@@ -1465,9 +1519,7 @@ l_input_get_text (lua_State * L)
         luaMC_pushstring_and_free (L, tilde_expand (input_get_ctext (ipt)));
     }
     else
-    {
         lua_pushstring (L, input_get_ctext (ipt));
-    }
 
     return 1;
 }
@@ -1479,7 +1531,6 @@ l_input_set_text (lua_State * L)
 {
     WInput *ipt;
     const char *text;
-
     gboolean first;
 
     ipt = LUA_TO_INPUT (L, 1);
@@ -1487,20 +1538,19 @@ l_input_set_text (lua_State * L)
     /* '-1' means: load the text from history. */
     if (luaMC_is_int_eq (L, 2, -1))
     {
-        if (WIDGET (ipt)->owner)
+        if (WIDGET (ipt)->owner != NULL)
         {
             /* 'init_from_history' is handled in dlg_init() */
             luaL_error (L, "%s",
                         E_
                         ("You can only set the text property to '-1' *before* adding the widget to a dialog."));
         }
+
         text = "";
         ipt->init_from_history = TRUE;
     }
     else
-    {
         text = luaL_checkstring (L, 2);
-    }
 
     first = ipt->first;
 
@@ -1521,12 +1571,16 @@ l_input_set_text (lua_State * L)
 static int
 l_input_set_cols (lua_State * L)
 {
-    Widget *w = WIDGET (LUA_TO_INPUT (L, 1));
-    WRect *r = &w->rect;
-    int cols = luaL_checkint (L, 2);
+    Widget *w;
+    WRect *r;
+    int cols;
 
-    /* Trigger update of internal variables of input line (done by its
-     * MSG_RESIZE). We follow lib/widget/quick.c's example here. */
+    w = WIDGET (LUA_TO_INPUT (L, 1));
+    r = &w->rect;
+    cols = luaL_checkint (L, 2);
+
+    /* Trigger update of internal variables of input line (done by its MSG_RESIZE).
+     * We follow lib/widget/quick.c's example here. */
     widget_set_size (w, r->y, r->x, r->lines, cols);
 
     return 0;
@@ -1548,8 +1602,11 @@ l_input_set_cols (lua_State * L)
 static int
 l_input_insert (lua_State * L)
 {
-    WInput *ipt = LUA_TO_INPUT (L, 1);
-    const char *text = luaL_checkstring (L, 2);
+    WInput *ipt;
+    const char *text;
+
+    ipt = LUA_TO_INPUT (L, 1);
+    text = luaL_checkstring (L, 2);
 
     input_insert (ipt, text, FALSE);
     return 0;
@@ -1574,10 +1631,10 @@ l_input_insert (lua_State * L)
 static int
 l_input_set_password (lua_State * L)
 {
-    WInput *ipt = LUA_TO_INPUT (L, 1);
-    gboolean b = lua_toboolean (L, 2);
+    WInput *ipt;
 
-    ipt->is_password = b;
+    ipt = LUA_TO_INPUT (L, 1);
+    ipt->is_password = lua_toboolean (L, 2) != 0;
 
     widget_draw (WIDGET (ipt));
     return 0;
@@ -1603,8 +1660,11 @@ l_input_get_password (lua_State * L)
 static int
 l_input_set_cursor_offs (lua_State * L)
 {
-    WInput *ipt = LUA_TO_INPUT (L, 1);
-    int pos = luaL_checkint (L, 2);
+    WInput *ipt;
+    int pos;
+
+    ipt = LUA_TO_INPUT (L, 1);
+    pos = luaL_checkint (L, 2);
 
     input_set_point (ipt, pos - 1);
     return 0;
@@ -1633,13 +1693,13 @@ l_input_get_cursor_offs (lua_State * L)
 static int
 l_input_set_mark (lua_State * L)
 {
-    WInput *ipt = LUA_TO_INPUT (L, 1);
-    int pos = luaL_optint (L, 2, -1);
+    WInput *ipt;
+    int pos;
 
-    if (pos != -1)
-        ipt->mark = pos - 1;
-    else
-        ipt->mark = -1;
+    ipt = LUA_TO_INPUT (L, 1);
+    pos = luaL_optint (L, 2, -1);
+
+    ipt->mark = pos != -1 ? pos - 1 : -1;
 
     widget_draw (WIDGET (ipt));
     return 0;
@@ -1650,7 +1710,9 @@ l_input_set_mark (lua_State * L)
 static int
 l_input_get_mark (lua_State * L)
 {
-    WInput *ipt = LUA_TO_INPUT (L, 1);
+    WInput *ipt;
+
+    ipt = LUA_TO_INPUT (L, 1);
 
     if (ipt->mark >= 0)
         lua_pushinteger (L, ipt->mark + 1);
@@ -1676,17 +1738,20 @@ l_input_get_mark (lua_State * L)
 static int
 l_input_set_history (lua_State * L)
 {
-    WInput *ipt = LUA_TO_INPUT (L, 1);
-    const char *histname = luaL_checkstring (L, 2);
+    WInput *ipt;
+    const char *histname;
 
-    if (WIDGET (ipt)->owner)
+    ipt = LUA_TO_INPUT (L, 1);
+    histname = luaL_checkstring (L, 2);
+
+    if (WIDGET (ipt)->owner != NULL)
     {
         /* The history is loaded in dlg_init() */
         luaL_error (L, "%s",
                     E_ ("You must set the history *before* adding the widget to a dialog."));
     }
 
-    if ((histname != NULL) && (*histname != '\0'))
+    if (histname != NULL && *histname != '\0')
         ipt->history.name = g_strdup (histname);
 
     return 0;
@@ -1818,8 +1883,11 @@ l_listbox_new (lua_State * L)
 static int
 l_listbox_set_selected_index (lua_State * L)
 {
-    WListbox *lst = LUA_TO_LISTBOX (L, 1);
-    int index = luaL_checkint (L, 2);
+    WListbox *lst;
+    int index;
+
+    lst = LUA_TO_LISTBOX (L, 1);
+    index = luaL_checkint (L, 2);
 
     listbox_set_current (lst, index - 1);
     widget_draw (WIDGET (lst));
@@ -1831,7 +1899,9 @@ l_listbox_set_selected_index (lua_State * L)
 static int
 l_listbox_get_selected_index (lua_State * L)
 {
-    WListbox *lst = LUA_TO_LISTBOX (L, 1);
+    WListbox *lst;
+
+    lst = LUA_TO_LISTBOX (L, 1);
 
     lua_pushinteger (L, lst->current + 1);
     return 1;
@@ -1856,10 +1926,10 @@ process_list (lua_State * L, item_processor f, void *data)
     {
         lua_rawgeti (L, LST_IDX, i);
 
-        if (lua_isstring (L, -1))
+        if (lua_isstring (L, -1) != 0)
         {
             /* The item is of the simplest form. */
-            if (f)
+            if (f != NULL)
                 f (data, lua_tostring (L, -1), 0);
             lua_pop (L, 1);
         }
@@ -1867,10 +1937,10 @@ process_list (lua_State * L, item_processor f, void *data)
         {
             /* The item is of the the form {"Label", value="value", hotkey="C-p"} */
             const char *label;
-            long keycode;
+            long keycode = 0;
 
             lua_rawgeti (L, -1, 1);
-            if (!lua_isstring (L, -1))
+            if (lua_isstring (L, -1) == 0)
                 luaL_error (L,
                             E_
                             ("Invalid element of list at index %d: string expected as first element of table."),
@@ -1880,21 +1950,17 @@ process_list (lua_State * L, item_processor f, void *data)
             lua_getfield (L, -2, "hotkey");
             if (!lua_isnil (L, -1))
                 keycode = luaTTY_check_keycode (L, -1, FALSE);
-            else
-                keycode = 0;
 
-            if (f)
+            if (f != NULL)
                 f (data, label, keycode);
 
             lua_pop (L, 3);     /* Pop the label, the hotkey, and the element's table itself. */
         }
         else
-        {
             luaL_error (L,
                         E_
                         ("Invalid element type of list at index %d: either string or table expected."),
                         i);
-        }
     }
 
     LUAMC_UNGUARD (L);
@@ -1905,9 +1971,7 @@ process_list (lua_State * L, item_processor f, void *data)
 static void
 add_to_listbox (void *data, const char *label, long keycode)
 {
-    WListbox *lst = LISTBOX (data);
-
-    listbox_add_item (lst, LISTBOX_APPEND_AT_END, keycode, label, NULL, FALSE);
+    listbox_add_item (LISTBOX (data), LISTBOX_APPEND_AT_END, keycode, label, NULL, FALSE);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -1951,8 +2015,9 @@ add_to_listbox (void *data, const char *label, long keycode)
 static int
 l_listbox_set_items (lua_State * L)
 {
-    WListbox *lst = LUA_TO_LISTBOX (L, 1);
+    WListbox *lst;
 
+    lst = LUA_TO_LISTBOX (L, 1);
     luaL_checktype (L, 2, LUA_TTABLE);
     listbox_remove_list (lst);
     process_list (L, add_to_listbox, lst);
@@ -1970,7 +2035,9 @@ l_listbox_set_items (lua_State * L)
 static int
 l_listbox_get_items (lua_State * L)
 {
-    WListbox *lst = LUA_TO_LISTBOX (L, 1);
+    WListbox *lst;
+
+    lst = LUA_TO_LISTBOX (L, 1);
 
     luaMC_rawgetfield (L, 1, "_items");
 
@@ -1991,6 +2058,7 @@ l_listbox_get_items (lua_State * L)
         for (i = 1, le = listbox_get_first_link (lst); le != NULL; i++, le = g_list_next (le))
         {
             WLEntry *e = LENTRY (le->data);
+
             lua_pushstring (L, e->text);
             lua_rawseti (L, -2, i);
         }
@@ -2085,10 +2153,9 @@ set_radios_items (WRadio * rad, const char **items, int items_count)
 static void
 radios__add_to_array (void *data, const char *label, long keycode)
 {
-    GPtrArray *items = data;
     (void) keycode;
 
-    g_ptr_array_add (items, g_strdup (label));
+    g_ptr_array_add ((GPtrArray *) data, g_strdup (label));
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -2096,8 +2163,10 @@ radios__add_to_array (void *data, const char *label, long keycode)
 static int
 l_radios_set_items (lua_State * L)
 {
-    WRadio *rad = LUA_TO_RADIOS (L, 1);
+    WRadio *rad;
     GPtrArray *items;
+
+    rad = LUA_TO_RADIOS (L, 1);
 
     luaL_checktype (L, 2, LUA_TTABLE);
     luaMC_checkargcount (L, 2, TRUE);
@@ -2106,8 +2175,7 @@ l_radios_set_items (lua_State * L)
     process_list (L, NULL, NULL);
 
     /* Store the items in a (dynamic) C array. */
-    items = g_ptr_array_new ();
-    g_ptr_array_set_free_func (items, g_free);
+    items = g_ptr_array_new_with_free_func (g_free);
     process_list (L, radios__add_to_array, items);
 
     /* Finally, set the items on the radios. */
@@ -2129,6 +2197,7 @@ static int
 l_radios_get_items (lua_State * L)
 {
     (void) LUA_TO_RADIOS (L, 1);
+
     luaMC_rawgetfield (L, 1, "_items");
 
     /* Unlike in l_listbox_get_items(), here we don't fetch items of radios
@@ -2150,8 +2219,11 @@ l_radios_get_items (lua_State * L)
 static int
 l_radios_set_selected_index (lua_State * L)
 {
-    WRadio *rad = LUA_TO_RADIOS (L, 1);
-    int sel = luaL_checkint (L, 2);
+    WRadio *rad;
+    int sel;
+
+    rad = LUA_TO_RADIOS (L, 1);
+    sel = luaL_checkint (L, 2);
 
     rad->pos = rad->sel = sel - 1;
     widget_draw (WIDGET (rad));
@@ -2164,7 +2236,9 @@ l_radios_set_selected_index (lua_State * L)
 static int
 l_radios_get_selected_index (lua_State * L)
 {
-    WRadio *rad = LUA_TO_RADIOS (L, 1);
+    WRadio *rad;
+
+    rad = LUA_TO_RADIOS (L, 1);
 
     lua_pushinteger (L, rad->sel + 1);
 
@@ -2238,11 +2312,14 @@ l_gauge_new (lua_State * L)
 static int
 l_gauge_set_value (lua_State * L)
 {
-    WGauge *g = LUA_TO_GAUGE (L, 1);
+    WGauge *g;
+    lua_Number value;
+
+    g = LUA_TO_GAUGE (L, 1);
     /* Note: We use checknumber, not checkinteger! It's very likely we'll
      * be fed a floating-point number and we don't want Lua 5.3 to raise
      * an exception. */
-    lua_Number value = luaL_checknumber (L, 2);
+    value = luaL_checknumber (L, 2);
 
     gauge_set_value (g, g->max, (int) value);
     return 0;
@@ -2276,9 +2353,12 @@ l_gauge_get_value (lua_State * L)
 static int
 l_gauge_set_max (lua_State * L)
 {
-    WGauge *g = LUA_TO_GAUGE (L, 1);
+    WGauge *g;
+    lua_Number max;
+
+    g = LUA_TO_GAUGE (L, 1);
     /* See explanation at l_gauge_set_value() for why we don't use checkinteger(). */
-    lua_Number max = luaL_checknumber (L, 2);
+    max = luaL_checknumber (L, 2);
 
     gauge_set_value (g, (int) max, g->current);
     return 0;
@@ -2310,7 +2390,7 @@ l_gauge_get_max (lua_State * L)
 static int
 l_gauge_set_shown (lua_State * L)
 {
-    gauge_show (LUA_TO_GAUGE (L, 1), lua_toboolean (L, 2));
+    gauge_show (LUA_TO_GAUGE (L, 1), lua_toboolean (L, 2) != 0);
     return 0;
 }
 
@@ -2359,7 +2439,7 @@ l_hline_new (lua_State * L)
 static int
 l_hline_set_through (lua_State * L)
 {
-    LUA_TO_HLINE (L, 1)->auto_adjust_cols = lua_toboolean (L, 2);
+    LUA_TO_HLINE (L, 1)->auto_adjust_cols = lua_toboolean (L, 2) != 0;
     return 0;
 }
 
@@ -2410,10 +2490,9 @@ l_hline_get_text (lua_State * L)
 static void
 init_child (void *data, void *user_data)
 {
-    Widget *w = data;
     (void) user_data;
 
-    call_widget_method (w, "on_init", 0, NULL);
+    call_widget_method (WIDGET (data), "on_init", 0, NULL);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -2621,7 +2700,7 @@ ui_dialog_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm, voi
              * on_post_key() event too. Currently the only place we use it is
              * to simulate an on_change event for the Input widget, as, unlike
              * other widgets, it doesn't emit MSG_NOTIFY. */
-            g_assert (GROUP (w)->current != NULL);     /* Guaranteed by dlg_key_event(). */
+            g_assert (GROUP (w)->current != NULL);      /* Guaranteed by dlg_key_event(). */
             call_widget_method (WIDGET (GROUP (w)->current->data), "on_post_key", 0, NULL);
 
             /* And now send it to the dialog itself. */
@@ -2741,10 +2820,11 @@ static char *
 dlg_title_handler (const WDialog * dlg, size_t len)
 {
     char *title;
+
     (void) len;
 
     call_widget_method_ex (WIDGET (dlg), "on_title", 0, NULL, NULL, FALSE);
-    title = g_strdup (lua_tostring (Lg, -1) ? lua_tostring (Lg, -1) : "");
+    title = g_strdup (lua_tostring (Lg, -1) != NULL ? lua_tostring (Lg, -1) : "");
     lua_pop (Lg, 1);
 
     return title;
@@ -2755,10 +2835,11 @@ dlg_title_handler (const WDialog * dlg, size_t len)
 static Widget *
 dialog_constructor (void)
 {
+    WDialog *dlg;
+
     /* The '-1' is a sentry value we check for on the Lua side. */
-    WDialog *dlg = dlg_create (TRUE, -1, -1, 4, 4, WPOS_CENTER, FALSE,
-                               dialog_colors, ui_dialog_callback,
-                               NULL, NULL, NULL);
+    dlg = dlg_create (TRUE, -1, -1, 4, 4, WPOS_CENTER, FALSE, dialog_colors, ui_dialog_callback,
+                      NULL, NULL, NULL);
     dlg->get_title = dlg_title_handler; /* for modaless dialogs. */
     return WIDGET (dlg);
 }
@@ -2832,7 +2913,7 @@ l_dialog_new (lua_State * L)
 static int
 l_dialog_set_on_idle (lua_State * L)
 {
-    widget_idle (WIDGET (LUA_TO_DIALOG (L, 1)), lua_toboolean (L, 2));
+    widget_idle (WIDGET (LUA_TO_DIALOG (L, 1)), lua_toboolean (L, 2) != 0);
     luaMC_rawsetfield (L, 1, "on_idle__real");
     return 0;
 }
@@ -2856,10 +2937,12 @@ l_dialog_get_on_idle (lua_State * L)
 static int
 l_dialog_command (lua_State * L)
 {
-    WDialog *dlg = LUA_TO_DIALOG (L, 1);
-    const char *cmd_name = luaL_checkstring (L, 2);
-
+    WDialog *dlg;
+    const char *cmd_name;
     int cmd;
+
+    dlg = LUA_TO_DIALOG (L, 1);
+    cmd_name = luaL_checkstring (L, 2);
 
     cmd = keybind_lookup_action (cmd_name);
 
@@ -2888,7 +2971,7 @@ l_dialog_set_colorset (lua_State * L)
 
     dlg->colors = luaMC_checkoption (L, 2, NULL, colorset_names, colorset_values);
 
-    widget_draw (WIDGET (dlg));         /* In case the user changes the colorset of an active dialog. */
+    widget_draw (WIDGET (dlg)); /* In case the user changes the colorset of an active dialog. */
 
     return 0;
 }
@@ -2942,10 +3025,12 @@ add_child (Widget * w, lua_State * L)
 static int
 l_dialog_get_mapped_children (lua_State * L)
 {
-    WDialog *dlg = LUA_TO_DIALOG (L, 1);
+    WGroup *g;
+
+    g = GROUP (LUA_TO_DIALOG (L, 1));
 
     lua_newtable (L);
-    g_list_foreach (GROUP (dlg)->widgets, (GFunc) add_child, L);
+    g_list_foreach (g->widgets, (GFunc) add_child, L);
 
     return 1;
 }
@@ -2964,7 +3049,9 @@ l_dialog_get_mapped_children (lua_State * L)
 static int
 l_dialog_get_current (lua_State * L)
 {
-    WGroup *g = GROUP (LUA_TO_DIALOG (L, 1));
+    WGroup *g;
+
+    g = GROUP (LUA_TO_DIALOG (L, 1));
 
     /* Note the use of the _ex() version: We also push widgets that don't
        have Lua counterparts. */
@@ -2986,7 +3073,6 @@ l_dialog_run (lua_State * L)
 {
     WDialog *dlg;
     WGroup *g;
-
     int result;
 
     dlg = LUA_TO_DIALOG (L, 1);
@@ -3005,21 +3091,20 @@ l_dialog_run (lua_State * L)
      */
     g->current = g->widgets;
 
-    while (g->current)
+    while (g->current != NULL)
     {
         Widget *w;
 
         w = WIDGET (g->current->data);
 
         if (!widget_get_state (w, WST_DISABLED)
-            && (widget_get_options (w, WOP_WANT_CURSOR)
-                || widget_get_options (w, WOP_WANT_HOTKEY)))
+            && (widget_get_options (w, WOP_WANT_CURSOR) || widget_get_options (w, WOP_WANT_HOTKEY)))
             break;
 
         g->current = g_list_next (g->current);
     }
 
-    if (!g->current)
+    if (g->current == NULL)
         group_add_widget (g, button_new (0, 0, 0, HIDDEN_BUTTON, "-", NULL));
 
     result = dlg_run (dlg);
@@ -3044,10 +3129,13 @@ l_dialog_run (lua_State * L)
 static int
 l_dialog_map_widget (lua_State * L)
 {
-    WGroup *g = GROUP (LUA_TO_DIALOG (L, 1));
-    Widget *w = luaUI_check_widget (L, 2);
+    WGroup *g;
+    Widget *w;
 
-    if (w->owner)
+    g = GROUP (LUA_TO_DIALOG (L, 1));
+    w = luaUI_check_widget (L, 2);
+
+    if (w->owner != NULL)
         return luaL_error (L,
                            E_
                            ("Attempt is made to add to a dialog a widget which was already added."));
@@ -3073,12 +3161,12 @@ l_dialog_map_widget (lua_State * L)
 static int
 l_dialog_del_widget (lua_State * L)
 {
-    WDialog *dlg = LUA_TO_DIALOG (L, 1);
-    Widget *w = luaUI_check_widget (L, 2);
+    Widget *w;
 
-    (void) dlg;
+    (void) LUA_TO_DIALOG (L, 1);
+    w = luaUI_check_widget (L, 2);
 
-    if (w->owner)
+    if (w->owner != NULL)
     {
         group_remove_widget (w);
         widget_destroy (w);
@@ -3106,8 +3194,11 @@ l_dialog_del_widget (lua_State * L)
 static int
 l_dialog_set_text (lua_State * L)
 {
-    WDialog *dlg = LUA_TO_DIALOG (L, 1);
-    const char *text = luaL_checkstring (L, 2);
+    WDialog *dlg;
+    const char *text;
+
+    dlg = LUA_TO_DIALOG (L, 1);
+    text = luaL_checkstring (L, 2);
 
     /* @FIXME: MC should have a setter for this. */
     if (widget_get_state (WIDGET (dlg), WST_MODAL))
@@ -3121,7 +3212,9 @@ l_dialog_set_text (lua_State * L)
 static int
 l_dialog_get_text (lua_State * L)
 {
-    WDialog *dlg = LUA_TO_DIALOG (L, 1);
+    WDialog *dlg;
+
+    dlg = LUA_TO_DIALOG (L, 1);
 
     if (!widget_get_state (WIDGET (dlg), WST_MODAL))
         lua_pushliteral (L, "");
@@ -3129,7 +3222,7 @@ l_dialog_get_text (lua_State * L)
     {
         const char *text = FRAME (dlg->bg)->title;
 
-        if (text)
+        if (text != NULL)
             /* @FIXME: see note above about the silliness of MC's space padding. */
             lua_pushlstring (L, text + 1, strlen (text) - 2);
         else
@@ -3213,7 +3306,7 @@ l_dialog_set_help_id (lua_State * L)
 static int
 l_dialog_set_modal (lua_State * L)
 {
-    widget_set_state (WIDGET (LUA_TO_DIALOG (L, 1)), WST_MODAL, lua_toboolean (L, 2));
+    widget_set_state (WIDGET (LUA_TO_DIALOG (L, 1)), WST_MODAL, lua_toboolean (L, 2) != 0);
     return 0;
 }
 
@@ -3253,9 +3346,7 @@ l_dialog_destroy (lua_State * L)
                            ("Attempt is made to destroy a dialog which isn't closed (call dialog:close() first)."));
     }
     else
-    {
         widget_destroy (w);
-    }
 
     return 0;
 }
@@ -3349,7 +3440,7 @@ l_dialog_set_dimensions (lua_State * L)
     r.y = luaL_checkint (L, 3);
     r.cols = luaL_checkint (L, 4);
     r.lines = luaL_checkint (L, 5);
-    send_msg_resize = lua_toboolean (L, 6);
+    send_msg_resize = lua_toboolean (L, 6) != 0;
 
     widget_set_size_rect (WIDGET (dlg), &r);
 
@@ -3394,9 +3485,10 @@ l_dialog_set_dimensions (lua_State * L)
 static int
 l_dialog_get_state (lua_State * L)
 {
-    Widget *w = WIDGET (LUA_TO_DIALOG (L, 1));
-
+    Widget *w;
     const char *state;
+
+    w = WIDGET (LUA_TO_DIALOG (L, 1));
 
     if (widget_get_state (w, WST_CONSTRUCT))
         state = "construct";
@@ -3438,9 +3530,11 @@ l_dialog_get_compact (lua_State * L)
 static int
 l_dialog_set_compact (lua_State * L)
 {
-    WDialog *dlg = LUA_TO_DIALOG (L, 1);
+    WDialog *dlg;
 
-    dlg->compact = lua_toboolean (L, 2);
+    dlg = LUA_TO_DIALOG (L, 1);
+
+    dlg->compact = lua_toboolean (L, 2) != 0;
 
     return 0;
 }
