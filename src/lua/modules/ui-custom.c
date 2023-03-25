@@ -623,11 +623,11 @@ ev_buttons_to_table (lua_State * L, mouse_event_t * event)
 {
     lua_newtable (L);
 
-    if (event->buttons & GPM_B_LEFT)
+    if ((event->buttons & GPM_B_LEFT) != 0)
         luaMC_setflag (L, -1, "left", TRUE);
-    if (event->buttons & GPM_B_MIDDLE)
+    if ((event->buttons & GPM_B_MIDDLE) != 0)
         luaMC_setflag (L, -1, "middle", TRUE);
-    if (event->buttons & GPM_B_RIGHT)
+    if ((event->buttons & GPM_B_RIGHT) != 0)
         luaMC_setflag (L, -1, "right", TRUE);
 }
 
@@ -677,7 +677,7 @@ call_abortive_widget_method (Widget * w, const char *method_name, int nargs,
     gboolean explicit_false;
 
     call_widget_method_ex (w, method_name, nargs, NULL, method_found, FALSE);
-    explicit_false = (lua_type (Lg, -1) == LUA_TBOOLEAN && !lua_toboolean (Lg, -1));
+    explicit_false = (lua_type (Lg, -1) == LUA_TBOOLEAN && lua_toboolean (Lg, -1) == 0);
     lua_pop (Lg, 1);
     return !explicit_false;
 }
@@ -754,7 +754,7 @@ l_custom_set_mouse_capture (lua_State * L)
     Widget *w;
 
     w = luaUI_check_widget (L, 1);
-    w->mouse.forced_capture = lua_toboolean (L, 2);
+    w->mouse.forced_capture = lua_toboolean (L, 2) != 0;
 
     return 0;
 }
