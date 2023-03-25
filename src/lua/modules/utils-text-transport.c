@@ -1,3 +1,28 @@
+/*
+   Encoding utilities.
+
+   Copyright (C) 2015-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2015
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 /**
  * Encoding utilities.
  *
@@ -12,6 +37,32 @@
 
 #include "../modules.h"
 
+/*** global variables ****************************************************************************/
+
+/*** file scope macro definitions ****************************************************************/
+
+/*** file scope type declarations ****************************************************************/
+
+/*** forward declarations (file scope functions) *************************************************/
+
+static int l_base64_decode (lua_State * L);
+static int l_base64_encode (lua_State * L);
+static int l_hash (lua_State * L);
+
+/*** file scope variables ************************************************************************/
+
+/* *INDENT-OFF* */
+static const struct luaL_Reg utils_text_transport_lib[] = {
+    { "base64_decode", l_base64_decode },
+    { "base64_encode", l_base64_encode },
+    { "hash", l_hash },
+    { NULL, NULL }
+};
+/* *INDENT-ON* */
+
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Decodes a base64-encoded string.
@@ -47,6 +98,8 @@ l_base64_decode (lua_State * L)
 
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Encodes a string using base64.
@@ -102,6 +155,8 @@ l_base64_encode (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Calculates the checksum of a string.
  *
@@ -140,16 +195,9 @@ l_hash (lua_State * L)
     return 1;
 }
 
-/* ------------------------------------------------------------------------ */
-
-/* *INDENT-OFF* */
-static const struct luaL_Reg utils_text_transport_lib[] = {
-    { "base64_decode", l_base64_decode },
-    { "base64_encode", l_base64_encode },
-    { "hash", l_hash },
-    { NULL, NULL }
-};
-/* *INDENT-ON* */
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 int
 luaopen_utils_text_transport (lua_State * L)
@@ -157,3 +205,5 @@ luaopen_utils_text_transport (lua_State * L)
     luaL_newlib (L, utils_text_transport_lib);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
