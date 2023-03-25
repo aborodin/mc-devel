@@ -1096,7 +1096,6 @@ static int
 l_widget_get_canvas (lua_State * L)
 {
     Widget *w;
-    WRect *r;
 
     w = luaUI_check_widget (L, 1);
 
@@ -1113,8 +1112,7 @@ l_widget_get_canvas (lua_State * L)
         luaMC_rawsetfield (L, 1, "_canvas");
     }
 
-    r = &w->rect;
-    luaUI_set_canvas_dimensions (L, -1, r->x, r->y, r->cols, r->lines);
+    luaUI_set_canvas_dimensions (L, -1, &w->rect);
     return 1;
 }
 

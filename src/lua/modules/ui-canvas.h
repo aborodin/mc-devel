@@ -12,7 +12,7 @@
 /*** declarations of public functions ************************************************************/
 
 void luaUI_new_canvas (lua_State * L);
-void luaUI_set_canvas_dimensions (lua_State * L, int index, int x, int y, int cols, int rows);
+void luaUI_set_canvas_dimensions (lua_State * L, int index, const WRect * r);
 
 /*** inline functions ****************************************************************************/
 

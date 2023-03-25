@@ -528,6 +528,8 @@ l_refresh (lua_State * L)
 static int
 l_get_canvas (lua_State * L)
 {
+    WRect r = { 0, 0, COLS, LINES };
+
     /* Search for a cached canvas object. */
     lua_getfield (L, LUA_REGISTRYINDEX, "_tty_canvas");
 
@@ -540,7 +542,7 @@ l_get_canvas (lua_State * L)
         lua_setfield (L, LUA_REGISTRYINDEX, "_tty_canvas");
     }
 
-    luaUI_set_canvas_dimensions (L, -1, 0, 0, COLS, LINES);
+    luaUI_set_canvas_dimensions (L, -1, &r);
     return 1;
 }
 

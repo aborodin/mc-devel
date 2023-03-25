@@ -135,7 +135,7 @@ aware of this fact.
  */
 #define luaMC_checkcoord luaL_checkint
 
-#define canvas_move(c, _y, _x) tty_gotoyx ((c)->y + (_y), (c)->x + (_x))
+#define canvas_gotyx(c, _y, _x) tty_gotoyx ((c)->rect.y + (_y), (c)->rect.x + (_x))
 
 /*** file scope type declarations ****************************************************************/
 
@@ -144,8 +144,7 @@ aware of this fact.
  */
 typedef struct
 {
-    int x, y;
-    int cols, rows;
+    WRect rect;
 #if DEBUG_CANVAS
     int serial_number;
 #endif
@@ -220,15 +219,12 @@ luaUI_new_canvas (lua_State * L)
  * Sets the dimensions of a canvas object.
  */
 void
-luaUI_set_canvas_dimensions (lua_State * L, int index, int x, int y, int cols, int rows)
+luaUI_set_canvas_dimensions (lua_State * L, int index, const WRect * r)
 {
     Canvas *c;
 
     c = LUA_TO_CANVAS (L, index);
-    c->x = x;
-    c->y = y;
-    c->cols = cols;
-    c->rows = rows;
+    c->rect = *r;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -267,7 +263,7 @@ l_canvas_goto_xy (lua_State * L)
     x = luaMC_checkcoord (L, 2);
     y = luaMC_checkcoord (L, 3);
 
-    canvas_move (c, y, x);
+    canvas_gotyx (c, y, x);
 
     return 0;
 }
@@ -297,7 +293,7 @@ l_canvas_goto_xy1 (lua_State * L)
     x = luaMC_checkcoord (L, 2);
     y = luaMC_checkcoord (L, 3);
 
-    canvas_move (c, y - 1, x - 1);
+    canvas_gotyx (c, y - 1, x - 1);
 
     return 0;
 }
@@ -318,8 +314,8 @@ l_canvas_get_xy (lua_State * L)
     c = LUA_TO_CANVAS (L, 1);
 
     tty_getyx (&y, &x);
-    x -= c->x;
-    y -= c->y;
+    x -= c->rect.x;
+    y -= c->rect.y;
 
     lua_pushinteger (L, x);
     lua_pushinteger (L, y);
@@ -356,7 +352,7 @@ l_canvas_draw_box (lua_State * L)
     rows = luaMC_checkcoord (L, 5);
     use_double_lines = lua_toboolean (L, 6) != 0;
 
-    tty_draw_box (c->y + y, c->x + x, rows, cols, !use_double_lines);
+    tty_draw_box (c->rect.y + y, c->rect.x + x, rows, cols, !use_double_lines);
     return 0;
 }
 
@@ -408,7 +404,7 @@ l_canvas_fill_rect (lua_State * L)
     rows = luaMC_checkcoord (L, 5);
     filler = luaL_optstring (L, 6, " ");
 
-    fill_rect (c->x + x, c->y + y, cols, rows, filler);
+    fill_rect (c->rect.x + x, c->rect.y + y, cols, rows, filler);
     return 0;
 }
 
@@ -512,7 +508,7 @@ l_canvas_set_style (lua_State * L)
 static int
 l_canvas_get_x (lua_State * L)
 {
-    lua_pushinteger (L, LUA_TO_CANVAS (L, 1)->x);
+    lua_pushinteger (L, LUA_TO_CANVAS (L, 1)->rect.x);
     return 1;
 }
 
@@ -528,7 +524,7 @@ l_canvas_get_x (lua_State * L)
 static int
 l_canvas_get_y (lua_State * L)
 {
-    lua_pushinteger (L, LUA_TO_CANVAS (L, 1)->y);
+    lua_pushinteger (L, LUA_TO_CANVAS (L, 1)->rect.y);
     return 1;
 }
 
@@ -542,7 +538,7 @@ l_canvas_get_y (lua_State * L)
 static int
 l_canvas_get_cols (lua_State * L)
 {
-    lua_pushinteger (L, LUA_TO_CANVAS (L, 1)->cols);
+    lua_pushinteger (L, LUA_TO_CANVAS (L, 1)->rect.cols);
     return 1;
 }
 
@@ -556,7 +552,7 @@ l_canvas_get_cols (lua_State * L)
 static int
 l_canvas_get_rows (lua_State * L)
 {
-    lua_pushinteger (L, LUA_TO_CANVAS (L, 1)->rows);
+    lua_pushinteger (L, LUA_TO_CANVAS (L, 1)->rect.lines);
     return 1;
 }
 
