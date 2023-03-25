@@ -1,3 +1,28 @@
+/*
+   Custom widget.
+
+   Copyright (C) 2015-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2015
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 /**
 
 Custom widget.
@@ -13,6 +38,7 @@ For a sample script that uses a custom widget, see @{git:ui_canvas.mcs}.
 @classmod ui.Custom
 
 */
+
 #include <config.h>
 
 #include "lib/global.h"
@@ -26,8 +52,18 @@ For a sample script that uses a custom widget, see @{git:ui_canvas.mcs}.
 
 #include "ui-custom.h"
 
-/**
+/*** global variables ****************************************************************************/
 
+/*** file scope macro definitions ****************************************************************/
+
+#define WCUSTOM(x) ((WCustom *) (x))
+
+/* See comment for LUA_TO_BUTTON, in ui.c */
+#define LUA_TO_CUSTOM(L, i) (WCUSTOM (luaUI_check_widget (L, i)))
+
+/*** file scope type declarations ****************************************************************/
+
+/**
 GUI toolkits customarily have two classes to manage roll-your-own
 widgets: a custom widget class, and a GC class. We name ours "Custom"
 and "Canvas" respectively. Other toolkits name them differently:
@@ -39,19 +75,35 @@ and "Canvas" respectively. Other toolkits name them differently:
   Java AWT      Canvas                Graphics
   Java SWT      Canvas                GC
   HTML 5        <canvas>              CanvasRenderingContext2D (via canvas.getContext("2d"))
-
 */
-
 typedef struct
 {
     Widget widget;
     /* We need no additional fields for our Custom widget. Maybe in the future. */
 } WCustom;
 
-#define WCUSTOM(x) ((WCustom *) (x))
+/*** forward declarations (file scope functions) *************************************************/
 
-/* See comment for LUA_TO_BUTTON, in ui.c */
-#define LUA_TO_CUSTOM(L, i) (WCUSTOM (luaUI_check_widget (L, i)))
+static int l_custom_new (lua_State * L);
+static int l_custom_set_on_cursor (lua_State * L);
+
+/*** file scope variables ************************************************************************/
+
+/* *INDENT-OFF* */
+static const struct luaL_Reg ui_custom_static_lib[] = {
+    { "_new", l_custom_new },
+    { NULL, NULL }
+};
+
+static const struct luaL_Reg ui_custom_lib[] = {
+    { "set_on_cursor", l_custom_set_on_cursor },
+    { NULL, NULL }
+};
+/* *INDENT-ON* */
+
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Misc event handlers
@@ -81,6 +133,9 @@ typedef struct
  * @callback
  */
 
+/* --------------------------------------------------------------------------------------------- */
+
+
 /**
  * Cursor positioning handler.
  *
@@ -101,6 +156,8 @@ typedef struct
  * @args (self)
  * @callback
  */
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
 Keypress handler.
@@ -203,6 +260,8 @@ as the @{prompts.alert|alert}'s title.
 @callback
 */
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Global keypress handler.
  *
@@ -217,6 +276,8 @@ as the @{prompts.alert|alert}'s title.
  * @args (self, keycode)
  * @callback
  */
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Focus handler.
@@ -235,6 +296,8 @@ as the @{prompts.alert|alert}'s title.
  * @args (self)
  * @callback
  */
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Unfocus handler.
@@ -260,6 +323,8 @@ as the @{prompts.alert|alert}'s title.
  * @callback
  */
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Invoked when the user does "wgt.on_cursor = ...". We turn on a flag here
  * that tells the system we can position the cursor.
@@ -274,6 +339,8 @@ l_custom_set_on_cursor (lua_State * L)
 
     return 0;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 static cb_ret_t
 custom_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm, void *data)
@@ -336,11 +403,15 @@ custom_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm, void *
     }
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 gboolean
 is_custom (Widget * w)
 {
     return w->callback == custom_callback;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 static Widget *
 custom_constructor (void)
@@ -359,6 +430,8 @@ custom_constructor (void)
     return w;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static int
 l_custom_new (lua_State * L)
 {
@@ -366,19 +439,9 @@ l_custom_new (lua_State * L)
     return 1;
 }
 
-/* ------------------------------------------------------------------------ */
-
-/* *INDENT-OFF* */
-static const struct luaL_Reg ui_custom_static_lib[] = {
-    { "_new", l_custom_new },
-    { NULL, NULL }
-};
-
-static const struct luaL_Reg ui_custom_lib[] = {
-    { "set_on_cursor", l_custom_set_on_cursor },
-    { NULL, NULL }
-};
-/* *INDENT-ON* */
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 int
 luaopen_ui_custom (lua_State * L)
@@ -386,3 +449,5 @@ luaopen_ui_custom (lua_State * L)
     create_widget_metatable (L, "Custom", ui_custom_lib, ui_custom_static_lib, "Widget");
     return 0;                   /* Nothing to return! */
 }
+
+/* --------------------------------------------------------------------------------------------- */

@@ -1,3 +1,28 @@
+/*
+   A canvas is an object that holds methods by which you can draw on the screen.
+
+   Copyright (C) 2015-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2015
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 /**
 
 A canvas is an object that holds methods by which you can draw on the
@@ -80,6 +105,7 @@ aware of this fact.
 @classmod ui.Canvas
 
 */
+
 #include <config.h>
 
 #include "lib/global.h"
@@ -94,8 +120,24 @@ aware of this fact.
 
 #include "ui-canvas.h"
 
+/*** global variables ****************************************************************************/
+
+/*** file scope macro definitions ****************************************************************/
 
 #define DEBUG_CANVAS 1
+
+#define LUA_TO_CANVAS(L, i) ((Canvas *) luaMC_checkudata__unsafe (L, i, "canvas"))
+
+/**
+ * We currently read coordinates with luaL_checkint. This will raise an
+ * exception (on Lua 5.3+) if the user feeds us a fraction. If we decide
+ * we want to be lenient we can change this to luaL_checknumber here.
+ */
+#define luaMC_checkcoord luaL_checkint
+
+#define canvas_move(c, _y, _x) tty_gotoyx ((c)->y + (_y), (c)->x + (_x))
+
+/*** file scope type declarations ****************************************************************/
 
 /*
  * The Lua userdata.
@@ -109,14 +151,48 @@ typedef struct
 #endif
 } Canvas;
 
-#define LUA_TO_CANVAS(L, i) ((Canvas *) luaMC_checkudata__unsafe (L, i, "canvas"))
+/*** forward declarations (file scope functions) *************************************************/
 
-/**
- * We currently read coordinates with luaL_checkint. This will raise an
- * exception (on Lua 5.3+) if the user feeds us a fraction. If we decide
- * we want to be lenient we can change this to luaL_checknumber here.
- */
-#define luaMC_checkcoord luaL_checkint
+static int l_canvas_draw_string (lua_State * L);
+static int l_canvas_goto_xy (lua_State * L);
+static int l_canvas_get_xy (lua_State * L);
+static int l_canvas_goto_xy1 (lua_State * L);
+static int l_canvas_set_style (lua_State * L);
+static int l_canvas_fill_rect (lua_State * L);
+static int l_canvas_draw_box (lua_State * L);
+#if DEBUG_CANVAS
+static int l_canvas_get_serial (lua_State * L);
+#endif
+static int l_canvas_get_x (lua_State * L);
+static int l_canvas_get_y (lua_State * L);
+static int l_canvas_get_cols (lua_State * L);
+static int l_canvas_get_rows (lua_State * L);
+
+/*** file scope variables ************************************************************************/
+
+/* *INDENT-OFF* */
+static const struct luaL_Reg ui_canvas_lib[] = {
+    { "draw_string", l_canvas_draw_string },
+    { "goto_xy", l_canvas_goto_xy },
+    { "get_xy", l_canvas_get_xy },
+    { "goto_xy1", l_canvas_goto_xy1 },
+    { "set_style", l_canvas_set_style },
+    { "fill_rect", l_canvas_fill_rect },
+    { "draw_box", l_canvas_draw_box },
+#if DEBUG_CANVAS
+    { "get_serial", l_canvas_get_serial },
+#endif
+    { "get_x", l_canvas_get_x },
+    { "get_y", l_canvas_get_y },
+    { "get_cols", l_canvas_get_cols },
+    { "get_rows", l_canvas_get_rows },
+    { NULL, NULL }
+};
+/* *INDENT-ON* */
+
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Creates a new canvas object, on the Lua stack.
@@ -135,6 +211,8 @@ luaUI_new_canvas (lua_State * L)
 #endif
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Sets the dimensions of a canvas object.
  */
@@ -149,6 +227,8 @@ luaUI_set_canvas_dimensions (lua_State * L, int index, int x, int y, int cols, i
     c->cols = cols;
     c->rows = rows;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Draws a string, at the cursor position.
@@ -166,7 +246,7 @@ l_canvas_draw_string (lua_State * L)
     return 0;
 }
 
-#define canvas_move(c, _y, _x) tty_gotoyx ((c)->y + (_y), (c)->x + (_x))
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Positions the cursor.
@@ -188,6 +268,8 @@ l_canvas_goto_xy (lua_State * L)
 
     return 0;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Positions the cursor.
@@ -217,6 +299,8 @@ l_canvas_goto_xy1 (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Gets the cursor position.
  *
@@ -240,6 +324,8 @@ l_canvas_get_xy (lua_State * L)
 
     return 2;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Draws a box.
@@ -272,6 +358,8 @@ l_canvas_draw_box (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /*
  * There's already tty_fill_region() but it doesn't support Unicode.
  */
@@ -291,6 +379,8 @@ fill_rect (int x, int y, int cols, int rows, const char *ch)
             tty_print_string (ch);
     }
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Fills a rectangle.
@@ -319,6 +409,8 @@ l_canvas_fill_rect (lua_State * L)
     fill_rect (c->x + x, c->y + y, cols, rows, filler);
     return 0;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
 
@@ -404,6 +496,8 @@ l_canvas_set_style (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Gets the canvas' distance from the left edge of the screen.
  *
@@ -420,6 +514,8 @@ l_canvas_get_x (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Gets the canvas' distance from the top of the screen.
  *
@@ -434,6 +530,8 @@ l_canvas_get_y (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Gets the canvas' width.
  *
@@ -445,6 +543,8 @@ l_canvas_get_cols (lua_State * L)
     lua_pushinteger (L, LUA_TO_CANVAS (L, 1)->cols);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Gets the canvas' height.
@@ -458,6 +558,8 @@ l_canvas_get_rows (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 #if DEBUG_CANVAS
 static int
 l_canvas_get_serial (lua_State * L)
@@ -467,27 +569,9 @@ l_canvas_get_serial (lua_State * L)
 }
 #endif
 
-/* ------------------------------------------------------------------------ */
-
-/* *INDENT-OFF* */
-static const struct luaL_Reg ui_canvas_lib[] = {
-    { "draw_string", l_canvas_draw_string },
-    { "goto_xy", l_canvas_goto_xy },
-    { "get_xy", l_canvas_get_xy },
-    { "goto_xy1", l_canvas_goto_xy1 },
-    { "set_style", l_canvas_set_style },
-    { "fill_rect", l_canvas_fill_rect },
-    { "draw_box", l_canvas_draw_box },
-#if DEBUG_CANVAS
-    { "get_serial", l_canvas_get_serial },
-#endif
-    { "get_x", l_canvas_get_x },
-    { "get_y", l_canvas_get_y },
-    { "get_cols", l_canvas_get_cols },
-    { "get_rows", l_canvas_get_rows },
-    { NULL, NULL }
-};
-/* *INDENT-ON* */
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 int
 luaopen_ui_canvas (lua_State * L)
@@ -500,3 +584,5 @@ luaopen_ui_canvas (lua_State * L)
     create_widget_metatable (L, "Canvas", ui_canvas_lib, NULL, NULL);
     return 0;                   /* Nothing to return! */
 }
+
+/* --------------------------------------------------------------------------------------------- */
