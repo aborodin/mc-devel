@@ -603,11 +603,9 @@ luaTTY_assert_ui_is_ready_ex (lua_State * L, gboolean push_only, const char *fun
 static void
 validate_color_name (lua_State * L, const char *color_name)
 {
-    if (color_name && tty_color_get_index_by_name (color_name) == -1
+    if (color_name != NULL && tty_color_get_index_by_name (color_name) == -1
         && !STREQ (color_name, "default") && !STREQ (color_name, "base"))
-    {
         luaL_error (L, _("Invalid color name '%s'. Perhaps you misspelled it?"), color_name);
-    }
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -619,10 +617,7 @@ validate_color_name (lua_State * L, const char *color_name)
 static int
 l_style (lua_State * L)
 {
-    const char *fg;
-    const char *bg;
-    const char *attrs;
-
+    const char *fg, *bg, *attrs;
     int pair;
 
     luaTTY_assert_ui_is_ready (L);
@@ -666,8 +661,7 @@ l_style (lua_State * L)
 static int
 l_skin_style (lua_State * L)
 {
-    const char *group;
-    const char *name;
+    const char *group, *name;
 
     luaTTY_assert_ui_is_ready (L);
 
@@ -1030,9 +1024,7 @@ l_is_ui_ready (lua_State * L)
 static int
 l_skin_get (lua_State * L)
 {
-    const char *group;
-    const char *name;
-    const char *def;
+    const char *group, *name, *def;
 
     luaTTY_assert_ui_is_ready (L);
 
@@ -1250,8 +1242,8 @@ l_generate_error_message (lua_State * L)
         luaTTY_assert_ui_is_ready_ex (L, TRUE, funcname);
         return 1;
     }
-    else
-        return 0;
+
+    return 0;
 }
 
 /* --------------------------------------------------------------------------------------------- */

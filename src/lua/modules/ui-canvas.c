@@ -171,7 +171,8 @@ static int l_canvas_get_rows (lua_State * L);
 /*** file scope variables ************************************************************************/
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_canvas_lib[] = {
+static const struct luaL_Reg ui_canvas_lib[] =
+{
     { "draw_string", l_canvas_draw_string },
     { "goto_xy", l_canvas_goto_xy },
     { "get_xy", l_canvas_get_xy },
@@ -203,9 +204,11 @@ luaUI_new_canvas (lua_State * L)
     Canvas *c;
 
     c = luaMC_newuserdata0 (L, sizeof (Canvas), mc_lua_ui_meta_name ("Canvas"));
+
 #if DEBUG_CANVAS
     {
         static int serial_number = 0;
+
         c->serial_number = ++serial_number;
     }
 #endif
@@ -310,7 +313,6 @@ static int
 l_canvas_get_xy (lua_State * L)
 {
     Canvas *c;
-
     int x, y;
 
     c = LUA_TO_CANVAS (L, 1);
@@ -352,7 +354,7 @@ l_canvas_draw_box (lua_State * L)
     y = luaMC_checkcoord (L, 3);
     cols = luaMC_checkcoord (L, 4);
     rows = luaMC_checkcoord (L, 5);
-    use_double_lines = lua_toboolean (L, 6);
+    use_double_lines = lua_toboolean (L, 6) != 0;
 
     tty_draw_box (c->y + y, c->x + x, rows, cols, !use_double_lines);
     return 0;

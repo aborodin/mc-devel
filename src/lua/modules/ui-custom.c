@@ -90,12 +90,16 @@ static int l_custom_set_on_cursor (lua_State * L);
 /*** file scope variables ************************************************************************/
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_custom_static_lib[] = {
+static const struct luaL_Reg ui_custom_static_lib[] =
+{
     { "_new", l_custom_new },
     { NULL, NULL }
 };
+/* *INDENT-ON* */
 
-static const struct luaL_Reg ui_custom_lib[] = {
+/* *INDENT-OFF* */
+static const struct luaL_Reg ui_custom_lib[] =
+{
     { "set_on_cursor", l_custom_set_on_cursor },
     { NULL, NULL }
 };
@@ -332,7 +336,9 @@ as the @{prompts.alert|alert}'s title.
 static int
 l_custom_set_on_cursor (lua_State * L)
 {
-    Widget *w = luaUI_check_widget (L, 1);
+    Widget *w;
+
+    w = luaUI_check_widget (L, 1);
 
     luaMC_rawsetfield (L, 1, "on_cursor");
     widget_want_cursor (w, TRUE);
@@ -355,7 +361,9 @@ custom_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm, void *
 
     case MSG_UNFOCUS:
         {
-            cb_ret_t result = call_widget_method (w, "on_unfocus", 0, &method_found);
+            cb_ret_t result;
+
+            result = call_widget_method (w, "on_unfocus", 0, &method_found);
             /* If the method is not implemented, we pretend it returned 'true'
              * (by return MSG_HANDLED). This way we don't bother our users with
              * implementing this method as it's only seldom that users would want
