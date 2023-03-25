@@ -146,7 +146,9 @@ l_enable_table_gc (lua_State * L)
 static int
 l_sleep (lua_State * L)
 {
-    useconds_t msec = luaL_checki (L, 1);
+    useconds_t msec;
+
+    msec = luaL_checki (L, 1);
     usleep (msec * 1000);
     return 0;
 }
