@@ -94,7 +94,7 @@ l_input (lua_State * L)
     def_text = luaMC_is_int_eq (L, 2, -1) ? INPUT_LAST_TEXT : luaL_optstring (L, 2, "");
     title = luaL_optstring (L, 3, "");
     history = luaL_optstring (L, 4, MC_HISTORY_LUA_DEFAULT);
-    is_password = lua_toboolean (L, 5);
+    is_password = lua_toboolean (L, 5) != 0;
 
 #ifdef ENABLE_BACKGROUND
     if (mc_global.we_are_background)
