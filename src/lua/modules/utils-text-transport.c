@@ -52,7 +52,8 @@ static int l_hash (lua_State * L);
 /*** file scope variables ************************************************************************/
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg utils_text_transport_lib[] = {
+static const struct luaL_Reg utils_text_transport_lib[] =
+{
     { "base64_decode", l_base64_decode },
     { "base64_encode", l_base64_encode },
     { "hash", l_hash },
@@ -86,7 +87,6 @@ static int
 l_base64_decode (lua_State * L)
 {
     const char *text;
-
     char *output;
     gsize output_len;
 
@@ -134,7 +134,8 @@ l_base64_encode (lua_State * L)
      */
     {
         gchar *out;
-        gint state = 0, outlen;
+        gint state = 0;
+        gint outlen;
         gint save = 0;
 
         /* We can use a smaller limit here, since we know the saved state is 0,
@@ -172,12 +173,16 @@ l_base64_encode (lua_State * L)
 static int
 l_hash (lua_State * L)
 {
-    static const char *const algo_names[] = {
+    /* *INDENT-OFF* */
+    static const char *const algo_names[] =
+    {
         "md5", "sha1", "sha256", "sha512", NULL
     };
-    static GChecksumType algo_values[] = {
+    static GChecksumType algo_values[] =
+    {
         G_CHECKSUM_MD5, G_CHECKSUM_SHA1, G_CHECKSUM_SHA256, G_CHECKSUM_SHA512
     };
+    /* *INDENT-ON* */
 
     GChecksumType algo;
     const char *data;
