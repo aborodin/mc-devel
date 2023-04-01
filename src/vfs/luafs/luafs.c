@@ -56,19 +56,25 @@ struct vfs_class vfs_luafs_ops; /* global because luafs-gc.c needs it. */
 /*** file scope macro definitions ****************************************************************/
 
 #define ON_ERROR_RETURN_N(result, pop_count) \
-    do { \
+    do \
+    { \
         if (!lua_isnil (Lg, -1)) { \
             my_errno = lua_tointeger (Lg, -1); \
             lua_pop (Lg, pop_count); \
             return result; \
         } \
     } \
-    while (0)
+    while (FALSE)
 
 #define ON_ERROR_RETURN(result) ON_ERROR_RETURN_N(result, 2)
 
 #define DATA_CHECK() \
-    do { if (!data) return -1; } while (0)
+    do \
+    { \
+        if (data == NULL) \
+            return (-1); \
+    } \
+    while (FALSE)
 
 /*** file scope type declarations ****************************************************************/
 
@@ -103,7 +109,9 @@ static int my_errno;
 static void *
 lua_ref_cell__new (lua_State * L)
 {
-    int *cell = g_new (int, 1);
+    int *cell;
+
+    cell = g_new (int, 1);
     *cell = luaL_ref (L, LUA_REGISTRYINDEX);
     return cell;
 }
@@ -115,6 +123,7 @@ static void
 lua_ref_cell__push_value (lua_State * L, void *cell)
 {
     int idx = *(int *) cell;
+
     lua_rawgeti (L, LUA_REGISTRYINDEX, idx);
 }
 
@@ -142,7 +151,7 @@ static int
 luafs_failure (void)
 {
     my_errno = EPERM;
-    return -1;
+    return (-1);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -229,7 +238,7 @@ handle_returned_pair__as_string (char *buf, size_t bufsiz)
     s = lua_tolstring (Lg, -2, &s_len);
     lua_pop (Lg, 2);
 
-    if (!s)
+    if (s == NULL)
     {
         /*
          * We're expecting a Lua string. If we encounter some other type of
@@ -240,12 +249,10 @@ handle_returned_pair__as_string (char *buf, size_t bufsiz)
          */
         return 0;
     }
-    else
-    {
-        s_len = MIN (s_len, bufsiz);
-        memcpy (buf, s, s_len);
-        return s_len;
-    }
+
+    s_len = MIN (s_len, bufsiz);
+    memcpy (buf, s, s_len);
+    return s_len;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -299,6 +306,7 @@ luafs_open (const vfs_path_t * vpath, int flags, mode_t mode)
         if (luaMC_safe_call (Lg, 4, 2))
             return handle_returned_pair__as_cellref ();
     }
+
     return luafs_failure__ptr ();
 }
 
@@ -322,6 +330,7 @@ luafs_read (void *data, char *buffer, size_t count)
         if (luaMC_safe_call (Lg, 2, 2))
             return handle_returned_pair__as_string (buffer, count);
     }
+
     return luafs_failure ();
 }
 
@@ -340,6 +349,7 @@ luafs_close (void *data)
         if (luaMC_safe_call (Lg, 1, 2))
             return handle_returned_pair ();
     }
+
     return luafs_failure ();
 }
 
@@ -355,6 +365,7 @@ luafs_opendir (const vfs_path_t * vpath)
         if (luaMC_safe_call (Lg, 1, 2))
             return handle_returned_pair__as_cellref ();
     }
+
     return luafs_failure__ptr ();
 }
 
@@ -382,7 +393,7 @@ luafs_readdir (void *data)
                 lua_pop (Lg, 3);
                 return NULL;
             }
-            else
+
             {
                 const char *d_name;
                 int d_ino;
@@ -397,6 +408,7 @@ luafs_readdir (void *data)
             }
         }
     }
+
     return luafs_failure__ptr ();
 }
 
@@ -444,6 +456,7 @@ luafs_fstat (void *data, struct stat *buf)
         if (luaMC_safe_call (Lg, 1, 2))
             return handle_returned_pair__as_statbf (buf);
     }
+
     return luafs_failure ();
 }
 
@@ -459,6 +472,7 @@ luafs_lstat (const vfs_path_t * vpath, struct stat *buf)
         if (luaMC_safe_call (Lg, 1, 2))
             return handle_returned_pair__as_statbf (buf);
     }
+
     return luafs_failure ();
 }
 
@@ -475,6 +489,7 @@ luafs_chmod (const vfs_path_t * vpath, mode_t mode)
         if (luaMC_safe_call (Lg, 2, 2))
             return handle_returned_pair ();
     }
+
     return luafs_failure ();
 }
 
@@ -492,6 +507,7 @@ luafs_chown (const vfs_path_t * vpath, uid_t owner, gid_t group)
         if (luaMC_safe_call (Lg, 3, 2))
             return handle_returned_pair ();
     }
+
     return luafs_failure ();
 }
 
@@ -503,7 +519,8 @@ luafs_utime (const vfs_path_t * vpath, mc_timesbuf_t * times)
     if (luaMC_get_system_callback (Lg, "luafs::utime"))
     {
         luaFS_push_vpath (Lg, vpath);
-        if (times)
+
+        if (times != NULL)
         {
             /* For consistency, the order is that of fs.utime() */
 #ifdef HAVE_UTIMENSAT
@@ -516,7 +533,9 @@ luafs_utime (const vfs_path_t * vpath, mc_timesbuf_t * times)
         }
         else
         {
-            time_t now = time (NULL);
+            time_t now;
+
+            now = time (NULL);
             lua_pushi (Lg, now);
             lua_pushi (Lg, now);
         }
@@ -524,6 +543,7 @@ luafs_utime (const vfs_path_t * vpath, mc_timesbuf_t * times)
         if (luaMC_safe_call (Lg, 3, 2))
             return handle_returned_pair ();
     }
+
     return luafs_failure ();
 }
 
@@ -539,6 +559,7 @@ luafs_readlink (const vfs_path_t * vpath, char *buf, size_t size)
         if (luaMC_safe_call (Lg, 1, 2))
             return handle_returned_pair__as_string (buf, size);
     }
+
     return luafs_failure ();
 }
 
@@ -554,6 +575,7 @@ luafs_unlink (const vfs_path_t * vpath)
         if (luaMC_safe_call (Lg, 1, 2))
             return handle_returned_pair ();
     }
+
     return luafs_failure ();
 }
 
@@ -570,6 +592,7 @@ luafs_symlink (const vfs_path_t * vpath1, const vfs_path_t * vpath2)
         if (luaMC_safe_call (Lg, 2, 2))
             return handle_returned_pair ();
     }
+
     return luafs_failure ();
 }
 
@@ -589,10 +612,13 @@ luafs_write (void *data, const char *buffer, size_t count)
         {
             /* Because of -Wfloat-conversion and -Wbad-function-cast we can't
                return the function's value directly. */
-            lua_Number ret = handle_returned_pair__as_number ();
+            lua_Number ret;
+
+            ret = handle_returned_pair__as_number ();
             return (ssize_t) ret;
         }
     }
+
     return luafs_failure ();
 }
 
@@ -609,6 +635,7 @@ luafs_rename (const vfs_path_t * vpath1, const vfs_path_t * vpath2)
         if (luaMC_safe_call (Lg, 2, 2))
             return handle_returned_pair ();
     }
+
     return luafs_failure ();
 }
 
@@ -624,6 +651,7 @@ luafs_chdir (const vfs_path_t * vpath)
         if (luaMC_safe_call (Lg, 1, 2))
             return handle_returned_pair ();
     }
+
     return luafs_failure ();
 }
 
@@ -641,6 +669,7 @@ luafs_mknod (const vfs_path_t * vpath, mode_t mode, dev_t dev)
         if (luaMC_safe_call (Lg, 3, 2))
             return handle_returned_pair ();
     }
+
     return luafs_failure ();
 }
 
@@ -657,8 +686,8 @@ luafs_link (const vfs_path_t * vpath1, const vfs_path_t * vpath2)
         if (luaMC_safe_call (Lg, 2, 2))
             return handle_returned_pair ();
     }
-    return luafs_failure ();
 
+    return luafs_failure ();
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -674,6 +703,7 @@ luafs_mkdir (const vfs_path_t * vpath, mode_t mode)
         if (luaMC_safe_call (Lg, 2, 2))
             return handle_returned_pair ();
     }
+
     return luafs_failure ();
 }
 
@@ -689,6 +719,7 @@ luafs_rmdir (const vfs_path_t * vpath)
         if (luaMC_safe_call (Lg, 1, 2))
             return handle_returned_pair ();
     }
+
     return luafs_failure ();
 }
 
@@ -708,10 +739,13 @@ luafs_lseek (void *data, off_t offset, int whence)
         if (luaMC_safe_call (Lg, 3, 2))
         {
             /* See comment above at prior use of handle_returned_pair__as_number(). */
-            lua_Number ret = handle_returned_pair__as_number ();
+            lua_Number ret;
+
+            ret = handle_returned_pair__as_number ();
             return (off_t) ret;
         }
     }
+
     return luafs_failure ();
 }
 
@@ -785,6 +819,7 @@ luafs_setctl (const vfs_path_t * vpath, int ctlop, void *arg)
              * for the rest it isn't checked by MC. */
             return luaMC_pop_boolean (Lg) ? 1 : 0;
     }
+
     return 0;
 }
 
@@ -840,6 +875,7 @@ luafs_getid (const vfs_path_t * vpath)
         if (luaMC_safe_call (Lg, 1, 1))
             return GINT_TO_POINTER ((int) luaMC_pop_integer (Lg));
     }
+
     return NULL;
 }
 
@@ -855,6 +891,7 @@ luafs_nothingisopen (vfsid id)
         if (luaMC_safe_call (Lg, 1, 1))
             return luaMC_pop_boolean (Lg);
     }
+
     return TRUE;
 }
 

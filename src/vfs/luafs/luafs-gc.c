@@ -55,7 +55,8 @@ static int l_get_vfs_stamps (lua_State * L);
 /*** file scope variables ************************************************************************/
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg luafs_gc_lib[] = {
+static const struct luaL_Reg luafs_gc_lib[] =
+{
     { "stamp", l_stamp },
     { "rmstamp", l_rmstamp },
     { "stamp_create", l_stamp_create },
