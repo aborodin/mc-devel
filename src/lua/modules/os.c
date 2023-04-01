@@ -59,7 +59,8 @@ static int l_kill (lua_State * L);
 /*** file scope variables ************************************************************************/
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg mc_os_lib[] = {
+static const struct luaL_Reg mc_os_lib[] =
+{
     { "hostname", l_hostname },
     { "getpid", l_getpid },
     { "kill", l_kill },
@@ -148,7 +149,7 @@ l_kill (lua_State * L)
     int sig;
 
     pid = luaL_checki (L, 1);
-    if (lua_isnumber (L, 2))
+    if (lua_isnumber (L, 2) != 0)
         sig = luaL_checki (L, 2);
     else
         sig = luaMC_checkoption (L, 2, "SIGTERM", sig_names, sig_values);
@@ -175,6 +176,8 @@ luaopen_mc_os (lua_State * L)
     lua_getglobal (L, "os");
     g_assert (!lua_isnil (L, -1));
     luaL_setfuncs (L, mc_os_lib, 0);
-    return 0;                   /* Return nothing. We augment the standard Lua module. */
+
+    /* Return nothing. We augment the standard Lua module. */
+    return 0;
 }
 /* --------------------------------------------------------------------------------------------- */
