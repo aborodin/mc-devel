@@ -1,9 +1,11 @@
 /*
    Virtual File System: Lua filesystems.
 
-   Copyright (C) 1995, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007, 2009, 2011
+   Copyright (C) 2916-2023
    The Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2016
 
    This file is part of the Midnight Commander.
 
@@ -53,13 +55,32 @@ struct vfs_class vfs_luafs_ops; /* global because luafs-gc.c needs it. */
 
 /*** file scope macro definitions ****************************************************************/
 
+#define ON_ERROR_RETURN_N(result, pop_count) \
+    do { \
+        if (!lua_isnil (Lg, -1)) { \
+            my_errno = lua_tointeger (Lg, -1); \
+            lua_pop (Lg, pop_count); \
+            return result; \
+        } \
+    } \
+    while (0)
+
+#define ON_ERROR_RETURN(result) ON_ERROR_RETURN_N(result, 2)
+
+#define DATA_CHECK() \
+    do { if (!data) return -1; } while (0)
+
 /*** file scope type declarations ****************************************************************/
+
+/*** forward declarations (file scope functions) *************************************************/
 
 /*** file scope variables ************************************************************************/
 
 static int my_errno;
 
+/* --------------------------------------------------------------------------------------------- */
 /*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 /* ----------------------- Wrapping Lua objects --------------------------- */
 
@@ -87,6 +108,8 @@ lua_ref_cell__new (lua_State * L)
     return cell;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /* Converts 'void *' to a Lua object (placed at the top of the stack). */
 static void
 lua_ref_cell__push_value (lua_State * L, void *cell)
@@ -95,6 +118,8 @@ lua_ref_cell__push_value (lua_State * L, void *cell)
     lua_rawgeti (L, LUA_REGISTRYINDEX, idx);
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /* Disposes of a ref cell. */
 static void
 lua_ref_cell__dispose (lua_State * L, void *cell)
@@ -102,6 +127,8 @@ lua_ref_cell__dispose (lua_State * L, void *cell)
     luaL_unref (L, LUA_REGISTRYINDEX, *(int *) cell);
     g_free (cell);
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /* --------------------------- errno handling ----------------------------- */
 
@@ -118,12 +145,16 @@ luafs_failure (void)
     return -1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static void *
 luafs_failure__ptr (void)
 {
     my_errno = EPERM;
     return NULL;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /* -------------------------- Callback results ---------------------------- */
 
@@ -144,18 +175,6 @@ luafs_failure__ptr (void)
  * inspect the second (last) element in the [potential] pair.
  */
 
-#define ON_ERROR_RETURN_N(result, pop_count) \
-    do { \
-        if (!lua_isnil (Lg, -1)) { \
-            my_errno = lua_tointeger (Lg, -1); \
-            lua_pop (Lg, pop_count); \
-            return result; \
-        } \
-    } \
-    while (0)
-
-#define ON_ERROR_RETURN(result) ON_ERROR_RETURN_N(result, 2)
-
 /*
  * Handle callbacks of the simplest case: the operation either succeeded or failed.
  * Most callbacks are of this type.
@@ -170,6 +189,8 @@ handle_returned_pair (void)
     lua_pop (Lg, 2);
     return 0;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /*
  * Handle callbacks that return a number on success.
@@ -187,6 +208,8 @@ handle_returned_pair__as_number (void)
     lua_pop (Lg, 2);
     return result;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /*
  * Handle callbacks that return a string on success.
@@ -225,6 +248,8 @@ handle_returned_pair__as_string (char *buf, size_t bufsiz)
     }
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /*
  * Handle callbacks that return a fs.StatBuf on success.
  *
@@ -244,6 +269,8 @@ handle_returned_pair__as_statbf (struct stat *buf)
     lua_pop (Lg, 2);
     return 0;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /*
  * Handle callbacks that return an arbitrary Lua value.
@@ -282,10 +309,6 @@ luafs_open (const vfs_path_t * vpath, int flags, mode_t mode)
  * read()/write()/close(). I don't think this is needed (more so when the guard
  * is omitted in lseek()/fstat()), but I'm duplicating that check here.
  */
-#define DATA_CHECK() \
-    do { if (!data) return -1; } while (0)
-
-
 static ssize_t
 luafs_read (void *data, char *buffer, size_t count)
 {
@@ -423,6 +446,8 @@ luafs_fstat (void *data, struct stat *buf)
     }
     return luafs_failure ();
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 static int
 luafs_lstat (const vfs_path_t * vpath, struct stat *buf)
