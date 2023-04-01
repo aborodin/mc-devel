@@ -1,3 +1,29 @@
+/*
+   Operating-system facilities.
+
+   Copyright (C) 2015-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2015
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+
 /**
  * Operating-system facilities.
  *
@@ -18,6 +44,32 @@
 
 #include "../modules.h"
 
+/*** global variables ****************************************************************************/
+
+/*** file scope macro definitions ****************************************************************/
+
+/*** file scope type declarations ****************************************************************/
+
+/*** forward declarations (file scope functions) *************************************************/
+
+static int l_hostname (lua_State * L);
+static int l_getpid (lua_State * L);
+static int l_kill (lua_State * L);
+
+/*** file scope variables ************************************************************************/
+
+/* *INDENT-OFF* */
+static const struct luaL_Reg mc_os_lib[] = {
+    { "hostname", l_hostname },
+    { "getpid", l_getpid },
+    { "kill", l_kill },
+    { NULL, NULL }
+};
+/* *INDENT-ON* */
+
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Returns the current host name.
@@ -48,6 +100,8 @@ l_hostname (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Returns the process ID.
  *
@@ -59,6 +113,8 @@ l_getpid (lua_State * L)
     lua_pushi (L, getpid ());
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Sends a signal to a process.
@@ -102,16 +158,9 @@ l_kill (lua_State * L)
     return 1;
 }
 
-/* ------------------------------------------------------------------------ */
-
-/* *INDENT-OFF* */
-static const struct luaL_Reg mc_os_lib[] = {
-    { "hostname", l_hostname },
-    { "getpid", l_getpid },
-    { "kill", l_kill },
-    { NULL, NULL }
-};
-/* *INDENT-ON* */
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Note: We can't name this function 'luaopen_os'. Lua itself already
@@ -128,3 +177,4 @@ luaopen_mc_os (lua_State * L)
     luaL_setfuncs (L, mc_os_lib, 0);
     return 0;                   /* Return nothing. We augment the standard Lua module. */
 }
+/* --------------------------------------------------------------------------------------------- */
