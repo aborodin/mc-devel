@@ -78,7 +78,7 @@ redraw_dirty_panel (WPanel * panel)
 static int
 l_panel_get_dir (lua_State * L)
 {
-    lua_pushstring (L, LUA_TO_PANEL (L, 1)->cwd_vpath->str);
+    lua_pushstring (L, vfs_path_as_str (LUA_TO_PANEL (L, 1)->cwd_vpath));
     return 1;
 }
 
@@ -295,14 +295,21 @@ l_panel_panelize_by_command (lua_State * L)
 static int
 l_panel_set_filter (lua_State * L)
 {
-    set_panel_filter_to (LUA_TO_PANEL (L, 1), g_strdup (luaL_optstring (L, 2, "*")));
+    /* TODO */
+    panel_set_filter_to (LUA_TO_PANEL (L, 1), g_strdup (luaL_optstring (L, 2, "*")),
+                         luaL_opti (L, 2, FILE_FILTER_DEFAULT_FLAGS));
     return 0;
 }
 
 static int
 l_panel_get_filter (lua_State * L)
 {
-    lua_pushstring (L, LUA_TO_PANEL (L, 1)->filter);    /* NULL-safe */
+    WPanel *panel;
+
+    panel = LUA_TO_PANEL (L, 1);
+    /* TODO  */
+    lua_pushstring (L, panel->filter.value);            /* NULL-safe */
+    lua_pushinteger (L, panel->filter.flags);
     return 1;
 }
 
@@ -843,13 +850,6 @@ l_panel_remove (lua_State * L)
  * @method _get_metrics
  */
 
-/*
- * The following #def was copied from panel.c. @FIXME: remove.
- */
-
-/* This macro extracts the number of available lines in a panel */
-#define llines(p) (WIDGET (p)->lines - 3 - (panels_options.show_mini_info ? 2 : 0))
-
 static int
 l_panel_get_metrics (lua_State * L)
 {
@@ -858,7 +858,7 @@ l_panel_get_metrics (lua_State * L)
     panel = LUA_TO_PANEL (L, 1);
 
     lua_pushinteger (L, panel->top + 1);
-    lua_pushinteger (L, llines (panel));
+    lua_pushinteger (L, panel_lines (panel));
     lua_pushinteger (L, panel->list_cols);
 
     return 3;

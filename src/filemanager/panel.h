@@ -167,6 +167,8 @@ void panel_change_encoding (WPanel * panel);
 vfs_path_t *remove_encoding_from_path (const vfs_path_t * vpath);
 #endif
 
+int panel_lines (const WPanel * p);
+
 void update_panels (panel_update_flags_t flags, const char *current_file);
 int set_panel_formats (WPanel * p);
 
