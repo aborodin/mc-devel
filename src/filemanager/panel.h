@@ -171,6 +171,7 @@ void update_panels (panel_update_flags_t flags, const char *current_file);
 int set_panel_formats (WPanel * p);
 
 void panel_set_filter (WPanel * panel, const file_filter_t * filter);
+gboolean panel_set_filter_to (WPanel * panel, const char *value, select_flags_t flags);
 
 void panel_set_current_by_name (WPanel * panel, const char *name);
 

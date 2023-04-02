@@ -2598,6 +2598,27 @@ mark_file_left (WPanel * panel)
 /* --------------------------------------------------------------------------------------------- */
 
 static mc_search_t *
+panel_create_filter_handler (const char *str, gboolean shell_patterns, gboolean case_sens)
+{
+    mc_search_t *ret;
+
+    ret = mc_search_new (str, NULL);
+    ret->search_type = shell_patterns ? MC_SEARCH_T_GLOB : MC_SEARCH_T_REGEX;
+    ret->is_entire_line = TRUE;
+    ret->is_case_sensitive = case_sens;
+
+    if (!mc_search_prepare (ret))
+    {
+        mc_search_free (ret);
+        ret = SELECT_ERROR;
+    }
+
+    return ret;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+static mc_search_t *
 panel_select_unselect_files_dialog (select_flags_t * flags, const char *title,
                                     const char *history_name, const char *help_section, char **str)
 {
@@ -2640,31 +2661,26 @@ panel_select_unselect_files_dialog (select_flags_t * flags, const char *title,
         return SELECT_RESET;
     }
 
-    search = mc_search_new (reg_exp, NULL);
-    search->search_type = shell_patterns ? MC_SEARCH_T_GLOB : MC_SEARCH_T_REGEX;
-    search->is_entire_line = TRUE;
-    search->is_case_sensitive = case_sens;
+    search = panel_create_filter_handler (reg_exp, shell_patterns, case_sens);
 
     if (str != NULL)
         *str = reg_exp;
     else
         g_free (reg_exp);
 
-    if (!mc_search_prepare (search))
-    {
+    if (search == SELECT_ERROR)
         message (D_ERROR, MSG_ERROR, _("Malformed regular expression"));
-        mc_search_free (search);
-        return SELECT_ERROR;
+    else
+    {
+        /* result flags */
+        *flags = 0;
+        if (case_sens)
+            *flags |= SELECT_MATCH_CASE;
+        if (files_only)
+            *flags |= SELECT_FILES_ONLY;
+        if (shell_patterns)
+            *flags |= SELECT_SHELL_PATTERNS;
     }
-
-    /* result flags */
-    *flags = 0;
-    if (case_sens)
-        *flags |= SELECT_MATCH_CASE;
-    if (files_only)
-        *flags |= SELECT_FILES_ONLY;
-    if (shell_patterns)
-        *flags |= SELECT_SHELL_PATTERNS;
 
     return search;
 }
@@ -4735,6 +4751,34 @@ panel_set_filter (WPanel * panel, const file_filter_t * filter)
         panel->filter = *filter;
 
     reread_cmd ();
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+gboolean
+panel_set_filter_to (WPanel * panel, const char *value, select_flags_t flags)
+{
+    mc_search_t *handler;
+    gboolean ok;
+
+    handler =
+        panel_create_filter_handler (value, (flags & SELECT_SHELL_PATTERNS) != 0,
+                                     (flags & SELECT_MATCH_CASE) != 0);
+
+    ok = (handler != NULL);
+
+    if (ok)
+    {
+        g_free (panel->filter.value);
+        panel->filter.value = g_strdup (value);
+        mc_search_free (panel->filter.handler);
+        panel->filter.handler = handler;
+        panel->filter.flags = flags;
+
+        reread_cmd ();
+    }
+
+    return ok;
 }
 
 /* --------------------------------------------------------------------------------------------- */
