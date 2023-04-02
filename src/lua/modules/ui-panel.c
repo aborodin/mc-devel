@@ -112,24 +112,41 @@ static int l_panel_get_metrics (lua_State * L);
  * @property rw
  */
 
-static const char *const list_format_names[] = {
-    "full", "brief", "long", "custom", NULL
+/* *INDENT-OFF* */
+static const char *const list_format_names[] =
+{
+    "full",
+    "brief",
+    "long",
+    "custom",
+    NULL
 };
-
-static const list_format_t list_format_values[] = {
-    list_full, list_brief, list_long, list_user
-};
+/* *INDENT-ON* */
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_panel_static_lib[] = {
+static const list_format_t list_format_values[] =
+{
+    list_full,
+    list_brief,
+    list_long,
+    list_user
+};
+/* *INDENT-ON* */
+
+/* *INDENT-OFF* */
+static const struct luaL_Reg ui_panel_static_lib[] =
+{
     { "get_left", l_get_left },
     { "get_right", l_get_right },
     { "get_current", l_get_current },
     { "get_other", l_get_other },
     { NULL, NULL }
 };
+/* *INDENT-ON* */
 
-static const struct luaL_Reg ui_panel_lib[] = {
+/* *INDENT-OFF* */
+static const struct luaL_Reg ui_panel_lib[] =
+{
     { "get_dir", l_panel_get_dir },
     { "set_dir", l_panel_set_vdir },
     { "get_vdir", l_panel_get_vdir },
@@ -262,7 +279,7 @@ l_panel_set_vdir (lua_State * L)
      * So we refocus the current panel to trigger re-chdir() to the current
      * panel's dir.
      */
-    if (current_panel && current_panel != panel)
+    if (current_panel != NULL && current_panel != panel)
     {
         /* We can't just do `widget_select(current_panel)` becuse it's a no-op:
          * widget_select() (via widget_focus()) does nothing if the widget is
@@ -467,7 +484,7 @@ l_panel_get_filter (lua_State * L)
 
     panel = LUA_TO_PANEL (L, 1);
     /* TODO  */
-    lua_pushstring (L, panel->filter.value);            /* NULL-safe */
+    lua_pushstring (L, panel->filter.value);    /* NULL-safe */
     lua_pushinteger (L, panel->filter.flags);
     return 1;
 }
@@ -721,7 +738,7 @@ l_set_num_brief_cols (lua_State * L)
 
     panel->brief_cols = CLAMP (cols, 1, 9);     /* GLib macro. */
 
-    if (panel->list_format == list_brief) /* don't waste CPU cycles otherwise. */
+    if (panel->list_format == list_brief)       /* don't waste CPU cycles otherwise. */
         update_view (panel);
 
     return 0;
@@ -770,7 +787,6 @@ l_set_sort_field (lua_State * L)
 {
     WPanel *panel;
     const char *id;
-
     const panel_field_t *field;
 
     panel = LUA_TO_PANEL (L, 1);
@@ -778,9 +794,9 @@ l_set_sort_field (lua_State * L)
 
     field = panel_get_field_by_id (id);
 
-    if (!field)
+    if (field == NULL)
         luaL_error (L, _("Unknown field '%s'"), id);
-    if (!field->sort_routine)
+    if (field->sort_routine == NULL)
         luaL_error (L, _("Field '%s' isn't sortable"), id);
 
     panel_set_sort_order (panel, field);
@@ -925,8 +941,8 @@ l_panel_get_file_by_index (lua_State * L)
         /* How many values we pushed. Make sure to update this if you change the above. */
         return 6;
     }
-    else
-        return 0;
+
+    return 0;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -1072,7 +1088,9 @@ static int
 push_panel (lua_State * L, int panel_idx)
 {
     /* *INDENT-OFF* */
-    luaUI_push_widget (L, (get_panel_type (panel_idx) == view_listing ? get_panel_widget (panel_idx) : NULL), TRUE);
+    luaUI_push_widget (L, get_panel_type (panel_idx) == view_listing
+                          ? get_panel_widget (panel_idx) : NULL,
+                       TRUE);
     /* *INDENT-ON* */
     return 1;
 }
