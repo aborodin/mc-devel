@@ -1,3 +1,28 @@
+/*
+   Panel widget.
+
+   Copyright (C) 2015-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2015
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 /**
  * A panel widget is the central component in MC's display. It lists files.
  *
@@ -24,9 +49,125 @@
 #include "../modules.h"
 #include "fs.h"
 
+/*** global variables ****************************************************************************/
+
+/*** file scope macro definitions ****************************************************************/
 
 /* See comment for LUA_TO_BUTTON, in ui.c */
 #define LUA_TO_PANEL(L, i) (PANEL (luaUI_check_widget (L, i)))
+
+/*** file scope type declarations ****************************************************************/
+
+/*** forward declarations (file scope functions) *************************************************/
+
+static int l_get_left (lua_State * L);
+static int l_get_right (lua_State * L);
+static int l_get_current (lua_State * L);
+static int l_get_other (lua_State * L);
+
+static int l_panel_get_dir (lua_State * L);
+static int l_panel_get_vdir (lua_State * L);
+static int l_panel_set_vdir (lua_State * L);
+static int l_panel_set_filter (lua_State * L);
+static int l_panel_get_filter (lua_State * L);
+static int l_panel_set_panelized (lua_State * L);
+static int l_panel_get_panelized (lua_State * L);
+static int l_panel_panelize_by_command (lua_State * L);
+static int l_panel_reload (lua_State * L);
+static int l_set_list_format (lua_State * L);
+static int l_get_list_format (lua_State * L);
+static int l_get_custom_format (lua_State * L);
+static int l_set_custom_format (lua_State * L);
+static int l_get_custom_mini_status (lua_State * L);
+static int l_set_custom_mini_status (lua_State * L);
+static int l_get_custom_mini_status_format (lua_State * L);
+static int l_set_custom_mini_status_format (lua_State * L);
+static int l_get_num_brief_cols (lua_State * L);
+static int l_set_num_brief_cols (lua_State * L);
+static int l_set_sort_field (lua_State * L);
+static int l_get_sort_field (lua_State * L);
+static int l_get_sort_reverse (lua_State * L);
+static int l_set_sort_reverse (lua_State * L);
+static int l_panel_get_current_index (lua_State * L);
+static int l_panel_set_current_index (lua_State * L);
+static int l_panel_get_file_by_index (lua_State * L);
+static int l_panel_mark_file_by_index (lua_State * L);
+static int l_panel_get_max_index (lua_State * L);
+static int l_panel_remove (lua_State * L);
+static int l_panel_get_metrics (lua_State * L);
+
+/*** file scope variables ************************************************************************/
+
+/**
+ * The list type.
+ *
+ * How files are listed. It is one of "full", "brief", "long", or "custom".
+ * For "custom", the format is specified with @{custom_format}.
+ *
+ * Info: "custom" is entitled "User defined" in MC's interface. In our API we
+ * use the word "custom", rather than "user", because the latter's meaning
+ * isn't clear when embedded in names of other properties.
+ *
+ * @attr list_format
+ * @property rw
+ */
+
+static const char *const list_format_names[] = {
+    "full", "brief", "long", "custom", NULL
+};
+
+static const list_format_t list_format_values[] = {
+    list_full, list_brief, list_long, list_user
+};
+
+/* *INDENT-OFF* */
+static const struct luaL_Reg ui_panel_static_lib[] = {
+    { "get_left", l_get_left },
+    { "get_right", l_get_right },
+    { "get_current", l_get_current },
+    { "get_other", l_get_other },
+    { NULL, NULL }
+};
+
+static const struct luaL_Reg ui_panel_lib[] = {
+    { "get_dir", l_panel_get_dir },
+    { "set_dir", l_panel_set_vdir },
+    { "get_vdir", l_panel_get_vdir },
+    { "set_vdir", l_panel_set_vdir },
+    { "set_filter", l_panel_set_filter },
+    { "get_filter", l_panel_get_filter },
+    { "set_panelized", l_panel_set_panelized },
+    { "get_panelized", l_panel_get_panelized },
+    { "panelize_by_command", l_panel_panelize_by_command },
+    { "reload", l_panel_reload },
+    { "set_list_format", l_set_list_format },
+    { "get_list_format", l_get_list_format },
+    { "get_custom_format", l_get_custom_format },
+    { "set_custom_format", l_set_custom_format },
+    { "get_custom_mini_status", l_get_custom_mini_status },
+    { "set_custom_mini_status", l_set_custom_mini_status },
+    { "get_custom_mini_status_format", l_get_custom_mini_status_format },
+    { "set_custom_mini_status_format", l_set_custom_mini_status_format },
+    { "get_num_brief_cols", l_get_num_brief_cols },
+    { "set_num_brief_cols", l_set_num_brief_cols },
+    { "set_sort_field", l_set_sort_field },
+    { "get_sort_field", l_get_sort_field },
+    { "get_sort_reverse", l_get_sort_reverse },
+    { "set_sort_reverse", l_set_sort_reverse },
+    { "_get_current_index", l_panel_get_current_index },
+    { "_set_current_index", l_panel_set_current_index },
+    { "_get_file_by_index", l_panel_get_file_by_index },
+    { "_mark_file_by_index", l_panel_mark_file_by_index },
+    { "_get_max_index", l_panel_get_max_index },
+    { "_remove", l_panel_remove },
+    { "_get_metrics", l_panel_get_metrics },
+    { NULL, NULL }
+};
+/* *INDENT-ON* */
+
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 /* Our own flavor of filemanager.c:update_dirty_panels(). */
 static void
@@ -35,6 +176,8 @@ redraw_dirty_panel (WPanel * panel)
     if (panel->dirty)
         widget_draw (WIDGET (panel));
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * General methods.
@@ -82,6 +225,8 @@ l_panel_get_dir (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * The panel's directory (as a @{~mod:fs.VPath|vpath}).
  *
@@ -94,6 +239,8 @@ l_panel_get_vdir (lua_State * L)
     luaFS_push_vpath (L, LUA_TO_PANEL (L, 1)->cwd_vpath);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 static int
 l_panel_set_vdir (lua_State * L)
@@ -126,6 +273,8 @@ l_panel_set_vdir (lua_State * L)
     redraw_dirty_panel (panel);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Reloads the panel.
@@ -165,6 +314,8 @@ l_panel_reload (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Whether the listing is "panelized".
  *
@@ -191,6 +342,8 @@ l_panel_get_panelized (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static int
 l_panel_set_panelized (lua_State * L)
 {
@@ -208,6 +361,8 @@ l_panel_set_panelized (lua_State * L)
 
     return 0;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Populates the panel with the output of a shell command.
@@ -266,6 +421,8 @@ l_panel_panelize_by_command (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * The filter.
  *
@@ -301,6 +458,8 @@ l_panel_set_filter (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static int
 l_panel_get_filter (lua_State * L)
 {
@@ -317,6 +476,8 @@ l_panel_get_filter (lua_State * L)
  * @section end
  */
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Marking and unmarking files
  *
@@ -331,6 +492,8 @@ l_panel_get_filter (lua_State * L)
 
 */
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * The view.
  * @section panel-view
@@ -344,6 +507,8 @@ update_view (WPanel * panel)
     set_panel_formats (panel);
     widget_draw (WIDGET (panel));       /* configure_panel_listing() does do_refresh(), which is an overkill. */
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Whether to show a custom format for the mini status.
@@ -360,6 +525,8 @@ l_get_custom_mini_status (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static int
 l_set_custom_mini_status (lua_State * L)
 {
@@ -375,6 +542,8 @@ l_set_custom_mini_status (lua_State * L)
     update_view (panel);
     return 0;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Custom format for the mini status.
@@ -404,6 +573,8 @@ l_get_custom_mini_status_format (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static int
 l_set_custom_mini_status_format (lua_State * L)
 {
@@ -421,27 +592,11 @@ l_set_custom_mini_status_format (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * The list type.
- *
- * How files are listed. It is one of "full", "brief", "long", or "custom".
- * For "custom", the format is specified with @{custom_format}.
- *
- * Info: "custom" is entitled "User defined" in MC's interface. In our API we
- * use the word "custom", rather than "user", because the latter's meaning
- * isn't clear when embedded in names of other properties.
- *
- * @attr list_format
- * @property rw
  */
-
-static const char *const list_format_names[] = {
-    "full", "brief", "long", "custom", NULL
-};
-
-static const list_format_t list_format_values[] = {
-    list_full, list_brief, list_long, list_user
-};
 
 static int
 l_set_list_format (lua_State * L)
@@ -459,6 +614,8 @@ l_set_list_format (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static int
 l_get_list_format (lua_State * L)
 {
@@ -466,6 +623,8 @@ l_get_list_format (lua_State * L)
                        list_format_values);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Custom format for the listing.
@@ -513,12 +672,16 @@ l_set_custom_format (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static int
 l_get_custom_format (lua_State * L)
 {
     lua_pushstring (L, LUA_TO_PANEL (L, 1)->user_format);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Number of columns for the "brief" @{list_format|list type}.
@@ -564,12 +727,16 @@ l_set_num_brief_cols (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static int
 l_get_num_brief_cols (lua_State * L)
 {
     lua_pushinteger (L, LUA_TO_PANEL (L, 1)->brief_cols);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * The field by which to sort.
@@ -596,6 +763,8 @@ l_get_sort_field (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static int
 l_set_sort_field (lua_State * L)
 {
@@ -620,6 +789,8 @@ l_set_sort_field (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Whether to reverse the sort.
  *
@@ -636,6 +807,8 @@ l_get_sort_reverse (lua_State * L)
     lua_pushboolean (L, LUA_TO_PANEL (L, 1)->sort_info.reverse);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 static int
 l_set_sort_reverse (lua_State * L)
@@ -656,6 +829,8 @@ l_set_sort_reverse (lua_State * L)
 /**
  * @section end
  */
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Low-level methods.
@@ -686,6 +861,8 @@ l_panel_get_current_index (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Sets the the current ("selected") file, by index.
  *
@@ -707,6 +884,8 @@ l_panel_set_current_index (lua_State * L)
     redraw_dirty_panel (panel);
     return 0;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Gets meta information about a file.
@@ -750,6 +929,8 @@ l_panel_get_file_by_index (lua_State * L)
         return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Gets the number of files in the panel.
  *
@@ -761,6 +942,8 @@ l_panel_get_max_index (lua_State * L)
     lua_pushinteger (L, LUA_TO_PANEL (L, 1)->dir.len);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Changes the mark status of a file.
@@ -788,6 +971,8 @@ l_panel_mark_file_by_index (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /*
  * Removes an entry from the panel. Used by l_panel_remove().
  */
@@ -810,6 +995,8 @@ panel_remove_entry (WPanel * panel, int i)
     if (panel->current > i || panel->current == panel->dir.len)
         panel->current--;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Removes a file.
@@ -837,6 +1024,8 @@ l_panel_remove (lua_State * L)
 
     return 0;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Returns various measurements.
@@ -868,6 +1057,8 @@ l_panel_get_metrics (lua_State * L)
  * @section end
  */
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Static panel functions.
  *
@@ -886,6 +1077,8 @@ push_panel (lua_State * L, int panel_idx)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * The left panel.
  *
@@ -898,6 +1091,8 @@ l_get_left (lua_State * L)
     return push_panel (L, 0);
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * The right panel.
  *
@@ -909,6 +1104,8 @@ l_get_right (lua_State * L)
 {
     return push_panel (L, 1);
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * The "current" panel.
@@ -948,6 +1145,8 @@ l_get_current (lua_State * L)
     return push_panel (L, get_current_index ());
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * The "other" panel.
  *
@@ -970,6 +1169,8 @@ l_get_other (lua_State * L)
 /**
  * @section end
  */
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Events
@@ -994,6 +1195,8 @@ l_get_other (lua_State * L)
  * @moniker draw
  * @event
  */
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Triggered after a directory has been read into the panel.
@@ -1035,6 +1238,8 @@ l_get_other (lua_State * L)
  * @event
  */
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Triggered when the user reloads (`C-r`) the panel.
  *
@@ -1051,6 +1256,8 @@ l_get_other (lua_State * L)
  * @event
  */
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Triggered when a panel becomes the @{ui.Panel.current|current} one.
  * (E.g., as a result of tabbing to it.)
@@ -1066,6 +1273,8 @@ l_get_other (lua_State * L)
  * @moniker activate
  * @event
  */
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Triggered when a file is selected in the panel.
@@ -1092,6 +1301,8 @@ l_get_other (lua_State * L)
  * @event
  */
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Triggered after a panel has been panelized.
  *
@@ -1108,6 +1319,8 @@ l_get_other (lua_State * L)
  * @moniker panelize
  * @event
  */
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Triggered before the directory is changed.
@@ -1141,50 +1354,9 @@ l_get_other (lua_State * L)
  * @section end
  */
 
-/* *INDENT-OFF* */
-static const struct luaL_Reg ui_panel_static_lib[] = {
-    { "get_left", l_get_left },
-    { "get_right", l_get_right },
-    { "get_current", l_get_current },
-    { "get_other", l_get_other },
-    { NULL, NULL }
-};
-
-static const struct luaL_Reg ui_panel_lib[] = {
-    { "get_dir", l_panel_get_dir },
-    { "set_dir", l_panel_set_vdir },
-    { "get_vdir", l_panel_get_vdir },
-    { "set_vdir", l_panel_set_vdir },
-    { "set_filter", l_panel_set_filter },
-    { "get_filter", l_panel_get_filter },
-    { "set_panelized", l_panel_set_panelized },
-    { "get_panelized", l_panel_get_panelized },
-    { "panelize_by_command", l_panel_panelize_by_command },
-    { "reload", l_panel_reload },
-    { "set_list_format", l_set_list_format },
-    { "get_list_format", l_get_list_format },
-    { "get_custom_format", l_get_custom_format },
-    { "set_custom_format", l_set_custom_format },
-    { "get_custom_mini_status", l_get_custom_mini_status },
-    { "set_custom_mini_status", l_set_custom_mini_status },
-    { "get_custom_mini_status_format", l_get_custom_mini_status_format },
-    { "set_custom_mini_status_format", l_set_custom_mini_status_format },
-    { "get_num_brief_cols", l_get_num_brief_cols },
-    { "set_num_brief_cols", l_set_num_brief_cols },
-    { "set_sort_field", l_set_sort_field },
-    { "get_sort_field", l_get_sort_field },
-    { "get_sort_reverse", l_get_sort_reverse },
-    { "set_sort_reverse", l_set_sort_reverse },
-    { "_get_current_index", l_panel_get_current_index },
-    { "_set_current_index", l_panel_set_current_index },
-    { "_get_file_by_index", l_panel_get_file_by_index },
-    { "_mark_file_by_index", l_panel_mark_file_by_index },
-    { "_get_max_index", l_panel_get_max_index },
-    { "_remove", l_panel_remove },
-    { "_get_metrics", l_panel_get_metrics },
-    { NULL, NULL }
-};
-/* *INDENT-ON* */
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 int
 luaopen_ui_panel (lua_State * L)
@@ -1192,3 +1364,5 @@ luaopen_ui_panel (lua_State * L)
     create_widget_metatable (L, "Panel", ui_panel_lib, ui_panel_static_lib, "Widget");
     return 0;                   /* Nothing to return! */
 }
+
+/* --------------------------------------------------------------------------------------------- */
