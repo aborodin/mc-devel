@@ -1277,10 +1277,17 @@ l_edit_set_syntax (lua_State * L)
 static int
 l_edit_add_keyword (lua_State * L)
 {
+    /* *INDENT-OFF* */
     static const char *const range_names[] =
-        { "default", "all", "spellcheck", "!spellcheck", NULL };
+    {
+        "default", "all", "spellcheck", "!spellcheck", NULL
+    };
+
     static int range_values[] =
-        { RANGE_TYPE_DEFAULT, RANGE_TYPE_ANY, RANGE_TYPE_SPELLCHECK, RANGE_TYPE_NOT_SPELLCHECK };
+    {
+        RANGE_TYPE_DEFAULT, RANGE_TYPE_ANY, RANGE_TYPE_SPELLCHECK, RANGE_TYPE_NOT_SPELLCHECK
+    };
+    /* *INDENT-ON* */
 
     WEdit *edit;
     int range;
