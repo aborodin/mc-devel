@@ -1,3 +1,28 @@
+/*
+   Fields are the columns shown in the filemanager's panels.
+
+   Copyright (C) 2015-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2015
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 /**
  * Fields are the columns shown in the filemanager's panels.
  *
@@ -23,40 +48,35 @@
 
 #include "fields.h"
 
+/*** global variables ****************************************************************************/
+
+/*** file scope macro definitions ****************************************************************/
+
+/*** file scope type declarations ****************************************************************/
+
+/*** forward declarations (file scope functions) *************************************************/
+
+static int l_register_field (lua_State * L);
 
 static void invalidate_info_table (lua_State * L);
 
-/**
+/*** file scope variables ************************************************************************/
 
-To be able to render and sort fields, we register two callback functions
-with MC (see render_multiplex and sort_multiplex).
-
-However, when MC calls our functions it passes them the file entries
-only. It doesn't pass them the field ID, which we need in order to
-channel the call to the correct Lua callback.
-
-To fix this problem we keep a track of which is the "current
-field". We also want to know which is the "current panel" because the Lua
-programmer might want to pull information out of this object (e.g., the
-file's directory).
-
-This tracking task is carried out by mc_lua_set_current_field(). We have to
-call this function whenever the current field changes.
-
-*/
+/* *INDENT-OFF* */
+static const struct luaL_Reg fields_lib[] = {
+    { "_register_field", l_register_field },
+    { NULL, NULL }
+};
+/* *INDENT-ON* */
 
 /* *INDENT-OFF* */
 static const char *current_field_id;
 static WPanel     *current_field_panel;
 /* *INDENT-ON* */
 
-void
-mc_lua_set_current_field (WPanel * panel, const char *field_id)
-{
-    current_field_panel = panel;
-    current_field_id = field_id;        /* @todo: is it possible for it to be g_free()'ed while we're holding it? and in the future? */
-    invalidate_info_table (Lg);
-}
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 /**
 
@@ -96,6 +116,7 @@ We call it in format_file because of the rendering.
 
 */
 
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * The "info" table is basket of goodies we pass to the Lua "render" and
@@ -119,12 +140,16 @@ push_info_table (lua_State * L)
     }
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static void
 invalidate_info_table (lua_State * L)
 {
     lua_pushnil (L);
     lua_setfield (L, LUA_REGISTRYINDEX, "fields.info");
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
 
@@ -183,6 +208,8 @@ render_multiplex (file_entry_t * fe, int len)
         return _("NO CALLBACK");
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static int
 sort_multiplex (file_entry_t * a, file_entry_t * b)
 {
@@ -212,6 +239,8 @@ sort_multiplex (file_entry_t * a, file_entry_t * b)
 
     return 0;                   /* failed. */
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * This is exposed to lua as fields._register_field() and is wrapped by the
@@ -285,14 +314,9 @@ l_register_field (lua_State * L)
     return 0;
 }
 
-/* ------------------------------------------------------------------------ */
-
-/* *INDENT-OFF* */
-static const struct luaL_Reg fields_lib[] = {
-    { "_register_field", l_register_field },
-    { NULL, NULL }
-};
-/* *INDENT-ON* */
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 int
 luaopen_fields (lua_State * L)
@@ -302,3 +326,34 @@ luaopen_fields (lua_State * L)
     luaL_newlib (L, fields_lib);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
+
+/**
+
+To be able to render and sort fields, we register two callback functions
+with MC (see render_multiplex and sort_multiplex).
+
+However, when MC calls our functions it passes them the file entries
+only. It doesn't pass them the field ID, which we need in order to
+channel the call to the correct Lua callback.
+
+To fix this problem we keep a track of which is the "current
+field". We also want to know which is the "current panel" because the Lua
+programmer might want to pull information out of this object (e.g., the
+file's directory).
+
+This tracking task is carried out by mc_lua_set_current_field(). We have to
+call this function whenever the current field changes.
+
+*/
+
+void
+mc_lua_set_current_field (WPanel * panel, const char *field_id)
+{
+    current_field_panel = panel;
+    current_field_id = field_id;        /* @todo: is it possible for it to be g_free()'ed while we're holding it? and in the future? */
+    invalidate_info_table (Lg);
+}
+
+/* --------------------------------------------------------------------------------------------- */
