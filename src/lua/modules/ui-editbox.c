@@ -100,15 +100,19 @@ static int l_edit_is_utf8 (lua_State * L);
 /*** file scope variables ************************************************************************/
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_edit_static_lib[] = {
+static const struct luaL_Reg ui_edit_static_lib[] =
+{
     { "_new", l_edit_new },
     { "get_syntax_list", l_edit_get_syntax_list },
     { "set_option", l_edit_set_option },
     { "get_option", l_edit_get_option },
     { NULL, NULL }
 };
+/* *INDENT-ON* */
 
-static const struct luaL_Reg ui_edit_lib[] = {
+/* *INDENT-OFF* */
+static const struct luaL_Reg ui_edit_lib[] =
+{
     { "insert", l_edit_insert },
     { "delete", l_edit_delete },
     { "get_line", l_edit_get_line },
@@ -152,7 +156,7 @@ static const struct luaL_Reg ui_edit_lib[] = {
 static void
 edit_update_view (WEdit * e)
 {
-    if (WIDGET (e)->owner)      /* perchance we haven't been added to a dialog yet. */
+    if (WIDGET (e)->owner != NULL)      /* perchance we haven't been added to a dialog yet. */
         edit_update_screen (e);
 }
 
@@ -162,7 +166,7 @@ static Widget *
 edit_constructor (void)
 {
     Widget *w;
-    const WRect r = {1, 1, 5, 20};
+    const WRect r = { 1, 1, 5, 20 };
 
     w = WIDGET (edit_init (NULL, &r, NULL, 1));
     /* FIXME: edit_init() itself should do the following. See comment
@@ -208,7 +212,6 @@ l_edit_insert (lua_State * L)
 {
     WEdit *edit;
     const char *text;
-
     size_t len, i;
 
     edit = LUA_TO_EDITBOX (L, 1);
@@ -269,14 +272,11 @@ l_edit_delete (lua_State * L)
     count = luaL_checki (L, 2);
     backwards = lua_toboolean (L, 3);
 
-    while (count > 0)
-    {
+    for (; count > 0; count--)
         if (backwards)
             edit_backspace (edit, TRUE);
         else
             edit_delete (edit, TRUE);
-        --count;
-    }
 
     edit_update_view (edit);
 
@@ -300,7 +300,6 @@ l_edit_load (lua_State * L)
     WEdit *edit;
     const vfs_path_t *vpath;
     long line;
-
     gboolean success;
 
     edit = LUA_TO_EDITBOX (L, 1);
@@ -346,7 +345,9 @@ l_edit_load (lua_State * L)
 static void
 luaUI_editbox_pushstring (lua_State * L, WEdit * edit, off_t start, off_t finish)
 {
-    if (finish > start)
+    if (finish <= start)
+        lua_pushliteral (L, "");
+    else
     {
         off_t len, i;
         unsigned char *s;
@@ -360,10 +361,6 @@ luaUI_editbox_pushstring (lua_State * L, WEdit * edit, off_t start, off_t finish
 
         lua_pushlstring (L, (char *) s, len);
         g_free (s);
-    }
-    else
-    {
-        lua_pushliteral (L, "");
     }
 }
 
@@ -395,7 +392,6 @@ l_edit_get_line (lua_State * L)
     WEdit *edit;
     long line_no;
     gboolean keep_eol;
-
     off_t start, finish;
 
     edit = LUA_TO_EDITBOX (L, 1);
@@ -437,8 +433,7 @@ static int
 l_edit_sub (lua_State * L)
 {
     WEdit *edit;
-    off_t start;
-    off_t finish;
+    off_t start, finish;
 
     edit = LUA_TO_EDITBOX (L, 1);
     start = luaL_checki (L, 2);
@@ -471,11 +466,9 @@ static int
 l_edit_get_current_char (lua_State * L)
 {
     WEdit *edit;
-
     off_t start;
 
     edit = LUA_TO_EDITBOX (L, 1);
-
     start = edit->buffer.curs1;
 
 #ifdef HAVE_CHARSET
@@ -678,21 +671,18 @@ static int
 l_edit_get_markers (lua_State * L)
 {
     WEdit *edit;
-
     off_t start_mark, end_mark;
 
     edit = LUA_TO_EDITBOX (L, 1);
 
-    if (eval_marks (edit, &start_mark, &end_mark) && (start_mark != end_mark))
+    if (eval_marks (edit, &start_mark, &end_mark) && start_mark != end_mark)
     {
         lua_pushi (L, start_mark + 1);
         lua_pushi (L, end_mark);
         return 2;
     }
-    else
-    {
-        return 0;
-    }
+
+    return 0;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -980,13 +970,18 @@ l_edit_get_cursor_line (lua_State * L)
 static int
 l_edit_set_cursor_line (lua_State * L)
 {
-    static const char *const scroll_names[] = {
+    /* *INDENT-OFF* */
+    static const char *const scroll_names[] =
+    {
         /* In the future we may want to add "top" & "bottom", and rename "nocenter" to "keep". */
         "center", "nocenter", NULL
     };
-    static gboolean scroll_values[] = {
+
+    static gboolean scroll_values[] =
+    {
         TRUE, FALSE
     };
+    /* *INDENT-ON* */
 
     WEdit *edit;
     long line;
@@ -1162,9 +1157,7 @@ static int
 l_edit_set_cursor_col (lua_State * L)
 {
     WEdit *edit;
-    off_t new_col;
-
-    off_t new_offs;
+    off_t new_col, new_offs;
 
     edit = LUA_TO_EDITBOX (L, 1);
     new_col = luaL_checki (L, 2) - 1;
@@ -1238,8 +1231,8 @@ l_edit_get_syntax (lua_State * L)
         lua_pushstring (L, edit->syntax_type);
         return 1;
     }
-    else
-        return 0;
+
+    return 0;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -1253,7 +1246,7 @@ l_edit_set_syntax (lua_State * L)
     edit = LUA_TO_EDITBOX (L, 1);
     syntax_type = luaL_optstring (L, 2, UNKNOWN_FORMAT);
 
-    if (!edit->filename_vpath)
+    if (edit->filename_vpath == NULL)
     {
         /* @FIXME: edit_load_syntax() exits if there's no filename_vpath. */
         return luaL_error (L,
@@ -1261,13 +1254,11 @@ l_edit_set_syntax (lua_State * L)
                            ("Midnight Commander bug: you cannot set a syntax for an edit buffer which doesn't have an associated filename."));
     }
 
-    {
-        /* The following was copied from edit_syntax_dialog(). @FIXME: factor out. */
-        auto_syntax = 0;
-        g_free (edit->syntax_type);
-        edit->syntax_type = g_strdup (syntax_type);
-        edit_load_syntax (edit, NULL, edit->syntax_type);
-    }
+    /* The following was copied from edit_syntax_dialog(). @FIXME: factor out. */
+    auto_syntax = 0;
+    g_free (edit->syntax_type);
+    edit->syntax_type = g_strdup (syntax_type);
+    edit_load_syntax (edit, NULL, edit->syntax_type);
 
     edit->force |= REDRAW_COMPLETELY;
     edit_update_view (edit);
@@ -1356,7 +1347,7 @@ l_edit_is_utf8 (lua_State * L)
 static void
 redraw_editors (void)
 {
-    if (top_dlg)
+    if (top_dlg != NULL)
     {
         /* @FIXME: An extremely dumb way to redraw the editor(s).
          * src/editor.c should export this functionality. */
@@ -1376,7 +1367,9 @@ redraw_editors (void)
 static int
 l_edit_set_option (lua_State * L)
 {
-    const char *option = luaL_checkstring (L, 1);
+    const char *option;
+
+    option = luaL_checkstring (L, 1);
 
     if (STREQ (option, "tab_size"))     /* UI name: "Tab spacing" */
     {
@@ -1418,13 +1411,9 @@ l_edit_set_option (lua_State * L)
         redraw_editors ();
     }
     else if (STREQ (option, "save_position"))
-    {
         edit_options.save_position = lua_toboolean (L, 2);
-    }
     else
-    {
         luaL_error (L, E_ ("Unknown option name '%s'"), option);
-    }
 
     return 0;
 }
@@ -1434,7 +1423,9 @@ l_edit_set_option (lua_State * L)
 static int
 l_edit_get_option (lua_State * L)
 {
-    const char *option = luaL_checkstring (L, 1);
+    const char *option;
+
+    option = luaL_checkstring (L, 1);
 
     if (STREQ (option, "tab_size"))
         lua_pushinteger (L, option_tab_spacing);
@@ -1489,20 +1480,21 @@ l_edit_get_syntax_list (lua_State * L)
     GPtrArray *names;
     size_t i;
 
-    names = g_ptr_array_new ();
+    names = g_ptr_array_new_with_free_func (g_free);
     edit_load_syntax (NULL, names, NULL);       /* @FIXME: make that function itself call g_ptr_array_sort(), instead of all its callers doing it? */
 
     lua_newtable (L);
 
     for (i = 0; i < names->len; i++)
     {
-        const char *name = g_ptr_array_index (names, i);
+        const char *name;
+
+        name = g_ptr_array_index (names, i);
 
         lua_pushstring (L, name);
         lua_rawseti (L, -2, i + 1);
     }
 
-    g_ptr_array_foreach (names, (GFunc) g_free, NULL);
     g_ptr_array_free (names, TRUE);
 
     return 1;
@@ -1572,4 +1564,5 @@ luaopen_ui_editbox (lua_State * L)
     create_widget_metatable (L, "Editbox", ui_edit_lib, ui_edit_static_lib, "Widget");
     return 0;                   /* Nothing to return! */
 }
+
 /* --------------------------------------------------------------------------------------------- */
