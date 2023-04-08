@@ -1,3 +1,28 @@
+/*
+   Editbox.
+
+   Copyright (C) 2016-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2016
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 /**
  * An editbox is a multi-line input widget. It is the widget you interact
  * with when you use MC's editor, but you may also @{~mod:ui*Editbox|embed}
@@ -21,11 +46,108 @@
 #include "../modules.h"
 #include "fs.h"                 /* luaFS_check_vpath() */
 
+/*** global variables ****************************************************************************/
+
+/*** file scope macro definitions ****************************************************************/
 
 #define UNKNOWN_FORMAT "unknown"        /* copied from "src/editor/syntax.c" (where it's not actually used) */
 
 /* See comment for LUA_TO_BUTTON, in ui.c */
 #define LUA_TO_EDITBOX(L, i) ((WEdit *) luaUI_check_widget (L, i))
+
+/*** file scope type declarations ****************************************************************/
+
+/*** forward declarations (file scope functions) *************************************************/
+
+static int l_edit_new (lua_State * L);
+static int l_edit_get_syntax_list (lua_State * L);
+static int l_edit_set_option (lua_State * L);
+static int l_edit_get_option (lua_State * L);
+
+static int l_edit_insert (lua_State * L);
+static int l_edit_delete (lua_State * L);
+static int l_edit_get_line (lua_State * L);
+static int l_edit_get_cursor_line (lua_State * L);
+static int l_edit_set_cursor_line (lua_State * L);
+static int l_edit_get_cursor_offs (lua_State * L);
+static int l_edit_set_cursor_offs (lua_State * L);
+static int l_edit_get_cursor_xoffs (lua_State * L);
+static int l_edit_set_cursor_xoffs (lua_State * L);
+static int l_edit_get_cursor_col (lua_State * L);
+static int l_edit_set_cursor_col (lua_State * L);
+static int l_edit_get_current_char (lua_State * L);
+static int l_edit_sub (lua_State * L);
+static int l_edit_len (lua_State * L);
+static int l_edit_get_syntax (lua_State * L);
+static int l_edit_set_syntax (lua_State * L);
+static int l_edit_bookmark_set (lua_State * L);
+static int l_edit_bookmark_clear (lua_State * L);
+static int l_edit_bookmark_exists (lua_State * L);
+static int l_edit_bookmark_flush (lua_State * L);
+static int l_edit_get_filename (lua_State * L);
+static int l_edit_get_modified (lua_State * L);
+static int l_edit_set_modified (lua_State * L);
+static int l_edit_get_max_line (lua_State * L);
+static int l_edit_get_top_line (lua_State * L);
+static int l_edit_set_top_line (lua_State * L);
+static int l_edit_get_markers (lua_State * L);
+static int l_edit_get_fullscreen (lua_State * L);
+static int l_edit_set_fullscreen (lua_State * L);
+static int l_edit_load (lua_State * L);
+static int l_edit_to_tty (lua_State * L);
+static int l_edit_is_utf8 (lua_State * L);
+
+/*** file scope variables ************************************************************************/
+
+/* *INDENT-OFF* */
+static const struct luaL_Reg ui_edit_static_lib[] = {
+    { "_new", l_edit_new },
+    { "get_syntax_list", l_edit_get_syntax_list },
+    { "set_option", l_edit_set_option },
+    { "get_option", l_edit_get_option },
+    { NULL, NULL }
+};
+
+static const struct luaL_Reg ui_edit_lib[] = {
+    { "insert", l_edit_insert },
+    { "delete", l_edit_delete },
+    { "get_line", l_edit_get_line },
+    { "get_cursor_line", l_edit_get_cursor_line },
+    { "set_cursor_line", l_edit_set_cursor_line },
+    { "get_cursor_offs", l_edit_get_cursor_offs },
+    { "set_cursor_offs", l_edit_set_cursor_offs },
+    { "get_cursor_xoffs", l_edit_get_cursor_xoffs },
+    { "set_cursor_xoffs", l_edit_set_cursor_xoffs },
+    { "get_cursor_col", l_edit_get_cursor_col },
+    { "set_cursor_col", l_edit_set_cursor_col },
+    { "get_current_char", l_edit_get_current_char },
+    { "sub", l_edit_sub },
+    { "len", l_edit_len },
+    { "get_syntax", l_edit_get_syntax },
+    { "set_syntax", l_edit_set_syntax },
+    { "bookmark_set", l_edit_bookmark_set },
+    { "bookmark_clear", l_edit_bookmark_clear },
+    { "bookmark_exists", l_edit_bookmark_exists },
+    { "bookmark_flush", l_edit_bookmark_flush },
+    { "get_filename", l_edit_get_filename },
+    { "get_modified", l_edit_get_modified },
+    { "set_modified", l_edit_set_modified },
+    { "get_max_line", l_edit_get_max_line },
+    { "get_top_line", l_edit_get_top_line },
+    { "set_top_line", l_edit_set_top_line },
+    { "get_markers", l_edit_get_markers },
+    { "get_fullscreen", l_edit_get_fullscreen },
+    { "set_fullscreen", l_edit_set_fullscreen },
+    { "load", l_edit_load },
+    { "to_tty", l_edit_to_tty },
+    { "is_utf8", l_edit_is_utf8 },
+    { NULL, NULL }
+};
+/* *INDENT-ON* */
+
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 static void
 edit_update_view (WEdit * e)
@@ -33,6 +155,8 @@ edit_update_view (WEdit * e)
     if (WIDGET (e)->owner)      /* perchance we haven't been added to a dialog yet. */
         edit_update_screen (e);
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 static Widget *
 edit_constructor (void)
@@ -49,12 +173,16 @@ edit_constructor (void)
     return w;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static int
 l_edit_new (lua_State * L)
 {
     luaUI_push_widget (L, edit_constructor (), FALSE);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Modifying
@@ -93,6 +221,8 @@ l_edit_insert (lua_State * L)
 
     return 0;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Deletes text at the cursor location.
@@ -153,6 +283,8 @@ l_edit_delete (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Loads a file into the buffer.
  *
@@ -200,6 +332,8 @@ l_edit_load (lua_State * L)
  * @section end
  */
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Reading
  *
@@ -232,6 +366,8 @@ luaUI_editbox_pushstring (lua_State * L, WEdit * edit, off_t start, off_t finish
         lua_pushliteral (L, "");
     }
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Fetches a line.
@@ -283,6 +419,8 @@ l_edit_get_line (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Extracts a substring.
  *
@@ -314,6 +452,8 @@ l_edit_sub (lua_State * L)
 
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * The character on which the cursor stands.
@@ -368,6 +508,8 @@ l_edit_get_current_char (lua_State * L)
  * @section end
  */
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Meta
  *
@@ -391,6 +533,8 @@ l_edit_len (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * The filename associated with the buffer.
  *
@@ -410,6 +554,8 @@ l_edit_get_filename (lua_State * L)
     lua_pushstring (L, vfs_path_as_str (edit->filename_vpath)); /* pushes nil if NULL */
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Whether the buffer has been modified.
@@ -438,6 +584,8 @@ l_edit_get_modified (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static int
 l_edit_set_modified (lua_State * L)
 {
@@ -452,6 +600,8 @@ l_edit_set_modified (lua_State * L)
 
     return 0;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * The number of lines in the buffer.
@@ -469,6 +619,8 @@ l_edit_get_max_line (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * The number of the first line displayed.
  *
@@ -481,6 +633,8 @@ l_edit_get_top_line (lua_State * L)
     lua_pushi (L, LUA_TO_EDITBOX (L, 1)->start_line + 1);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 static int
 l_edit_set_top_line (lua_State * L)
@@ -496,6 +650,8 @@ l_edit_set_top_line (lua_State * L)
 
     return 0;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Returns the extents of the selected text.
@@ -538,6 +694,8 @@ l_edit_get_markers (lua_State * L)
         return 0;
     }
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Whether the editbox is shown fullscreen.
@@ -595,6 +753,8 @@ l_edit_get_fullscreen (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static int
 l_edit_set_fullscreen (lua_State * L)
 {
@@ -613,6 +773,8 @@ l_edit_set_fullscreen (lua_State * L)
 /**
  * @section end
  */
+
+/* --------------------------------------------------------------------------------------------- */
 
 /* ----------------------------- Bookmarks -------------------------------- */
 
@@ -685,6 +847,8 @@ l_edit_bookmark_set (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Clears a bookmark.
  *
@@ -722,6 +886,8 @@ l_edit_bookmark_clear (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Queries for a bookmark.
  *
@@ -747,6 +913,8 @@ l_edit_bookmark_exists (lua_State * L)
                      : book_mark_query_color (edit, line, color));
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Clears all bookmarks.
@@ -777,7 +945,7 @@ l_edit_bookmark_flush (lua_State * L)
  * @section end
  */
 
-/* ------------------------------------------------------------------------ */
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Cursor
@@ -806,6 +974,8 @@ l_edit_get_cursor_line (lua_State * L)
     lua_pushi (L, LUA_TO_EDITBOX (L, 1)->buffer.curs_line + 1);
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 static int
 l_edit_set_cursor_line (lua_State * L)
@@ -837,6 +1007,8 @@ l_edit_set_cursor_line (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * The cursor's offset within the buffer.
  *
@@ -867,6 +1039,8 @@ l_edit_get_cursor_offs (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /*
  * Utility function: set the cursor position, and refresh the screen.
  */
@@ -884,12 +1058,16 @@ edit_set_cursor_offs (WEdit * edit, off_t offs)
     edit_update_view (edit);
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static int
 l_edit_set_cursor_offs (lua_State * L)
 {
     edit_set_cursor_offs (LUA_TO_EDITBOX (L, 1), luaL_checki (L, 2) - 1);
     return 0;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * The cursor's offset within the line.
@@ -913,6 +1091,8 @@ l_edit_get_cursor_xoffs (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static int
 l_edit_set_cursor_xoffs (lua_State * L)
 {
@@ -926,6 +1106,8 @@ l_edit_set_cursor_xoffs (lua_State * L)
 
     return 0;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * The cursor's column.
@@ -974,6 +1156,8 @@ l_edit_get_cursor_col (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static int
 l_edit_set_cursor_col (lua_State * L)
 {
@@ -1000,6 +1184,8 @@ l_edit_set_cursor_col (lua_State * L)
 /**
  * @section end
  */
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Syntax.
@@ -1056,6 +1242,8 @@ l_edit_get_syntax (lua_State * L)
         return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static int
 l_edit_set_syntax (lua_State * L)
 {
@@ -1090,6 +1278,8 @@ l_edit_set_syntax (lua_State * L)
 /**
  * @section end
  */
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * i18n
@@ -1130,6 +1320,8 @@ l_edit_to_tty (lua_State * L)
     return 1;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Whether the buffer is UTF-8 encoded.
  *
@@ -1153,6 +1345,8 @@ l_edit_is_utf8 (lua_State * L)
  * @section end
  */
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Static functions
  *
@@ -1170,6 +1364,8 @@ redraw_editors (void)
         edit_show_margin_cmd (DIALOG (top_dlg->data));
     }
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Set/get editor options.
@@ -1233,6 +1429,8 @@ l_edit_set_option (lua_State * L)
     return 0;
 }
 
+/* --------------------------------------------------------------------------------------------- */
+
 static int
 l_edit_get_option (lua_State * L)
 {
@@ -1265,6 +1463,8 @@ l_edit_get_option (lua_State * L)
 /**
  * @section end
  */
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Static functions (syntax)
@@ -1312,6 +1512,8 @@ l_edit_get_syntax_list (lua_State * L)
  * @section end
  */
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Events
  *
@@ -1347,6 +1549,8 @@ l_edit_get_syntax_list (lua_State * L)
  * @event
  */
 
+/* --------------------------------------------------------------------------------------------- */
+
 /**
  * Triggered when an editbox is closed.
  *
@@ -1358,53 +1562,9 @@ l_edit_get_syntax_list (lua_State * L)
  * @section end
  */
 
-/* ------------------------------------------------------------------------ */
-
-/* *INDENT-OFF* */
-static const struct luaL_Reg ui_edit_static_lib[] = {
-    { "_new", l_edit_new },
-    { "get_syntax_list", l_edit_get_syntax_list },
-    { "set_option", l_edit_set_option },
-    { "get_option", l_edit_get_option },
-    { NULL, NULL }
-};
-
-static const struct luaL_Reg ui_edit_lib[] = {
-    { "insert", l_edit_insert },
-    { "delete", l_edit_delete },
-    { "get_line", l_edit_get_line },
-    { "get_cursor_line", l_edit_get_cursor_line },
-    { "set_cursor_line", l_edit_set_cursor_line },
-    { "get_cursor_offs", l_edit_get_cursor_offs },
-    { "set_cursor_offs", l_edit_set_cursor_offs },
-    { "get_cursor_xoffs", l_edit_get_cursor_xoffs },
-    { "set_cursor_xoffs", l_edit_set_cursor_xoffs },
-    { "get_cursor_col", l_edit_get_cursor_col },
-    { "set_cursor_col", l_edit_set_cursor_col },
-    { "get_current_char", l_edit_get_current_char },
-    { "sub", l_edit_sub },
-    { "len", l_edit_len },
-    { "get_syntax", l_edit_get_syntax },
-    { "set_syntax", l_edit_set_syntax },
-    { "bookmark_set", l_edit_bookmark_set },
-    { "bookmark_clear", l_edit_bookmark_clear },
-    { "bookmark_exists", l_edit_bookmark_exists },
-    { "bookmark_flush", l_edit_bookmark_flush },
-    { "get_filename", l_edit_get_filename },
-    { "get_modified", l_edit_get_modified },
-    { "set_modified", l_edit_set_modified },
-    { "get_max_line", l_edit_get_max_line },
-    { "get_top_line", l_edit_get_top_line },
-    { "set_top_line", l_edit_set_top_line },
-    { "get_markers", l_edit_get_markers },
-    { "get_fullscreen", l_edit_get_fullscreen },
-    { "set_fullscreen", l_edit_set_fullscreen },
-    { "load", l_edit_load },
-    { "to_tty", l_edit_to_tty },
-    { "is_utf8", l_edit_is_utf8 },
-    { NULL, NULL }
-};
-/* *INDENT-ON* */
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 int
 luaopen_ui_editbox (lua_State * L)
@@ -1412,3 +1572,4 @@ luaopen_ui_editbox (lua_State * L)
     create_widget_metatable (L, "Editbox", ui_edit_lib, ui_edit_static_lib, "Widget");
     return 0;                   /* Nothing to return! */
 }
+/* --------------------------------------------------------------------------------------------- */
