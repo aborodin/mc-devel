@@ -63,16 +63,15 @@ static void invalidate_info_table (lua_State * L);
 /*** file scope variables ************************************************************************/
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg fields_lib[] = {
+static const struct luaL_Reg fields_lib[] =
+{
     { "_register_field", l_register_field },
     { NULL, NULL }
 };
 /* *INDENT-ON* */
 
-/* *INDENT-OFF* */
 static const char *current_field_id;
-static WPanel     *current_field_panel;
-/* *INDENT-ON* */
+static WPanel *current_field_panel;
 
 /* --------------------------------------------------------------------------------------------- */
 /*** file scope functions ************************************************************************/
@@ -130,9 +129,9 @@ push_info_table (lua_State * L)
 {
     if (!luaL_getsubtable (L, LUA_REGISTRYINDEX, "fields.info"))
     {
-        if (current_field_panel)
+        if (current_field_panel != NULL)
         {
-            lua_pushstring (L, current_field_panel->cwd_vpath->str);
+            lua_pushstring (L, vfs_path_as_str (current_field_panel->cwd_vpath));
             lua_setfield (L, -2, "dir");
             luaUI_push_widget (L, WIDGET (current_field_panel), TRUE);
             lua_setfield (L, -2, "panel");
@@ -201,11 +200,11 @@ render_multiplex (file_entry_t * fe, int len)
             lua_pop (Lg, 1);    /* We must always clean up after a successful luaMC_safe_call() */
             return buffer;
         }
-        else
-            return Q_ ("fields|failure");
+
+        return Q_ ("fields|failure");
     }
-    else
-        return _("NO CALLBACK");
+
+    return _("NO CALLBACK");
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -231,7 +230,9 @@ sort_multiplex (file_entry_t * a, file_entry_t * b)
         if (luaMC_safe_call (Lg, 6, 1))
         {
             /* The callback returns the comparison result. */
-            int sign = luaMC_get_sign (Lg, -1);
+            int sign;
+
+            sign = luaMC_get_sign (Lg, -1);
             lua_pop (Lg, 1);
             return sign;
         }
@@ -249,36 +250,41 @@ sort_multiplex (file_entry_t * a, file_entry_t * b)
 static int
 l_register_field (lua_State * L)
 {
-    gboolean has_render;
-    gboolean has_sort;
-
-    static const char *const sort_names[] = {
+    /* *INDENT-OFF* */
+    static const char *const sort_names[] =
+    {
         "name", "version", "extension",
         "size", "mtime", "atime",
-        "ctime", "inode", "unsorted", NULL
+        "ctime", "inode", "unsorted",
+        NULL
     };
-    static GCompareFunc sort_values[] = {
+
+    static GCompareFunc sort_values[] =
+    {
         (GCompareFunc) sort_name, (GCompareFunc) sort_vers, (GCompareFunc) sort_ext,
         (GCompareFunc) sort_size, (GCompareFunc) sort_time, (GCompareFunc) sort_atime,
         (GCompareFunc) sort_ctime, (GCompareFunc) sort_inode, (GCompareFunc) unsorted
     };
 
-    panel_field_t field = {
+    panel_field_t field =
+    {
         "", 12, FALSE, J_LEFT,
         "",
         "", FALSE, FALSE,
         NULL,
         NULL
     };
-
-    /* *INDENT-OFF* */
-    field.id            = luaL_checkstring(L, 1);
-    field.title_hotkey  = luaL_checkstring(L, 2);   /* title */
-    field.hotkey        = luaL_checkstring(L, 3);   /* sort indicator. @FIXME: misnomer. */
-    field.min_size      = luaL_checkint(L, 4);      /* @FIXME: "min_size" is a misnomer. It's the _default_ size. */
-    field.expands       = lua_toboolean(L, 5);
-    field.default_just  = luaTTY_check_align(L, 6);
     /* *INDENT-ON* */
+
+    gboolean has_render;
+    gboolean has_sort;
+
+    field.id = luaL_checkstring (L, 1);
+    field.title_hotkey = luaL_checkstring (L, 2);       /* title */
+    field.hotkey = luaL_checkstring (L, 3);     /* sort indicator. @FIXME: misnomer. */
+    field.min_size = luaL_checkint (L, 4);      /* @FIXME: "min_size" is a misnomer. It's the _default_ size. */
+    field.expands = lua_toboolean (L, 5);
+    field.default_just = luaTTY_check_align (L, 6);
 
     has_render = lua_toboolean (L, 7);
     has_sort = lua_toboolean (L, 8);
@@ -303,11 +309,9 @@ l_register_field (lua_State * L)
 
     /* We need these to survive after the Lua stack goes away. (We didn't do
      * this earlier as we might have had to raise exceptions.) */
-    /* *INDENT-OFF* */
-    field.id            = g_strdup(field.id);
-    field.title_hotkey  = g_strdup(field.title_hotkey);
-    field.hotkey        = g_strdup(field.hotkey);
-    /* *INDENT-ON* */
+    field.id = g_strdup (field.id);
+    field.title_hotkey = g_strdup (field.title_hotkey);
+    field.hotkey = g_strdup (field.hotkey);
 
     panel_fields_register (&field);
 
