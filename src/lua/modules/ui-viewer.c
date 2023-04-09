@@ -60,11 +60,15 @@ static int l_view_get_top_line (lua_State * L);
 /*** file scope variables ************************************************************************/
 
 /* *INDENT-OFF* */
-static const struct luaL_Reg ui_viewer_static_lib[] = {
+static const struct luaL_Reg ui_viewer_static_lib[] =
+{
     { NULL, NULL }
 };
+/* *INDENT-ON* */
 
-static const struct luaL_Reg ui_viewer_lib[] = {
+/* *INDENT-OFF* */
+static const struct luaL_Reg ui_viewer_lib[] =
+{
     { "get_filename", l_view_get_filename },
     { "get_top_line", l_view_get_top_line },
     { NULL, NULL }
@@ -128,7 +132,6 @@ static int
 l_view_get_top_line (lua_State * L)
 {
     WView *view;
-
     off_t line, column;
 
     view = LUA_TO_VIEWER (L, 1);
