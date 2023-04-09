@@ -781,8 +781,7 @@ tty_beep (void)
 /* --------------------------------------------------------------------------------------------- */
 
 /**
- * Read character and color at a certain position within the virtual
- * screen.
+ * Read character and color at a certain position within the virtual screen.
  *
  * (More than one characters may be returned: when combining characters
  * are used. See the fine documentation for SLsmg_char_at().)
@@ -803,7 +802,7 @@ tty_read_screen (int y, int x, char **str, int *color)
 
     tty_getyx (&saved_y, &saved_x);
     tty_gotoyx (y, x);
-    success = !SLsmg_char_at (&ct);
+    success = SLsmg_char_at (&ct) == 0;
     tty_gotoyx (saved_y, saved_x);
 
     if (!success)
@@ -811,8 +810,10 @@ tty_read_screen (int y, int x, char **str, int *color)
 
     if (str != NULL)
     {
-        GString *buf = g_string_sized_new (8);
-        unsigned i;
+        GString *buf;
+        unsigned int i;
+
+        buf = g_string_sized_new (8);
 
         for (i = 0; i < ct.nchars; i++)
         {

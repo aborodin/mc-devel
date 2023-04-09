@@ -619,7 +619,6 @@ l_canvas_get_char_at (lua_State * L)
 {
     Canvas *c;
     int x, y;
-
     char *s;
     int style;
 
@@ -634,10 +633,8 @@ l_canvas_get_char_at (lua_State * L)
         g_free (s);
         return 2;
     }
-    else
-    {
-        return 0;
-    }
+
+    return 0;
 }
 
 /* --------------------------------------------------------------------------------------------- */

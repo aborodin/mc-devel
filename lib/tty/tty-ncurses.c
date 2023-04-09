@@ -806,7 +806,7 @@ tty_read_screen (int y, int x, char **str, int *color)
            when we aren't in UTF-8 mode). We reset it to "normal". */
         ct_color = 1;
     }
-    else if (ct & A_ALTCHARSET)
+    else if ((ct & A_ALTCHARSET) != 0)
     {
         /* Line-drawing characters (ACS_*). We don't bother processing
            them. We could look them up in mc_tty_frm[], as tty_print_alt_char
@@ -814,9 +814,7 @@ tty_read_screen (int y, int x, char **str, int *color)
         ch = '#';
     }
     else
-    {
         ch = ct_char;
-    }
 
     if (str != NULL)
         *str = g_strndup (&ch, 1);
