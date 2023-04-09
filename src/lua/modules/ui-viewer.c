@@ -1,3 +1,28 @@
+/*
+   A viewer widget.
+
+   Copyright (C) 2016-2023
+   Free Software Foundation, Inc.
+
+   Written by:
+   Moffie <mooffie@gmail.com> 2016
+
+   This file is part of the Midnight Commander.
+
+   The Midnight Commander is free software: you can redistribute it
+   and/or modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
+
+   The Midnight Commander is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 /**
  * A viewer widget.
  *
@@ -19,9 +44,36 @@
 
 #include "../modules.h"
 
+/*** global variables ****************************************************************************/
+
+/*** file scope macro definitions ****************************************************************/
+
 #define LUA_TO_VIEWER(L, i) ((WView *) (luaUI_check_widget (L, i)))
 
-/* ------------------------------------------------------------------------ */
+/*** file scope type declarations ****************************************************************/
+
+/*** forward declarations (file scope functions) *************************************************/
+
+static int l_view_get_filename (lua_State * L);
+static int l_view_get_top_line (lua_State * L);
+
+/*** file scope variables ************************************************************************/
+
+/* *INDENT-OFF* */
+static const struct luaL_Reg ui_viewer_static_lib[] = {
+    { NULL, NULL }
+};
+
+static const struct luaL_Reg ui_viewer_lib[] = {
+    { "get_filename", l_view_get_filename },
+    { "get_top_line", l_view_get_top_line },
+    { NULL, NULL }
+};
+/* *INDENT-ON* */
+
+/* --------------------------------------------------------------------------------------------- */
+/*** file scope functions ************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * Properties
@@ -49,6 +101,8 @@ l_view_get_filename (lua_State * L)
 
     return 1;
 }
+
+/* --------------------------------------------------------------------------------------------- */
 
 /**
  * The number of the first line displayed.
@@ -90,20 +144,9 @@ l_view_get_top_line (lua_State * L)
  * @section end
  */
 
-/* ------------------------------------------------------------------------ */
-
-/* *INDENT-OFF* */
-static const struct luaL_Reg ui_viewer_static_lib[] = {
-    { NULL, NULL }
-};
-
-static const struct luaL_Reg ui_viewer_lib[] = {
-    { "get_filename", l_view_get_filename },
-    { "get_top_line", l_view_get_top_line },
-    { NULL, NULL }
-};
-
-/* *INDENT-ON* */
+/* --------------------------------------------------------------------------------------------- */
+/*** public functions ****************************************************************************/
+/* --------------------------------------------------------------------------------------------- */
 
 int
 luaopen_ui_viewer (lua_State * L)
@@ -111,3 +154,5 @@ luaopen_ui_viewer (lua_State * L)
     create_widget_metatable (L, "Viewer", ui_viewer_lib, ui_viewer_static_lib, "Widget");
     return 0;                   /* Nothing to return! */
 }
+
+/* --------------------------------------------------------------------------------------------- */
