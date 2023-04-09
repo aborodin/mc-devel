@@ -762,14 +762,14 @@ static int
 l_destruct_style (lua_State * L)
 {
     int pair;
-
     tty_color_pair_t *st;
 
     pair = luaL_checkint (L, 1);
-
     st = tty_color_pair_number_to_struct (pair);
 
-    if (st)
+    if (st == NULL)
+        lua_pushnil (L);
+    else
     {
         lua_newtable (L);
 
@@ -811,10 +811,6 @@ l_destruct_style (lua_State * L)
                indexes are reused. */
             luaMC_setflag (L, -1, "is_temp", TRUE);
         }
-    }
-    else
-    {
-        lua_pushnil (L);
     }
 
     return 1;
