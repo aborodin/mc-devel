@@ -49,7 +49,6 @@ tests/nonauto/vfs_bug_errno_chdir.mcs \
 tests/nonauto/vfs_bug_errno_open.mcs \
 tests/snippets/dev_clock.lua \
 tests/snippets/dialog_mover.lua \
-tests/snippets/find_file_title.lua \
 tests/snippets/fop_move_basename.lua \
 tests/snippets/hotlist_right_as_enter.lua \
 tests/snippets/listbox_AZ.lua \
