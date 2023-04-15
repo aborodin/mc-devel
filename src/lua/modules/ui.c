@@ -3742,10 +3742,7 @@ l_dialog_focus (lua_State * L)
  * This event is not triggered for dialogs that are canceled (e.g.,
  * by pressing ESC).
  *
- * You may use this event to read data from the widgets. E.g., the
- * @{git:find_file_title.lua} snippet uses this event to read the search
- * parameters from the "Find File" dialog and put them in the title
- * of the progress dialog that follows.
+ * You may use this event to read data from the widgets.
  *
  * Info-short: Right after this event is triggered, the @{zzz_close__event|<<close>>}
  * event too is triggered.
