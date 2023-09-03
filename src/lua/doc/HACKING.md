@@ -72,13 +72,9 @@ C names                Lua names
 -------                ---------
 widget->lines      ->  widget.rows    ("lines" is a name for an iterator (file:lines, ui.Editbox:lines); and it seems at first glance related to data, not presentation.)
 WEdit              ->  ui.Editbox     ("edit" is a verb, not a noun. This doesn't match the other widgets, and it's confusing to read.)
-dlg_stop()         ->  dlg:close()    (Lua programmer doesn't have to know about the internals.)
-WPanel.selected    ->  panel:current  (User may confuse "selected" with "marked file".)
 "color"            ->  "style"        (A style holds two colors + attribs. Using the term "color" would have caused enormous confusion in documentation.)
 tty_use_colors     ->  tty.is_color   (We shouldn't have some predicates named use_* and some is_*. We settle on is_*.)
 tty_use_256colors  ->  tty.is_hicolor
-lookup_key         ->  tty.keyname_to_keycode
-lookup_key_by_code ->  tty.keycode_to_keyname
 </pre>
 
 In the tty department MC has a complete snafu which we fix by
