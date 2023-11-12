@@ -190,6 +190,7 @@ static int l_widget_is_alive (lua_State * L);
 static int l_widget_redraw (lua_State * L);
 static int l_widget_focus (lua_State * L);
 static int l_widget_get_canvas (lua_State * L);
+static int l_widget_get_pos_flags (lua_State * L);
 static int l_widget_set_pos_flags (lua_State * L);
 static int l_widget_get__state_ (lua_State * L);
 static int l_widget_get__options_ (lua_State * L);
@@ -320,6 +321,7 @@ static const struct luaL_Reg ui_widget_methods_lib[] =
     { "redraw", l_widget_redraw },
     { "focus", l_widget_focus },
     { "get_canvas", l_widget_get_canvas },
+    { "get_pos_flags", l_widget_get_pos_flags },
     { "set_pos_flags", l_widget_set_pos_flags },
     { "get__state_", l_widget_get__state_ },
     { "get__options_", l_widget_get__options_ },
@@ -1160,6 +1162,15 @@ l_widget_set_pos_flags (lua_State * L)
 {
     luaUI_check_widget (L, 1)->pos_flags = luaL_checki (L, 2);
     return 0;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+static int
+l_widget_get_pos_flags (lua_State * L)
+{
+    lua_pushi (L, luaUI_check_widget (L, 1)->pos_flags);
+    return 1;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -3227,9 +3238,14 @@ l_dialog_run (lua_State * L)
 
         w = WIDGET (g->current->data);
 
+#if 0
         if (!widget_get_state (w, WST_DISABLED)
             && (widget_get_options (w, WOP_WANT_CURSOR) || widget_get_options (w, WOP_WANT_HOTKEY))
             && !is_custom (w))
+#else
+        if (widget_get_options (w, WOP_SELECTABLE) && !widget_get_state (w, WST_DISABLED)
+            && !is_custom (w) && widget_set_state (w, WST_FOCUSED, TRUE) == MSG_HANDLED)
+#endif
             break;
 
         g->current = g_list_next (g->current);
