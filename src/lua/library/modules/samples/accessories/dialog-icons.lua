@@ -73,7 +73,7 @@ local function get_color(dlg, name)
 end
 
 local function is_fullscreen(dlg)
-  return dlg.x == 0 and dlg.y == 0 and dlg.cols == tty.get_cols() and dlg.rows == tty.get_rows()
+  return (utils.bit32.band(dlg.pos_flags, ui.WPOS_FULLSCREEN) ~= 0)
 end
 
 --
