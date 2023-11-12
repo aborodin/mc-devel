@@ -50,7 +50,7 @@ function M.run()
   dlg.on_resize = function(self)
     -- Note the '-1': if the dialog covered absolutely the whole screen,
     -- tty.redraw() would not bother drawing the dialogs beneath (see
-    -- WDialog.fullscreen on the C side).
+    -- WPOS_FULLSCREEN on the C side).
     self:set_dimensions(0, 0, tty.get_cols(), tty.get_rows() - 1)
     ruler.cols = self.cols
     ruler.rows = self.rows
