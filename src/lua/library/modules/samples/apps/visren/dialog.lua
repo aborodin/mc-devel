@@ -182,7 +182,7 @@ local function run_dialog(world, opts)
   --------------------------------------------------------------------------
 
   if opts.maximize then
-    dlg.modal = false
+    dlg:set_modal(false)
     dlg:set_dimensions(nil, nil, tty.get_cols(), tty.get_rows() - 2)
   end
 
