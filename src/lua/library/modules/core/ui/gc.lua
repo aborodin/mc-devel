@@ -52,7 +52,7 @@ First, let's have a look at some common code:
 
   do
     local dlg = ...
-    dlg.modal = false
+    dlg:set_modal(false)
     dlg:add(ui.Button{"click me", on_click = function() ... end })
     dlg:run()
   end

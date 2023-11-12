@@ -52,7 +52,7 @@ local function test_gc()
   do
     local btn = ui.Label("Close this dialog.")
     local dlg = ui.Dialog("test"):add(btn)
-    dlg.modal = false
+    dlg:set_modal(false)
     dlg:run()
   end
 
@@ -61,7 +61,7 @@ local function test_gc()
   do
     local btn = ui.Label("Don't close this modaless dialog. Switch to another!")
     local dlg = ui.Dialog("test"):add(btn)
-    dlg.modal = false
+    dlg:set_modal(false)
     dlg:run()
   end
 

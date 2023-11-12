@@ -2937,7 +2937,7 @@ ui_dialog_callback (Widget * w, Widget * sender, widget_msg_t msg, int parm, voi
  *      return "Clock: " .. os.date()
  *    end
  *
- *    dlg.modal = false
+ *    dlg:set_modal(false)
  *
  *    dlg:add(ui.DefaultButtons())
  *    dlg:run()
@@ -3576,7 +3576,7 @@ l_dialog_set_dimensions (lua_State * L)
     widget_set_size_rect (WIDGET (dlg), &r);
 
     /*
-     * The 'fullscreen' flag tells MC the dialog from which to
+     * The 'WPOS_FULLSCREEN' flag tells MC the dialog from which to
      * start painting the whole screen (see dialog.c:do_refresh()).
      *
      * The only place where this is important to us is when using
