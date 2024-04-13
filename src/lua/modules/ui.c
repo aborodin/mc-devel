@@ -2979,7 +2979,8 @@ dialog_constructor (void)
     WDialog *dlg;
 
     /* The '-1' is a sentry value we check for on the Lua side. */
-    dlg = dlg_create (TRUE, -1, -1, 4, 4, WPOS_CENTER, FALSE, dialog_colors, ui_dialog_callback,
+    dlg = dlg_create (TRUE, -1, -1, 4, 4, WPOS_KEEP_DEFAULT, FALSE,
+                      dialog_colors, ui_dialog_callback,
                       NULL, NULL, NULL);
     dlg->get_title = dlg_title_handler; /* for modaless dialogs. */
     return WIDGET (dlg);
@@ -3578,18 +3579,19 @@ l_dialog_close (lua_State * L)
 static int
 l_dialog_set_dimensions (lua_State * L)
 {
-    WDialog *dlg;
-    WRect r;
+    Widget *w;
     gboolean send_msg_resize;
 
-    dlg = LUA_TO_DIALOG (L, 1);
-    r.x = luaL_checkint (L, 2);
-    r.y = luaL_checkint (L, 3);
-    r.cols = luaL_checkint (L, 4);
-    r.lines = luaL_checkint (L, 5);
+    w = WIDGET (LUA_TO_DIALOG (L, 1));
+
+    w->rect.x = luaL_checkint (L, 2);
+    w->rect.y = luaL_checkint (L, 3);
+    w->rect.cols = luaL_checkint (L, 4);
+    w->rect.lines = luaL_checkint (L, 5);
     send_msg_resize = lua_toboolean (L, 6) != 0;
 
-    widget_set_size_rect (WIDGET (dlg), &r);
+    if (send_msg_resize)
+        widget_set_size_rect (w, &w->rect);
 
     /*
      * The 'WPOS_FULLSCREEN' flag tells MC the dialog from which to
@@ -3604,8 +3606,6 @@ l_dialog_set_dimensions (lua_State * L)
      * we need to duplicate this code here. Solution: MC should
      * set it in dialog.c:dlg_set_position().
      */
-
-    (void) send_msg_resize;
 
     return 0;
 }
