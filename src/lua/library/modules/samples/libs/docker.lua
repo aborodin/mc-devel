@@ -199,7 +199,7 @@ function M.refresh()
 
   if dlg then
 
-    if dlg.state ~= 'active' then
+    if dlg:get_state() ~= 'active' then
       -- The editor or viewer (or some such modaless dialog) is active and
       -- obscures us. Do nothing: don't waste CPU cycles on updating the screen.
     else
