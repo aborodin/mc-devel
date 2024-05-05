@@ -35,7 +35,7 @@
 #include "lib/widget.h"         /* mc_refresh(), do_refresh() */
 #include "lib/tty/key.h"        /* tty_keyname_to_keycode(), tty_keycode_to_keyname() */
 #include "lib/tty/color.h"
-#include "lib/tty/color-internal.h"     /* tty_color_get_index_by_name(), tty_color_pair_t */
+#include "lib/tty/color-internal.h"     /* tty_color_get_index_by_name(), tty_color_lib_pair_t */
 #include "lib/skin.h"           /* mc_skin_color_get(), mc_skin_get() */
 #include "lib/strutil.h"        /* str_*() */
 #include "lib/lua/capi.h"
@@ -766,10 +766,10 @@ static int
 l_destruct_style (lua_State * L)
 {
     int pair;
-    tty_color_pair_t *st;
+    tty_color_lib_pair_t *st;
 
     pair = luaL_checkint (L, 1);
-    st = tty_color_pair_number_to_struct (pair);
+    st = tty_color_lib_pair_number_to_struct (pair);
 
     if (st == NULL)
         lua_pushnil (L);
@@ -777,14 +777,14 @@ l_destruct_style (lua_State * L)
     {
         lua_newtable (L);
 
-        lua_pushinteger (L, st->ifg);
+        lua_pushinteger (L, st->fg);
         lua_setfield (L, -2, "ifg");
-        lua_pushstring (L, tty_color_get_name_by_index (st->ifg));
+        lua_pushstring (L, tty_color_get_name_by_index (st->fg));
         lua_setfield (L, -2, "fg");
 
-        lua_pushinteger (L, st->ibg);
+        lua_pushinteger (L, st->bg);
         lua_setfield (L, -2, "ibg");
-        lua_pushstring (L, tty_color_get_name_by_index (st->ibg));
+        lua_pushstring (L, tty_color_get_name_by_index (st->bg));
         lua_setfield (L, -2, "bg");
 
         lua_pushinteger (L, st->attr);
