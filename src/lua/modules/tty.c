@@ -625,23 +625,23 @@ validate_color_name (lua_State * L, const char *color_name)
 static int
 l_style (lua_State * L)
 {
-    const char *fg, *bg, *attrs;
+    tty_color_pair_t colors;
     int pair;
 
     luaTTY_assert_ui_is_ready (L);
 
     /* We could use lua_tostring() instead of luaL_checkstring(), as
-     * tty_try_alloc_color_pair2() can handle NULL arguments. But we prefer to
+     * tty_try_alloc_color_pair() can handle NULL arguments. But we prefer to
      * push all the policy decisions to the Lua side: it, and not the C side,
      * will decide what to do with unspecified values. */
-    fg = luaL_checkstring (L, 1);
-    bg = luaL_checkstring (L, 2);
-    attrs = luaL_checkstring (L, 3);
+    colors.fg = (char *) luaL_checkstring (L, 1);
+    colors.bg = (char *) luaL_checkstring (L, 2);
+    colors.attrs = (char *) luaL_checkstring (L, 3);
 
-    validate_color_name (L, fg);
-    validate_color_name (L, bg);
+    validate_color_name (L, colors.fg);
+    validate_color_name (L, colors.bg);
 
-    pair = tty_try_alloc_color_pair2 (fg, bg, attrs, FALSE);
+    pair = tty_try_alloc_color_pair (&colors, FALSE);
     if (pair > 250)
     {
         /*
