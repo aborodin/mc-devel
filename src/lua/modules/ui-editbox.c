@@ -172,7 +172,7 @@ edit_constructor (void)
     Widget *w;
     const WRect r = { 1, 1, 5, 20 };
 
-    w = WIDGET (edit_init (NULL, &r, NULL, 1));
+    w = WIDGET (edit_init (NULL, &r, NULL));
     /* FIXME: edit_init() itself should do the following. See comment
      * in editwidget.h. And since we don't bother setting w->mouse here as
      * well, we don't have mouse support. */
@@ -302,13 +302,12 @@ static int
 l_edit_load (lua_State * L)
 {
     WEdit *edit;
-    const vfs_path_t *vpath;
-    long line;
+    edit_arg_t arg;
     gboolean success;
 
     edit = LUA_TO_EDITBOX (L, 1);
-    vpath = luaFS_check_vpath (L, 2);
-    line = luaL_optlong (L, 3, 7);
+    arg.file_vpath = luaFS_check_vpath (L, 2);
+    arg.line_number = luaL_optlong (L, 3, 7);
 
     /*
      * @todo:
@@ -321,7 +320,7 @@ l_edit_load (lua_State * L)
      * factor its history stuff out.
      */
 
-    success = edit_reload_line (edit, vpath, line);
+    success = edit_reload_line (edit, &arg);
 
     edit->force |= REDRAW_COMPLETELY;
     edit_update_view (edit);
