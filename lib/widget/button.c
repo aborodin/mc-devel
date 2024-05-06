@@ -282,3 +282,15 @@ button_set_text (WButton *b, const char *text)
 }
 
 /* --------------------------------------------------------------------------------------------- */
+
+void
+button_set_flags (WButton *b, button_flags_t flags)
+{
+    if (b->flags != flags)
+    {
+        b->flags = flags;
+        WIDGET (b)->rect.cols = button_get_columns (b);
+    }
+}
+
+/* --------------------------------------------------------------------------------------------- */
