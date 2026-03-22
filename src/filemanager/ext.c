@@ -81,12 +81,10 @@
 /*** forward declarations (file scope functions) *************************************************/
 
 #if defined(HAVE_TESTS)
-MC_TESTABLE
-GString *exec_make_shell_string (const char *lc_data, const vfs_path_t *filename_vpath);
+MC_TESTABLE GString *exec_make_shell_string (const char *lc_data, const vfs_path_t *filename_vpath,
+                                             GString **buffer);
 
 MC_TESTABLE GString *exec_get_export_variables (const vfs_path_t *filename_vpath);
-
-extern char buffer[BUF_1K];
 #endif
 
 /*** file scope variables ************************************************************************/
@@ -98,9 +96,7 @@ extern char buffer[BUF_1K];
 static mc_config_t *ext_ini = NULL;
 static gchar **ext_ini_groups = NULL;
 static vfs_path_t *localfilecopy_vpath = NULL;
-MC_TESTABLE char buffer[BUF_1K];
 
-static char *pbuffer = NULL;
 static time_t localmtime = 0;
 static quote_fn quote_func = name_quote;
 static gboolean run_view = FALSE;
@@ -236,7 +232,7 @@ exec_get_export_variables (const vfs_path_t *filename_vpath)
 /* --------------------------------------------------------------------------------------------- */
 
 MC_TESTABLE GString *
-exec_make_shell_string (const char *lc_data, const vfs_path_t *filename_vpath)
+exec_make_shell_string (const char *lc_data, const vfs_path_t *filename_vpath, GString **buffer)
 {
     GString *shell_string;
     char lc_prompt[80] = "\0";
@@ -301,7 +297,12 @@ exec_make_shell_string (const char *lc_data, const vfs_path_t *filename_vpath)
                         is_cd = TRUE;
                         quote_func = fake_name_quote;
                         do_local_copy = FALSE;
-                        pbuffer = buffer;
+
+                        if (*buffer == NULL)
+                            *buffer = g_string_sized_new (128);
+                        else
+                            g_string_set_size (*buffer, 0);
+
                         lc_data += i - 1;
                     }
                     else
@@ -334,14 +335,17 @@ exec_make_shell_string (const char *lc_data, const vfs_path_t *filename_vpath)
                             if (text != NULL)
                             {
                                 if (!is_cd)
+                                {
                                     mc_g_string_concat (shell_string, text);
+                                    g_string_free (text, TRUE);
+                                }
+                                else if (*buffer == NULL)
+                                    *buffer = text;
                                 else
                                 {
-                                    strncpy (pbuffer, text->str, text->len + 1);
-                                    pbuffer = strchr (pbuffer, '\0');
+                                    mc_g_string_concat (*buffer, text);
+                                    g_string_free (text, TRUE);
                                 }
-
-                                g_string_free (text, TRUE);
                             }
 
                             written_nonspace = TRUE;
@@ -357,7 +361,7 @@ exec_make_shell_string (const char *lc_data, const vfs_path_t *filename_vpath)
             if (!whitespace (*lc_data))
                 written_nonspace = TRUE;
             if (is_cd)
-                *(pbuffer++) = *lc_data;
+                g_string_append_c (*buffer, *lc_data);
             else
                 g_string_append_c (shell_string, *lc_data);
         }
@@ -404,21 +408,18 @@ exec_extension_view (void *target, char *cmd, const vfs_path_t *filename_vpath, 
 /* --------------------------------------------------------------------------------------------- */
 
 static void
-exec_extension_cd (WPanel *panel)
+exec_extension_cd (WPanel *panel, GString *buffer)
 {
-    char *q;
+    size_t i;
     vfs_path_t *p_vpath;
 
-    *pbuffer = '\0';
-    pbuffer = buffer;
     /* Search last non-space character. Start search at the end in order
        not to short filenames containing spaces. */
-    q = pbuffer + strlen (pbuffer) - 1;
-    while (q >= pbuffer && whitespace (*q))
-        q--;
-    q[1] = 0;
+    for (i = buffer->len; i != 0 && whitespace (buffer->str[i - 1]); i--)
+        ;
+    g_string_set_size (buffer, i);
 
-    p_vpath = vfs_path_from_str_flags (pbuffer, VPF_NO_CANON);
+    p_vpath = vfs_path_from_str_flags (buffer->str, VPF_NO_CANON);
     panel_cd (panel, p_vpath, cd_parse_command);
     vfs_path_free (p_vpath, TRUE);
 }
@@ -430,12 +431,12 @@ exec_extension (WPanel *panel, void *target, const vfs_path_t *filename_vpath, c
                 int start_line)
 {
     GString *shell_string, *export_variables;
+    GString *buffer = NULL;
     vfs_path_t *script_vpath = NULL;
     int cmd_file_fd;
     FILE *cmd_file;
     char *cmd = NULL;
 
-    pbuffer = NULL;
     localmtime = 0;
     quote_func = name_quote;
     run_view = FALSE;
@@ -445,13 +446,13 @@ exec_extension (WPanel *panel, void *target, const vfs_path_t *filename_vpath, c
     // Avoid making a local copy if we are doing a cd
     do_local_copy = !vfs_file_is_local (filename_vpath);
 
-    shell_string = exec_make_shell_string (lc_data, filename_vpath);
+    shell_string = exec_make_shell_string (lc_data, filename_vpath, &buffer);
     if (shell_string == NULL)
         goto ret;
 
     if (is_cd)
     {
-        exec_extension_cd (panel);
+        exec_extension_cd (panel, buffer);
         g_string_free (shell_string, TRUE);
         goto ret;
     }
@@ -535,6 +536,9 @@ exec_extension (WPanel *panel, void *target, const vfs_path_t *filename_vpath, c
 
     exec_cleanup_file_name (filename_vpath, TRUE);
 ret:
+    if (buffer != NULL)
+        g_string_free (buffer, TRUE);
+
     return script_vpath;
 }
 
