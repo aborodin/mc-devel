@@ -316,7 +316,7 @@ static void
 edit_window_list (const WDialog *h)
 {
     const WGroup *g = CONST_GROUP (h);
-    const size_t offset = 2;  // skip menu and buttonbar
+    const size_t offset = 3;  // skip background, menu, and buttonbar
     const size_t dlg_num = g_list_length (g->widgets) - offset;
     int lines, cols;
     Listbox *listbox;
