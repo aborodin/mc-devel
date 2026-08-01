@@ -32,9 +32,8 @@
 #include "lib/strutil.h"
 #include "src/filemanager/panel.h"
 
-extern char buffer[BUF_1K];
-
-MC_TESTABLE GString *exec_make_shell_string (const char *lc_data, const vfs_path_t *filename_vpath);
+MC_TESTABLE GString *exec_make_shell_string (const char *lc_data, const vfs_path_t *filename_vpath,
+                                             GString **buffer);
 
 /* --------------------------------------------------------------------------------------------- */
 
@@ -44,10 +43,10 @@ static struct test_paths
     const char *path;
     const char *expected_buffer;
     const char *expected_ret;
-} test_paths[] = { { "/foo/bar/hello_world.c", "/does_not_appear", "", "/foo/bar/hello_world.c" },
+} test_paths[] = { { "/foo/bar/hello_world.c", "/does_not_appear", NULL, "/foo/bar/hello_world.c" },
                    { "%cd /tmp/file/with/a/longer/path/name/xyz.sock", "/never/used",
                      "/tmp/file/with/a/longer/path/name/xyz.sock", "" },
-                   { "%f/utar://", "/path/to/foo.tar", "", "/path/to/foo.tar/utar://" },
+                   { "%f/utar://", "/path/to/foo.tar", NULL, "/path/to/foo.tar/utar://" },
                    { "%cd %f", "/path/to/directory", "/path/to/directory", "" },
                    { "%f%cd /dev", "/etc/mc", "/dev", "/etc/mc" },
                    { "%cd %f%view{ascii}/some/subdir", "/tmp", "/tmp/some/subdir", "" }
@@ -70,14 +69,24 @@ START_PARAMETRIZED_TEST (shell_str_test, test_paths)
 {
     vfs_path_t *vpath;
     GString *gs;
+    GString *buffer = NULL;
 
     vpath = vfs_path_from_str (data->path);
-    gs = exec_make_shell_string (data->lc_data, vpath);
+    gs = exec_make_shell_string (data->lc_data, vpath, &buffer);
     vfs_path_free (vpath, FALSE);
 
-    mctest_assert_str_eq (buffer, data->expected_buffer);
+    if (buffer == NULL)
+    {
+        mctest_assert_null (data->expected_buffer);
+    }
+    else
+    {
+        mctest_assert_str_eq (buffer->str, data->expected_buffer);
+    }
     mctest_assert_str_eq (gs->str, data->expected_ret);
 
+    if (buffer != NULL)
+        g_string_free (buffer, TRUE);
     g_string_free (gs, TRUE);
 }
 END_PARAMETRIZED_TEST
