@@ -316,7 +316,7 @@ static void
 edit_window_list (const WDialog *h)
 {
     const WGroup *g = CONST_GROUP (h);
-    const size_t offset = 2;  // skip menu and buttonbar
+    const size_t offset = 3;  // skip background, menu, and buttonbar
     const size_t dlg_num = g_list_length (g->widgets) - offset;
     int lines, cols;
     Listbox *listbox;
@@ -329,22 +329,27 @@ edit_window_list (const WDialog *h)
 
     listbox = listbox_window_new (lines, cols, _ ("Open files"), "[Open files]");
 
+    const size_t fname_offset = 2;  // marker and space
+    const size_t fname_max_width = WIDGET (listbox->list)->rect.cols - fname_offset;
+
     for (w = g->widgets; w != NULL; w = g_list_next (w))
         if (edit_widget_is_editor (CONST_WIDGET (w->data)))
         {
             WEdit *e = EDIT (w->data);
-            char *fname;
+            const char *fname;
+            char *item_text;
 
             if (e->filename_vpath == NULL)
-                fname = g_strdup_printf ("%c [%s]", e->modified != 0 ? '*' : ' ', _ ("NoName"));
+                fname = _ ("[NoName]");
             else
-                fname = g_strdup_printf ("%c%s", e->modified != 0 ? '*' : ' ',
-                                         vfs_path_as_str (e->filename_vpath));
+                fname = vfs_path_as_str (e->filename_vpath);
 
-            listbox_add_item (listbox->list, LISTBOX_APPEND_AT_END, get_hotkey (i++),
-                              str_term_trim (fname, WIDGET (listbox->list)->rect.cols - 2), e,
-                              FALSE);
-            g_free (fname);
+            const char *displayed_fname = str_term_trim (fname, fname_max_width);
+
+            item_text = g_strdup_printf ("%c %s", e->modified != 0 ? '*' : ' ', displayed_fname);
+
+            listbox_add_item_take (listbox->list, LISTBOX_APPEND_AT_END, get_hotkey (i++),
+                                   item_text, e, FALSE);
         }
 
     selected = listbox_run_with_data (listbox, g->current->data);
