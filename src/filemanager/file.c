@@ -2621,7 +2621,7 @@ copy_file_file (file_op_context_t *ctx, const char *src_path, const char *dst_pa
         // FICLONERANGE on Linux and copy_file_range(2) on FreeBSD support block-aligned ranges for
         // cloning, but for not in O_APPEND mode. Use O_WRONLY + mc_lseek instead as we don't care
         // about atomicity in our use cases.
-        open_flags |= mc_global.vfs.file_cloning ? O_WRONLY : O_APPEND;
+        open_flags |= mc_global.vfs.file_cloning ? 0 : O_APPEND;
 #else
         open_flags |= O_APPEND;
 #endif
@@ -2674,7 +2674,7 @@ open_dest:
             ctx->do_append = TRUE;
             mc_close (dest_desc);
             dst_status = DEST_NONE;
-            open_flags = (open_flags & ~O_WRONLY) | O_APPEND;
+            open_flags |= O_APPEND;
             goto open_dest;
         }
     }
