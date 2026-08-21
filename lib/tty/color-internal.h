@@ -35,16 +35,22 @@ typedef struct
     gboolean is_temp;
 } tty_color_lib_pair_t;
 
+typedef struct
+{
+    const char *name;
+    int value;
+} mc_tty_color_table_t;
+
 /*** global variables defined in .c file *********************************************************/
 
 extern gboolean use_colors;
 extern gboolean mc_tty_color_disable;
 extern gboolean need_convert_256color;
+extern mc_tty_color_table_t const color_table[];
 
 /*** declarations of public functions ************************************************************/
 
 const char *tty_color_get_name_by_index (int idx);
-int tty_color_get_index_by_name (const char *color_name);
 int tty_attr_get_bits (const char *attrs);
 int convert_256color_to_truecolor (int color);
 

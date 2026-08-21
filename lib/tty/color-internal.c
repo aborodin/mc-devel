@@ -38,25 +38,11 @@
 
 /*** global variables ****************************************************************************/
 
-gboolean mc_tty_color_disable;
-
-/*** file scope macro definitions ****************************************************************/
-
 #define COLOR_INTENSITY 8
 
-/*** file scope type declarations ****************************************************************/
+gboolean mc_tty_color_disable;
 
-typedef struct mc_tty_color_table_struct
-{
-    const char *name;
-    int value;
-} mc_tty_color_table_t;
-
-/*** forward declarations (file scope functions) *************************************************/
-
-/*** file scope variables ************************************************************************/
-
-static mc_tty_color_table_t const color_table[] = {
+mc_tty_color_table_t const color_table[] = {
     { "black", COLOR_BLACK },
     { "gray", COLOR_BLACK + COLOR_INTENSITY },
     { "red", COLOR_RED },
@@ -78,6 +64,14 @@ static mc_tty_color_table_t const color_table[] = {
     { NULL, 0 },
 };
 
+/*** file scope macro definitions ****************************************************************/
+
+/*** file scope type declarations ****************************************************************/
+
+/*** forward declarations (file scope functions) *************************************************/
+
+/*** file scope variables ************************************************************************/
+
 static mc_tty_color_table_t const attributes_table[] = {
     { "bold", A_BOLD },
 #ifdef A_ITALIC  // available since ncurses-5.9-20130831 / slang-pre2.3.0-107
@@ -93,69 +87,6 @@ static mc_tty_color_table_t const attributes_table[] = {
 /* --------------------------------------------------------------------------------------------- */
 /*** file scope functions ************************************************************************/
 /* --------------------------------------------------------------------------------------------- */
-
-static inline int
-parse_hex_digit (char c)
-{
-    if (c >= '0' && c <= '9')
-        return c - '0';
-    c |= 0x20;
-    if (c >= 'a' && c <= 'f')
-        return c - 'a' + 10;
-    return -1;
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-static int
-parse_256_or_true_color_name (const char *color_name)
-{
-    int i;
-    char dummy;
-
-    if (sscanf (color_name, "color%d%c", &i, &dummy) == 1 && i >= 0 && i < 256)
-    {
-        return i;
-    }
-    if (sscanf (color_name, "gray%d%c", &i, &dummy) == 1 && i >= 0 && i < 24)
-    {
-        return 232 + i;
-    }
-    if (strncmp (color_name, "rgb", 3) == 0             //
-        && color_name[3] >= '0' && color_name[3] < '6'  //
-        && color_name[4] >= '0' && color_name[4] < '6'  //
-        && color_name[5] >= '0' && color_name[5] < '6'  //
-        && color_name[6] == '\0')
-    {
-        return 16 + 36 * (color_name[3] - '0') + 6 * (color_name[4] - '0') + (color_name[5] - '0');
-    }
-    if (color_name[0] == '#')
-    {
-        int len;
-
-        color_name++;
-        len = (int) strlen (color_name);
-        if (len == 3 || len == 6)
-        {
-            int h[6];
-
-            for (i = 0; i < len; i++)
-            {
-                h[i] = parse_hex_digit (color_name[i]);
-                if (h[i] == -1)
-                    return -1;
-            }
-
-            if (i == 3)
-                i = (h[0] << 20) | (h[0] << 16) | (h[1] << 12) | (h[1] << 8) | (h[2] << 4) | h[2];
-            else
-                i = (h[0] << 20) | (h[1] << 16) | (h[2] << 12) | (h[3] << 8) | (h[4] << 4) | h[5];
-            return FLAG_TRUECOLOR | i;
-        }
-    }
-
-    return -1;
-}
 
 /* --------------------------------------------------------------------------------------------- */
 /*** public functions ****************************************************************************/
@@ -184,23 +115,6 @@ tty_color_get_name_by_index (int idx)
         return g_intern_string (name);
     }
     return "default";
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-int
-tty_color_get_index_by_name (const char *color_name)
-{
-    if (color_name != NULL)
-    {
-        size_t i;
-
-        for (i = 0; color_table[i].name != NULL; i++)
-            if (strcmp (color_name, color_table[i].name) == 0)
-                return color_table[i].value;
-        return parse_256_or_true_color_name (color_name);
-    }
-    return -1;
 }
 
 /* --------------------------------------------------------------------------------------------- */
