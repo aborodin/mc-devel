@@ -291,16 +291,6 @@ format_item_free (format_item_t *format)
 }
 
 /* --------------------------------------------------------------------------------------------- */
-/** Extract the number of available lines in a panel */
-
-static int
-panel_lines (const WPanel *p)
-{
-    // 3 lines are: top frame, column header, bottom frame
-    return (CONST_WIDGET (p)->rect.lines - 3 - (panels_options.show_mini_info ? 2 : 0));
-}
-
-/* --------------------------------------------------------------------------------------------- */
 /** This code relies on the default justification!!! */
 
 static void
@@ -5156,6 +5146,16 @@ update_panels (panel_update_flags_t flags, const char *current_file)
 
     if (!panel->is_panelized)
         (void) mc_chdir (panel->cwd_vpath);
+}
+
+/* --------------------------------------------------------------------------------------------- */
+/** Extract the number of available lines in a panel */
+
+int
+panel_lines (const WPanel *p)
+{
+    // 3 lines are: top frame, column header, bottom frame
+    return (CONST_WIDGET (p)->rect.lines - 3 - (panels_options.show_mini_info ? 2 : 0));
 }
 
 /* --------------------------------------------------------------------------------------------- */

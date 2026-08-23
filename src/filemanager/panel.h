@@ -182,6 +182,7 @@ gboolean panel_do_cd (WPanel *panel, const vfs_path_t *new_dir_vpath, enum cd_en
 MC_MOCKABLE gboolean panel_cd (WPanel *panel, const vfs_path_t *new_dir_vpath,
                                enum cd_enum cd_type);
 
+int panel_lines (const WPanel *p);
 gsize panel_get_num_of_sortable_fields (void);
 char **panel_get_sortable_fields (gsize *array_size);
 const panel_field_t *panel_get_field_by_id (const char *name);
