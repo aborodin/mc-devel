@@ -103,9 +103,7 @@ tty_color_get_next__color_pair_number (void)
 
     cp_count = g_hash_table_size (mc_tty_color__hashtable);
     for (cp = 0; cp < cp_count; cp++)
-        if (g_hash_table_find (mc_tty_color__hashtable, tty_color_get_next_cpn_cb,
-                               GSIZE_TO_POINTER (cp))
-            == NULL)
+        if (tty_color_lib_pair_number_to_struct (cp) == NULL)
             break;
 
     return cp;
@@ -292,6 +290,17 @@ tty_color_get_index_by_name (const char *color_name)
         return parse_256_or_true_color_name (color_name);
     }
     return -1;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+/* This function is the "reverse" of allocating a color. It's the key
+ * to creating "screen shots" and HTML output. */
+tty_color_lib_pair_t *
+tty_color_lib_pair_number_to_struct (int color)
+{
+    return (tty_color_lib_pair_t *) g_hash_table_find (
+        mc_tty_color__hashtable, tty_color_get_next_cpn_cb, GSIZE_TO_POINTER (color));
 }
 
 /* --------------------------------------------------------------------------------------------- */

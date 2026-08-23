@@ -25,16 +25,6 @@
 
 /*** structures declarations (and typedefs of structures)*****************************************/
 
-/* Screen library specific color pair */
-typedef struct
-{
-    int fg;
-    int bg;
-    int attr;
-    size_t pair_index;
-    gboolean is_temp;
-} tty_color_lib_pair_t;
-
 typedef struct
 {
     const char *name;

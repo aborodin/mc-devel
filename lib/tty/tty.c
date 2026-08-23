@@ -57,8 +57,8 @@
 
 #include "tty.h"
 #include "tty-internal.h"
-#include "color-internal.h"
 #include "color.h"  // tty_set_normal_attrs()
+#include "color-internal.h"
 #include "mouse.h"  // use_mouse_p
 #include "win.h"
 

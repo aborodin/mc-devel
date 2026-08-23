@@ -29,6 +29,16 @@ typedef struct
     size_t pair_index;
 } tty_color_pair_t;
 
+// screen library specific color pair
+typedef struct
+{
+    int fg;
+    int bg;
+    int attr;
+    size_t pair_index;
+    gboolean is_temp;
+} tty_color_lib_pair_t;
+
 /*
  * Color values below this number refer directly to the ncurses/slang color pair id.
  *
@@ -70,6 +80,8 @@ void tty_setcolor (int color);
 void tty_set_normal_attrs (void);
 
 int tty_color_get_index_by_name (const char *color_name);
+
+tty_color_lib_pair_t *tty_color_lib_pair_number_to_struct (int color);
 
 MC_MOCKABLE gboolean tty_use_256colors (GError **error);
 MC_MOCKABLE gboolean tty_use_truecolors (GError **error);
