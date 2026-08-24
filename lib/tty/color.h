@@ -80,6 +80,7 @@ void tty_setcolor (int color);
 void tty_set_normal_attrs (void);
 
 int tty_color_get_index_by_name (const char *color_name);
+const char *tty_color_get_name_by_index (int idx);
 
 tty_color_lib_pair_t *tty_color_lib_pair_number_to_struct (int color);
 

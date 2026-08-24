@@ -40,7 +40,6 @@ extern mc_tty_color_table_t const color_table[];
 
 /*** declarations of public functions ************************************************************/
 
-const char *tty_color_get_name_by_index (int idx);
 int tty_attr_get_bits (const char *attrs);
 int convert_256color_to_truecolor (int color);
 
