@@ -22,6 +22,8 @@ typedef struct
 
 /*** global variables defined in .c file *********************************************************/
 
+extern const dlg_colors_t listbox_colors;
+
 /*** declarations of public functions ************************************************************/
 
 /* Listbox utility functions */
