@@ -111,6 +111,7 @@ void dlg_init (WDialog *h);
 int dlg_run (WDialog *d);
 void dlg_run_done (WDialog *h);
 void dlg_process_event (WDialog *h, int key, Gpm_Event *event);
+cb_ret_t dlg_execute_cmd (WDialog *h, long command);
 
 char *dlg_get_title (const WDialog *h, const ssize_t width);
 

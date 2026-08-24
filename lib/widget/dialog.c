@@ -122,75 +122,6 @@ dlg_help (const WDialog *h)
 /* --------------------------------------------------------------------------------------------- */
 
 static cb_ret_t
-dlg_execute_cmd (WDialog *h, long command)
-{
-    WGroup *g = GROUP (h);
-    cb_ret_t ret = MSG_HANDLED;
-
-    if (send_message (h, NULL, MSG_ACTION, command, NULL) == MSG_HANDLED)
-        return MSG_HANDLED;
-
-    switch (command)
-    {
-    case CK_Ok:
-        h->ret_value = B_ENTER;
-        dlg_close (h);
-        break;
-    case CK_Cancel:
-        h->ret_value = B_CANCEL;
-        dlg_close (h);
-        break;
-
-    case CK_Up:
-    case CK_Left:
-        group_select_prev_widget (g);
-        break;
-    case CK_Down:
-    case CK_Right:
-        group_select_next_widget (g);
-        break;
-
-    case CK_Help:
-        dlg_help (h);
-        break;
-
-    case CK_Suspend:
-        mc_event_raise (MCEVENT_GROUP_CORE, "suspend", NULL);
-        refresh_cmd ();
-        break;
-    case CK_Refresh:
-        refresh_cmd ();
-        break;
-
-    case CK_ScreenList:
-        if (!widget_get_state (WIDGET (h), WST_MODAL))
-            dialog_switch_list ();
-        else
-            ret = MSG_NOT_HANDLED;
-        break;
-    case CK_ScreenNext:
-        if (!widget_get_state (WIDGET (h), WST_MODAL))
-            dialog_switch_next ();
-        else
-            ret = MSG_NOT_HANDLED;
-        break;
-    case CK_ScreenPrev:
-        if (!widget_get_state (WIDGET (h), WST_MODAL))
-            dialog_switch_prev ();
-        else
-            ret = MSG_NOT_HANDLED;
-        break;
-
-    default:
-        ret = MSG_NOT_HANDLED;
-    }
-
-    return ret;
-}
-
-/* --------------------------------------------------------------------------------------------- */
-
-static cb_ret_t
 dlg_handle_key (WDialog *h, int d_key)
 {
     long command;
@@ -510,6 +441,75 @@ dlg_process_event (WDialog *h, int key, Gpm_Event *event)
         dlg_key_event (h, key);
         break;
     }
+}
+
+/* --------------------------------------------------------------------------------------------- */
+
+cb_ret_t
+dlg_execute_cmd (WDialog *h, long command)
+{
+    WGroup *g = GROUP (h);
+    cb_ret_t ret = MSG_HANDLED;
+
+    if (send_message (h, NULL, MSG_ACTION, command, NULL) == MSG_HANDLED)
+        return MSG_HANDLED;
+
+    switch (command)
+    {
+    case CK_Ok:
+        h->ret_value = B_ENTER;
+        dlg_close (h);
+        break;
+    case CK_Cancel:
+        h->ret_value = B_CANCEL;
+        dlg_close (h);
+        break;
+
+    case CK_Up:
+    case CK_Left:
+        group_select_prev_widget (g);
+        break;
+    case CK_Down:
+    case CK_Right:
+        group_select_next_widget (g);
+        break;
+
+    case CK_Help:
+        dlg_help (h);
+        break;
+
+    case CK_Suspend:
+        mc_event_raise (MCEVENT_GROUP_CORE, "suspend", NULL);
+        refresh_cmd ();
+        break;
+    case CK_Refresh:
+        refresh_cmd ();
+        break;
+
+    case CK_ScreenList:
+        if (!widget_get_state (WIDGET (h), WST_MODAL))
+            dialog_switch_list ();
+        else
+            ret = MSG_NOT_HANDLED;
+        break;
+    case CK_ScreenNext:
+        if (!widget_get_state (WIDGET (h), WST_MODAL))
+            dialog_switch_next ();
+        else
+            ret = MSG_NOT_HANDLED;
+        break;
+    case CK_ScreenPrev:
+        if (!widget_get_state (WIDGET (h), WST_MODAL))
+            dialog_switch_prev ();
+        else
+            ret = MSG_NOT_HANDLED;
+        break;
+
+    default:
+        ret = MSG_NOT_HANDLED;
+    }
+
+    return ret;
 }
 
 /* --------------------------------------------------------------------------------------------- */
